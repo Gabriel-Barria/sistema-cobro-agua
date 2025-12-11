@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Medidor #{{ medidor.id }} - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Medidor #{{ medidor.id }}</h1>
+    <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Volver</a>
+</div>
+
+<div class="detalle-info">
+    <dl>
+        <dt>Cliente</dt>
+        <dd><a href="{{ url_for('clientes.detalle', cliente_id=medidor.cliente_id) }}">{{ medidor.cliente_nombre }}</a></dd>
+
+        <dt>Numero de Medidor</dt>
+        <dd>{{ medidor.numero_medidor or 'No registrado' }}</dd>
+
+        <dt>Direccion</dt>
+        <dd>{{ medidor.direccion or 'No registrada' }}</dd>
+
+        <dt>Estado</dt>
+        <dd>{% if medidor.activo %}Activo{% else %}Inactivo{% endif %}</dd>
+    </dl>
+</div>
+
+<h2>Historial de Lecturas</h2>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th class="sortable">Periodo</th>
+            <th class="sortable">Lectura (m3)</th>
+            <th class="sortable">Fecha</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for l in lecturas %}
+        <tr>
+            <td data-sort="{{ l.año * 100 + l.mes }}">{{ l.mes|mes_nombre }} {{ l.año }}</td>
+            <td>{{ l.lectura_m3 }}</td>
+            <td>{{ l.fecha_lectura|fecha_formato }}</td>
+            <td class="actions">
+                <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-small">Ver</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4" class="empty">No hay lecturas registradas</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

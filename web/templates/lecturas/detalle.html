@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Lectura #{{ lectura.id }} - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Lectura #{{ lectura.id }}</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('lecturas.editar', lectura_id=lectura.id) }}" class="btn">Editar</a>
+        <a href="{{ url_for('lecturas.listar') }}" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+<div class="detalle-grid">
+    <div class="detalle-info">
+        <h2>Informacion</h2>
+        <dl>
+            <dt>Cliente</dt>
+            <dd><a href="{{ url_for('clientes.detalle', cliente_id=lectura.cliente_id) }}">{{ lectura.cliente_nombre }}</a></dd>
+
+            <dt>Medidor</dt>
+            <dd><a href="{{ url_for('medidores.detalle', medidor_id=lectura.medidor_id) }}">Medidor #{{ lectura.medidor_id }}</a></dd>
+
+            <dt>Periodo</dt>
+            <dd>{{ lectura.mes|mes_nombre }} {{ lectura.año }}</dd>
+
+            <dt>Lectura</dt>
+            <dd><strong>{{ lectura.lectura_m3 }} m3</strong></dd>
+
+            <dt>Fecha de Lectura</dt>
+            <dd>{{ lectura.fecha_lectura|fecha_formato }}</dd>
+
+            <dt>Archivo Original</dt>
+            <dd>{{ lectura.foto_nombre }}</dd>
+        </dl>
+    </div>
+
+    <div class="detalle-foto">
+        <h2>Foto</h2>
+        {% if lectura.foto_path %}
+        <img src="/foto/{{ lectura.foto_path }}" alt="Foto de lectura" class="foto-lectura">
+        {% else %}
+        <p class="no-foto">Sin foto</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="danger-zone">
+    <h3>Zona de Peligro</h3>
+    <form method="POST" action="{{ url_for('lecturas.eliminar', lectura_id=lectura.id) }}" onsubmit="return confirm('¿Estas seguro de eliminar esta lectura?');">
+        <button type="submit" class="btn btn-danger">Eliminar Lectura</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: lecturas-app
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./data:/app/data
+      - ./fotos:/app/fotos
+    environment:
+      - FLASK_ENV=production
+      - FLASK_APP=web/app.py
+    restart: unless-stopped

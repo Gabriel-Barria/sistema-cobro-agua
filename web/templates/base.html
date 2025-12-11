@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Lecturas{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <a href="{{ url_for('index') }}">Sistema de Lecturas</a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('index') }}">Inicio</a></li>
+            <li><a href="{{ url_for('lecturas.listar') }}">Lecturas</a></li>
+            <li><a href="{{ url_for('clientes.listar') }}">Clientes</a></li>
+            <li><a href="{{ url_for('medidores.listar') }}">Medidores</a></li>
+        </ul>
+    </nav>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>Sistema de Lecturas de Medidores</p>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('th.sortable').forEach(function(th) {
+            th.addEventListener('click', function() {
+                const table = th.closest('table');
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const colIndex = Array.from(th.parentNode.children).indexOf(th);
+                const isAsc = th.classList.contains('asc');
+
+                // Limpiar clases de ordenamiento
+                th.parentNode.querySelectorAll('th').forEach(h => {
+                    h.classList.remove('asc', 'desc');
+                });
+
+                // Ordenar filas
+                rows.sort(function(a, b) {
+                    const aCell = a.children[colIndex];
+                    const bCell = b.children[colIndex];
+
+                    // Usar data-sort si existe, sino usar el texto
+                    const aVal = aCell.dataset.sort || aCell.textContent.trim();
+                    const bVal = bCell.dataset.sort || bCell.textContent.trim();
+
+                    // Intentar ordenar como número
+                    const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
+                    const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
+
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return isAsc ? bNum - aNum : aNum - bNum;
+                    }
+
+                    // Ordenar como texto
+                    return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+                });
+
+                // Aplicar nueva clase
+                th.classList.add(isAsc ? 'desc' : 'asc');
+
+                // Reinsertar filas ordenadas
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+    </script>
+</body>
+</html>

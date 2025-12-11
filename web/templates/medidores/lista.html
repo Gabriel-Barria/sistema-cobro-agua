@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Medidores - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Medidores</h1>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th class="sortable">ID</th>
+            <th class="sortable">Cliente</th>
+            <th class="sortable">Numero Medidor</th>
+            <th class="sortable">Direccion</th>
+            <th class="sortable">Lecturas</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in medidores %}
+        <tr>
+            <td>{{ m.id }}</td>
+            <td><a href="{{ url_for('clientes.detalle', cliente_id=m.cliente_id) }}">{{ m.cliente_nombre }}</a></td>
+            <td>{{ m.numero_medidor or '-' }}</td>
+            <td>{{ m.direccion or '-' }}</td>
+            <td>{{ m.num_lecturas }}</td>
+            <td class="actions">
+                <a href="{{ url_for('medidores.detalle', medidor_id=m.id) }}" class="btn btn-small">Ver</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6" class="empty">No hay medidores</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

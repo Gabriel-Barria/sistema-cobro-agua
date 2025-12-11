@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}{{ cliente.nombre }} - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ cliente.nombre }}</h1>
+    <div class="header-actions">
+        <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn">Editar</a>
+        <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Volver</a>
+    </div>
+</div>
+
+<div class="detalle-info">
+    <dl>
+        <dt>Nombre</dt>
+        <dd>{{ cliente.nombre }}</dd>
+
+        <dt>Nombre Completo</dt>
+        <dd>{{ cliente.nombre_completo or 'No registrado' }}</dd>
+
+        <dt>RUT</dt>
+        <dd>{{ cliente.rut or 'No registrado' }}</dd>
+
+        <dt>Estado</dt>
+        <dd>{% if cliente.activo %}Activo{% else %}Inactivo{% endif %}</dd>
+
+        <dt>Registrado</dt>
+        <dd>{{ cliente.created_at }}</dd>
+    </dl>
+</div>
+
+<h2>Lecturas</h2>
+<a href="{{ url_for('lecturas.listar', cliente_id=cliente.id) }}" class="btn">Ver todas las lecturas</a>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Lectura #{{ lectura.id }} - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Editar Lectura #{{ lectura.id }}</h1>
+    <a href="{{ url_for('lecturas.detalle', lectura_id=lectura.id) }}" class="btn btn-secondary">Cancelar</a>
+</div>
+
+<div class="edit-context">
+    <p><strong>Cliente:</strong> {{ lectura.cliente_nombre }}</p>
+    <p><strong>Periodo:</strong> {{ lectura.mes|mes_nombre }} {{ lectura.año }}</p>
+</div>
+
+<form method="POST" class="form">
+    <div class="form-group">
+        <label for="lectura_m3">Lectura (m3) *</label>
+        <input type="number" name="lectura_m3" id="lectura_m3" min="0" value="{{ lectura.lectura_m3 }}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="fecha_lectura">Fecha de Lectura</label>
+        <input type="date" name="fecha_lectura" id="fecha_lectura" value="{{ lectura.fecha_lectura }}">
+    </div>
+
+    <div class="form-group">
+        <label>Foto Actual</label>
+        {% if lectura.foto_path %}
+        <img src="/foto/{{ lectura.foto_path }}" alt="Foto actual" class="foto-preview">
+        {% else %}
+        <p>Sin foto</p>
+        {% endif %}
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    </div>
+</form>
+{% endblock %}

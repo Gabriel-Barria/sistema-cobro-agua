@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Clientes</h1>
+</div>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th class="sortable">ID</th>
+            <th class="sortable">Nombre</th>
+            <th class="sortable">Nombre Completo</th>
+            <th class="sortable">RUT</th>
+            <th class="sortable">Medidores</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for c in clientes %}
+        <tr>
+            <td>{{ c.id }}</td>
+            <td>{{ c.nombre }}</td>
+            <td>{{ c.nombre_completo or '-' }}</td>
+            <td>{{ c.rut or '-' }}</td>
+            <td>{{ c.num_medidores }}</td>
+            <td class="actions">
+                <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-small">Ver</a>
+                <a href="{{ url_for('clientes.editar', cliente_id=c.id) }}" class="btn btn-small">Editar</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6" class="empty">No hay clientes</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

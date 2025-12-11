@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<h1>Sistema de Lecturas de Medidores</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>{{ stats.clientes }}</h3>
+        <p>Clientes</p>
+        <a href="{{ url_for('clientes.listar') }}">Ver todos</a>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.medidores }}</h3>
+        <p>Medidores</p>
+        <a href="{{ url_for('medidores.listar') }}">Ver todos</a>
+    </div>
+    <div class="stat-card">
+        <h3>{{ stats.lecturas }}</h3>
+        <p>Lecturas</p>
+        <a href="{{ url_for('lecturas.listar') }}">Ver todas</a>
+    </div>
+</div>
+
+<div class="quick-actions">
+    <h2>Acciones Rapidas</h2>
+    <a href="{{ url_for('lecturas.crear') }}" class="btn btn-primary">Nueva Lectura</a>
+    <a href="{{ url_for('lecturas.listar') }}" class="btn">Ver Lecturas</a>
+</div>
+{% endblock %}
