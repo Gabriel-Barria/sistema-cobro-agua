@@ -24,7 +24,6 @@ coverage.xml
 *.db
 *.sqlite
 db/
-fotos/
 .env
 .env.*
 *.md
