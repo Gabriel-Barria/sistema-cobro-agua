@@ -1,9 +1,9 @@
 # Configuración EasyPanel - Sistema de Cobro de Agua
 
 ## Repositorio GitHub
-- **URL**: https://github.com/Gabriel-Barria/migracion-data-lecturas.git
+- **URL**: https://github.com/Gabriel-Barria/sistema-cobro-agua.git
 - **Branch**: main
-- **Commit**: 546fd98 (feat: migración completa a PostgreSQL)
+- **Commit**: 1f54e6a (feat: actualizar templates y routes con mejoras de UI)
 
 ---
 
@@ -39,7 +39,7 @@ python -c "import secrets; print(secrets.token_urlsafe(24))"
 4. Tipo: **Docker Compose**
 
 ### PASO 2: Conectar Repositorio GitHub
-- Repository URL: `https://github.com/Gabriel-Barria/migracion-data-lecturas.git`
+- Repository URL: `https://github.com/Gabriel-Barria/sistema-cobro-agua.git`
 - Branch: `main`
 - Build context: `/` (raíz)
 - Docker Compose file: `docker-compose.prod.yml`
