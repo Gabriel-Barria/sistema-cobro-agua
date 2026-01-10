@@ -18,9 +18,9 @@ db_dev/
 *.sqlite
 
 # Archivos de usuario (IMPORTANTE: No subir a GitHub)
-fotos/
+# TEMPORAL: fotos/
 fotos_dev/
-comprobantes/
+# TEMPORAL: comprobantes/
 comprobantes_dev/
 
 # Variables de entorno
