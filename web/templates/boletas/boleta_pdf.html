@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Boleta {{ boleta.numero_boleta }}</title>
+</head>
+<style type="text/css">
+    body{
+        font-family: verdana;
+        width: 80%;
+        margin: auto;
+    }
+    .head_container .data_container{
+        display: block;
+        height: 30px;
+    }
+    .pay_container, .total_container{
+        border:1px solid black;
+    }
+    .pay_container{
+        padding: 5px;
+    }
+    .total_container{
+        margin-bottom: 30px;
+        font-weight: bold;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .data_table{
+        width: 100%;
+        margin-bottom: 20px;
+        border-collapse: collapse;
+    }
+    .titulo{
+        text-align: center;
+    }
+    .data_table thead{
+        background-color: #156082;
+        color:white;
+        height: 40px;
+    }
+    .head_container{
+        margin-bottom:15px;
+    }
+    .number_container{
+        height: 80px;
+        display:flex;
+        align-items: center;
+        margin-bottom: 20px;
+        font-size: 1.2em;
+    }
+    td, th, tr{
+        border:solid 1px black;
+        padding: 8px;
+    }
+    ol{
+        list-style: disc;
+    }
+    .estado-pagada {
+        background: #d4edda;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .estado-pendiente {
+        background: #fff3cd;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+</style>
+<body>
+    <h2 class="titulo">COBRO AGUA PASAJE BAUCHE</h2>
+
+    <section class="number_container">
+        COMPROBANTE N&ordm; <span style="margin-left: 10px; font-weight: bold;">{{ boleta.numero_boleta }}</span>
+    </section>
+
+    <section class="head_container">
+        <div class="data_container">
+            <label>Cliente:</label>
+            <span><strong>{{ boleta.cliente_nombre|upper }}</strong></span>
+        </div>
+        <div class="data_container">
+            <label>Medidor:</label>
+            <span>{{ boleta.medidor_id }}</span>
+        </div>
+        <div class="data_container">
+            <label>Periodo:</label>
+            <span><strong>{{ meses[boleta.periodo_mes] }} {{ boleta.periodo_año }}</strong></span>
+        </div>
+        <div class="data_container">
+            <label>Fecha de emision:</label>
+            <span>{{ boleta.fecha_emision|fecha_formato }}</span>
+        </div>
+    </section>
+
+    <section class="table_container">
+        <table class="data_table">
+            <thead>
+                <tr>
+                    <th>CANTIDAD</th>
+                    <th>DESCRIPCION</th>
+                    <th>VALOR UNITARIO</th>
+                    <th>COSTO TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: center;">1</td>
+                    <td>Cargo fijo mensual</td>
+                    <td style="text-align: right;">${{ boleta.cargo_fijo|formato_pesos }}</td>
+                    <td style="text-align: right;">${{ boleta.cargo_fijo|formato_pesos }}</td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">{{ boleta.consumo_m3 }} m3</td>
+                    <td>
+                        Consumo de agua
+                        <br>
+                        <small>
+                            Lectura actual: {{ boleta.lectura_actual }} m3
+                            {% if fecha_lectura_actual %}
+                            ({{ fecha_lectura_actual|fecha_formato }})
+                            {% endif %}
+                            {% if boleta.lectura_anterior %}
+                            <br>Lectura anterior: {{ boleta.lectura_anterior }} m3
+                            {% if fecha_lectura_anterior %}
+                            ({{ fecha_lectura_anterior|fecha_formato }})
+                            {% endif %}
+                            {% endif %}
+                        </small>
+                    </td>
+                    <td style="text-align: right;">${{ boleta.precio_m3|formato_pesos }} / m3</td>
+                    <td style="text-align: right;">${{ boleta.subtotal_consumo|formato_pesos }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="total_container">
+            Total a pagar: ${{ boleta.total|formato_pesos }}
+        </div>
+    </section>
+
+    <section class="pay_container">
+        <h4>Metodos de pago:</h4>
+        <div>1.- Efectivo</div>
+        <div>2.- Transferencia a la siguiente cuenta:</div>
+        <ol style="margin-top:2px;">
+            <li>Banco: Banco Estado</li>
+            <li>N&ordm; de cuenta: 82970400962</li>
+            <li>RUT: 65096733-k</li>
+            <li>Tipo de Cuenta: Cuenta Vista o Chequera electronica</li>
+            <li>Nombre: Comite de Trabajo Pasaje Bauche</li>
+            <li>Email: comite.bauche@gmail.com</li>
+        </ol>
+    </section>
+
+    {% if foto_lectura %}
+    <section style="margin-top: 30px; page-break-inside: avoid;">
+        <h4>Foto del Medidor - Lectura {{ meses[boleta.periodo_mes] }} {{ boleta.periodo_año }}</h4>
+        <div style="text-align: center; margin-top: 10px;">
+            <img src="{{ foto_lectura }}" alt="Foto del medidor" style="max-width: 100%; max-height: 400px; border: 1px solid #ccc;">
+        </div>
+    </section>
+    {% endif %}
+
+</body>
+</html>

@@ -24,10 +24,11 @@ def crear_cliente(nombre: str, nombre_completo: str = None, rut: str = None) -> 
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO clientes (nombre, nombre_completo, rut)
-        VALUES (?, ?, ?)
+        VALUES (%s, %s, %s)
+        RETURNING id
     ''', (nombre, nombre_completo, rut))
+    cliente_id = cursor.fetchone()[0]
     conn.commit()
-    cliente_id = cursor.lastrowid
     conn.close()
     return cliente_id
 
@@ -44,7 +45,7 @@ def buscar_cliente_por_nombre(nombre: str) -> Optional[Dict]:
     """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM clientes WHERE nombre = ?', (nombre,))
+    cursor.execute('SELECT * FROM clientes WHERE nombre = %s', (nombre,))
     row = cursor.fetchone()
     conn.close()
 
@@ -90,22 +91,38 @@ def obtener_cliente(cliente_id: int) -> Optional[Dict]:
     """Obtiene un cliente por ID."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM clientes WHERE id = ?', (cliente_id,))
+    cursor.execute('SELECT * FROM clientes WHERE id = %s', (cliente_id,))
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
 
 
-def actualizar_cliente(cliente_id: int, nombre_completo: str = None, rut: str = None) -> bool:
+def actualizar_cliente(cliente_id: int, nombre: str = None, nombre_completo: str = None, rut: str = None) -> bool:
     """Actualiza datos de un cliente."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''
-        UPDATE clientes
-        SET nombre_completo = COALESCE(?, nombre_completo),
-            rut = COALESCE(?, rut)
-        WHERE id = ?
-    ''', (nombre_completo, rut, cliente_id))
+
+    updates = []
+    params = []
+
+    if nombre is not None:
+        updates.append('nombre = %s')
+        params.append(nombre)
+    if nombre_completo is not None:
+        updates.append('nombre_completo = %s')
+        params.append(nombre_completo if nombre_completo else None)
+    if rut is not None:
+        updates.append('rut = %s')
+        params.append(rut if rut else None)
+
+    if not updates:
+        conn.close()
+        return False
+
+    params.append(cliente_id)
+    query = f'UPDATE clientes SET {", ".join(updates)} WHERE id = %s'
+
+    cursor.execute(query, params)
     conn.commit()
     affected = cursor.rowcount
     conn.close()
@@ -114,7 +131,7 @@ def actualizar_cliente(cliente_id: int, nombre_completo: str = None, rut: str = 
 
 # ============== MEDIDORES ==============
 
-def crear_medidor(cliente_id: int, numero_medidor: str = None, direccion: str = None) -> int:
+def crear_medidor(cliente_id: int, numero_medidor: str = None, direccion: str = None, fecha_inicio: str = None) -> int:
     """
     Crea un nuevo medidor asociado a un cliente.
 
@@ -122,6 +139,7 @@ def crear_medidor(cliente_id: int, numero_medidor: str = None, direccion: str = 
         cliente_id: ID del cliente
         numero_medidor: Número/identificador del medidor (opcional)
         direccion: Dirección del medidor (opcional)
+        fecha_inicio: Fecha de alta del medidor (opcional, formato YYYY-MM-DD)
 
     Returns:
         ID del medidor creado
@@ -129,11 +147,12 @@ def crear_medidor(cliente_id: int, numero_medidor: str = None, direccion: str = 
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO medidores (cliente_id, numero_medidor, direccion)
-        VALUES (?, ?, ?)
-    ''', (cliente_id, numero_medidor, direccion))
+        INSERT INTO medidores (cliente_id, numero_medidor, direccion, fecha_inicio)
+        VALUES (%s, %s, %s, %s)
+        RETURNING id
+    ''', (cliente_id, numero_medidor, direccion, fecha_inicio))
+    medidor_id = cursor.fetchone()[0]
     conn.commit()
-    medidor_id = cursor.lastrowid
     conn.close()
     return medidor_id
 
@@ -150,7 +169,7 @@ def buscar_medidor_por_cliente(cliente_id: int) -> Optional[Dict]:
     """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM medidores WHERE cliente_id = ?', (cliente_id,))
+    cursor.execute('SELECT * FROM medidores WHERE cliente_id = %s', (cliente_id,))
     row = cursor.fetchone()
     conn.close()
 
@@ -175,19 +194,27 @@ def obtener_o_crear_medidor(cliente_id: int) -> int:
     return crear_medidor(cliente_id)
 
 
-def listar_medidores() -> List[Dict]:
-    """Lista todos los medidores con información del cliente."""
+def listar_medidores(cliente_id: int = None) -> List[Dict]:
+    """Lista medidores con información del cliente, opcionalmente filtrado por cliente."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''
+
+    query = '''
         SELECT m.*, c.nombre as cliente_nombre,
                COUNT(l.id) as num_lecturas
         FROM medidores m
         JOIN clientes c ON m.cliente_id = c.id
         LEFT JOIN lecturas l ON m.id = l.medidor_id
-        GROUP BY m.id
-        ORDER BY c.nombre
-    ''')
+    '''
+    params = []
+
+    if cliente_id:
+        query += ' WHERE m.cliente_id = %s'
+        params.append(cliente_id)
+
+    query += ' GROUP BY m.id, c.nombre ORDER BY c.nombre'
+
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -201,11 +228,137 @@ def obtener_medidor(medidor_id: int) -> Optional[Dict]:
         SELECT m.*, c.nombre as cliente_nombre
         FROM medidores m
         JOIN clientes c ON m.cliente_id = c.id
-        WHERE m.id = ?
+        WHERE m.id = %s
     ''', (medidor_id,))
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
+
+
+def actualizar_medidor(medidor_id: int, numero_medidor: str = None,
+                       direccion: str = None, cliente_id: int = None) -> bool:
+    """Actualiza datos de un medidor."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    updates = []
+    params = []
+
+    if numero_medidor is not None:
+        updates.append('numero_medidor = %s')
+        params.append(numero_medidor if numero_medidor else None)
+    if direccion is not None:
+        updates.append('direccion = %s')
+        params.append(direccion if direccion else None)
+    if cliente_id is not None:
+        updates.append('cliente_id = %s')
+        params.append(cliente_id)
+
+    if not updates:
+        return False
+
+    params.append(medidor_id)
+    query = f'UPDATE medidores SET {", ".join(updates)} WHERE id = %s'
+
+    cursor.execute(query, params)
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    return affected > 0
+
+
+def eliminar_medidor(medidor_id: int) -> bool:
+    """Elimina un medidor (solo si no tiene lecturas)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Verificar si tiene lecturas
+    cursor.execute('SELECT COUNT(*) FROM lecturas WHERE medidor_id = %s', (medidor_id,))
+    if cursor.fetchone()[0] > 0:
+        conn.close()
+        return False
+
+    cursor.execute('DELETE FROM medidores WHERE id = %s', (medidor_id,))
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    return affected > 0
+
+
+def desactivar_medidor(medidor_id: int, fecha_baja: str, motivo_baja: str = None) -> bool:
+    """
+    Desactiva un medidor estableciendo activo=0 y registrando fecha y motivo de baja.
+
+    Args:
+        medidor_id: ID del medidor a desactivar
+        fecha_baja: Fecha de baja (formato YYYY-MM-DD)
+        motivo_baja: Motivo de la desactivación (opcional)
+
+    Returns:
+        True si se desactivó exitosamente, False en caso contrario
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE medidores
+        SET activo = 0, fecha_baja = %s, motivo_baja = %s
+        WHERE id = %s
+    ''', (fecha_baja, motivo_baja, medidor_id))
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    return affected > 0
+
+
+def reactivar_medidor(medidor_id: int, fecha_inicio: str = None) -> bool:
+    """
+    Reactiva un medidor estableciendo activo=1 y limpiando fecha y motivo de baja.
+
+    Args:
+        medidor_id: ID del medidor a reactivar
+        fecha_inicio: Nueva fecha de inicio (opcional, si se cambia)
+
+    Returns:
+        True si se reactivó exitosamente, False en caso contrario
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    if fecha_inicio:
+        cursor.execute('''
+            UPDATE medidores
+            SET activo = 1, fecha_baja = NULL, motivo_baja = NULL, fecha_inicio = %s
+            WHERE id = %s
+        ''', (fecha_inicio, medidor_id))
+    else:
+        cursor.execute('''
+            UPDATE medidores
+            SET activo = 1, fecha_baja = NULL, motivo_baja = NULL
+            WHERE id = %s
+        ''', (medidor_id,))
+
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    return affected > 0
+
+
+def eliminar_cliente(cliente_id: int) -> bool:
+    """Elimina un cliente (solo si no tiene medidores)."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Verificar si tiene medidores
+    cursor.execute('SELECT COUNT(*) FROM medidores WHERE cliente_id = %s', (cliente_id,))
+    if cursor.fetchone()[0] > 0:
+        conn.close()
+        return False
+
+    cursor.execute('DELETE FROM clientes WHERE id = %s', (cliente_id,))
+    conn.commit()
+    affected = cursor.rowcount
+    conn.close()
+    return affected > 0
 
 
 # ============== LECTURAS ==============
@@ -231,10 +384,11 @@ def crear_lectura(medidor_id: int, lectura_m3: int, fecha_lectura: date,
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, año, mes)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
     ''', (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, año, mes))
+    lectura_id = cursor.fetchone()[0]
     conn.commit()
-    lectura_id = cursor.lastrowid
     conn.close()
     return lectura_id
 
@@ -255,7 +409,7 @@ def lectura_existe(medidor_id: int, año: int, mes: int) -> bool:
     cursor = conn.cursor()
     cursor.execute('''
         SELECT COUNT(*) FROM lecturas
-        WHERE medidor_id = ? AND año = ? AND mes = ?
+        WHERE medidor_id = %s AND año = %s AND mes = %s
     ''', (medidor_id, año, mes))
     count = cursor.fetchone()[0]
     conn.close()
@@ -296,22 +450,22 @@ def listar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
     params = []
 
     if medidor_id:
-        query += ' AND l.medidor_id = ?'
+        query += ' AND l.medidor_id = %s'
         params.append(medidor_id)
     if año:
-        query += ' AND l.año = ?'
+        query += ' AND l.año = %s'
         params.append(año)
     if mes:
-        query += ' AND l.mes = ?'
+        query += ' AND l.mes = %s'
         params.append(mes)
     if cliente_id:
-        query += ' AND c.id = ?'
+        query += ' AND c.id = %s'
         params.append(cliente_id)
 
     if solo_incompletos:
         medidores_inc = obtener_medidores_incompletos()
         if medidores_inc:
-            placeholders = ','.join('?' * len(medidores_inc))
+            placeholders = ','.join('%s' * len(medidores_inc))
             query += f' AND l.medidor_id IN ({placeholders})'
             params.extend(medidores_inc)
         else:
@@ -340,7 +494,7 @@ def listar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
     else:
         query += ' ORDER BY l.año DESC, l.mes DESC, c.nombre'
 
-    query += ' LIMIT ? OFFSET ?'
+    query += ' LIMIT %s OFFSET %s'
     params.extend([limit, offset])
 
     cursor.execute(query, params)
@@ -358,7 +512,7 @@ def obtener_lectura(lectura_id: int) -> Optional[Dict]:
         FROM lecturas l
         JOIN medidores m ON l.medidor_id = m.id
         JOIN clientes c ON m.cliente_id = c.id
-        WHERE l.id = ?
+        WHERE l.id = %s
     ''', (lectura_id,))
     row = cursor.fetchone()
     conn.close()
@@ -375,17 +529,17 @@ def actualizar_lectura(lectura_id: int, lectura_m3: int = None,
     params = []
 
     if lectura_m3 is not None:
-        updates.append('lectura_m3 = ?')
+        updates.append('lectura_m3 = %s')
         params.append(lectura_m3)
     if fecha_lectura is not None:
-        updates.append('fecha_lectura = ?')
+        updates.append('fecha_lectura = %s')
         params.append(fecha_lectura)
 
     if not updates:
         return False
 
     params.append(lectura_id)
-    query = f'UPDATE lecturas SET {", ".join(updates)} WHERE id = ?'
+    query = f'UPDATE lecturas SET {", ".join(updates)} WHERE id = %s'
 
     cursor.execute(query, params)
     conn.commit()
@@ -398,7 +552,7 @@ def eliminar_lectura(lectura_id: int) -> bool:
     """Elimina una lectura."""
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM lecturas WHERE id = ?', (lectura_id,))
+    cursor.execute('DELETE FROM lecturas WHERE id = %s', (lectura_id,))
     conn.commit()
     affected = cursor.rowcount
     conn.close()
@@ -420,22 +574,22 @@ def contar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
     params = []
 
     if medidor_id:
-        query += ' AND l.medidor_id = ?'
+        query += ' AND l.medidor_id = %s'
         params.append(medidor_id)
     if año:
-        query += ' AND l.año = ?'
+        query += ' AND l.año = %s'
         params.append(año)
     if mes:
-        query += ' AND l.mes = ?'
+        query += ' AND l.mes = %s'
         params.append(mes)
     if cliente_id:
-        query += ' AND c.id = ?'
+        query += ' AND c.id = %s'
         params.append(cliente_id)
 
     if solo_incompletos:
         medidores_inc = obtener_medidores_incompletos()
         if medidores_inc:
-            placeholders = ','.join('?' * len(medidores_inc))
+            placeholders = ','.join('%s' * len(medidores_inc))
             query += f' AND l.medidor_id IN ({placeholders})'
             params.extend(medidores_inc)
         else:
@@ -475,12 +629,12 @@ def obtener_medidores_incompletos() -> List[int]:
                 (l.año = 2024) OR
                 (l.año = 2025 AND l.mes <= 11)
             )
-        ) < ?
+        ) < %s
     ''', (total_periodos,))
 
     rows = cursor.fetchall()
     conn.close()
-    return [row[0] for row in rows]
+    return [row[0] if isinstance(row, tuple) else row['id'] for row in rows]
 
 
 def obtener_clientes_incompletos() -> List[int]:
@@ -508,12 +662,12 @@ def obtener_clientes_incompletos() -> List[int]:
                 (l.año = 2024) OR
                 (l.año = 2025 AND l.mes <= 11)
             )
-        ) < ?
+        ) < %s
     ''', (total_periodos,))
 
     rows = cursor.fetchall()
     conn.close()
-    return [row[0] for row in rows]
+    return [row[0] if isinstance(row, tuple) else row['cliente_id'] for row in rows]
 
 
 def obtener_años_disponibles() -> List[int]:
@@ -524,6 +678,98 @@ def obtener_años_disponibles() -> List[int]:
     rows = cursor.fetchall()
     conn.close()
     return [row[0] for row in rows]
+
+
+def obtener_fechas_comunes_por_periodo(periodos: List[tuple]) -> Dict[tuple, Optional[int]]:
+    """
+    Obtiene el día más común de lectura para cada periodo.
+    La fecha de lectura de un periodo (mes X, año Y) se toma en el mes siguiente.
+    Por ejemplo: periodo marzo 2024 -> lectura tomada en abril 2024.
+
+    Args:
+        periodos: Lista de tuplas (año, mes) representando los periodos
+
+    Returns:
+        Dict con (año, mes) como key y el día más común como value (None si no hay datos)
+    """
+    if not periodos:
+        return {}
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    resultado = {}
+
+    for año, mes in periodos:
+        # Calcular el mes de lectura (mes siguiente al periodo)
+        if mes == 12:
+            mes_lectura = 1
+            año_lectura = año + 1
+        else:
+            mes_lectura = mes + 1
+            año_lectura = año
+
+        # Buscar el día más común en las lecturas de ese periodo
+        # Formato de fecha: YYYY-MM-DD, extraemos el día
+        cursor.execute('''
+            SELECT CAST(SUBSTRING(fecha_lectura, 9, 2) AS INTEGER) as dia, COUNT(*) as cuenta
+            FROM lecturas
+            WHERE año = %s AND mes = %s
+            AND SUBSTRING(fecha_lectura, 1, 7) = %s
+            GROUP BY dia
+            ORDER BY cuenta DESC
+            LIMIT 1
+        ''', (año, mes, f'{año_lectura:04d}-{mes_lectura:02d}'))
+
+        row = cursor.fetchone()
+        if row:
+            resultado[(año, mes)] = row[0]
+        else:
+            resultado[(año, mes)] = None
+
+    conn.close()
+    return resultado
+
+
+def crear_lecturas_multiple(medidor_id: int, lectura_m3: int, periodos_fechas: List[Dict]) -> Dict:
+    """
+    Crea múltiples lecturas para un medidor, omitiendo periodos que ya existen.
+
+    Args:
+        medidor_id: ID del medidor
+        lectura_m3: Valor de lectura en m3 (igual para todas)
+        periodos_fechas: Lista de dicts con {año, mes, fecha_lectura}
+
+    Returns:
+        Dict con 'creados' (lista de IDs), 'omitidos' (cantidad de omitidos)
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    ids_creados = []
+    omitidos = 0
+
+    for pf in periodos_fechas:
+        # Verificar si ya existe lectura para este medidor/periodo
+        cursor.execute('''
+            SELECT id FROM lecturas
+            WHERE medidor_id = %s AND año = %s AND mes = %s
+        ''', (medidor_id, pf['año'], pf['mes']))
+
+        if cursor.fetchone():
+            omitidos += 1
+            continue
+
+        cursor.execute('''
+            INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, año, mes)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        ''', (medidor_id, lectura_m3, pf['fecha_lectura'], '', 'sin_foto', pf['año'], pf['mes']))
+        ids_creados.append(cursor.fetchone()[0])
+
+    conn.commit()
+    conn.close()
+    return {'creados': ids_creados, 'omitidos': omitidos}
 
 
 def obtener_estadisticas() -> Dict:
@@ -547,3 +793,99 @@ def obtener_estadisticas() -> Dict:
         'medidores': num_medidores,
         'lecturas': num_lecturas
     }
+
+
+def obtener_clientes_sin_lectura(año: int, mes: int) -> List[Dict]:
+    """
+    Filtrado AUTOMÁTICO de clientes pendientes.
+    Retorna SOLO clientes con medidores activos que NO tienen lectura
+    registrada en el período especificado.
+
+    Args:
+        año: Año del período
+        mes: Mes del período (1-12)
+
+    Returns:
+        Lista de dicts con:
+        - cliente_id: ID del cliente
+        - cliente_nombre: Nombre del cliente
+        - nombre_completo: Nombre completo del cliente
+        - medidores: Lista de dicts con id, numero, direccion
+        - num_medidores: Cantidad de medidores del cliente
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Query con LEFT JOIN para detectar ausencia de lectura
+    query = '''
+        SELECT DISTINCT
+            c.id as cliente_id,
+            c.nombre as cliente_nombre,
+            c.nombre_completo,
+            STRING_AGG(
+                CAST(m.id AS TEXT) || '|' ||
+                COALESCE(m.numero_medidor, 'S/N') || '|' ||
+                COALESCE(m.direccion, ''),
+                ';'
+            ) as medidores_info
+        FROM clientes c
+        INNER JOIN medidores m ON c.id = m.cliente_id
+        LEFT JOIN lecturas l ON m.id = l.medidor_id
+            AND l.año = %s
+            AND l.mes = %s
+        WHERE m.activo = 1
+            AND l.id IS NULL
+        GROUP BY c.id, c.nombre, c.nombre_completo
+        ORDER BY c.nombre
+    '''
+
+    cursor.execute(query, (año, mes))
+    rows = cursor.fetchall()
+    conn.close()
+
+    # Procesar resultado para estructura más amigable
+    resultado = []
+    for row in rows:
+        medidores_str = row['medidores_info']
+        medidores_list = []
+
+        if medidores_str:
+            for med_info in medidores_str.split(';'):
+                parts = med_info.split('|')
+                if len(parts) == 3:
+                    medidores_list.append({
+                        'id': int(parts[0]),
+                        'numero': parts[1],
+                        'direccion': parts[2]
+                    })
+
+        resultado.append({
+            'cliente_id': row['cliente_id'],
+            'cliente_nombre': row['cliente_nombre'],
+            'nombre_completo': row['nombre_completo'],
+            'medidores': medidores_list,
+            'num_medidores': len(medidores_list)
+        })
+
+    return resultado
+
+
+def buscar_cliente_por_rut(rut: str) -> Optional[Dict]:
+    """
+    Busca un cliente por su RUT normalizado.
+
+    Args:
+        rut: RUT normalizado (sin puntos ni guiones, mayúsculas)
+
+    Returns:
+        Dict con datos del cliente o None si no existe
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM clientes WHERE rut = %s', (rut,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return dict(row)
+    return None

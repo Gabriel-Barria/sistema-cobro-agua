@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -7,10 +8,38 @@ env/
 venv/
 .venv/
 ENV/
-.env
+
+# Base de datos
+db/
+db_dev/
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
-db/lecturas.db
+
+# Archivos de usuario (IMPORTANTE: No subir a GitHub)
+fotos/
+fotos_dev/
+comprobantes/
+comprobantes_dev/
+
+# Variables de entorno
+.env
+.env.local
+.env.production
+
+# Docker
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
 *.log
+
+# OS
 .DS_Store
 Thumbs.db

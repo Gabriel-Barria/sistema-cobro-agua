@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Boletas Masivo - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Crear Boletas - Modo Masivo</h1>
+    <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary">Cancelar</a>
+</div>
+
+<div class="config-info" style="padding: 15px; background: #e8f4f8; border-radius: 5px; margin-bottom: 20px;">
+    <strong>Tarifas actuales:</strong>
+    Cargo fijo: ${{ config.cargo_fijo|formato_pesos }} |
+    Precio por m3: ${{ config.precio_m3|formato_pesos }}
+    <a href="{{ url_for('boletas.configuracion') }}" style="margin-left: 10px;">Cambiar</a>
+</div>
+
+<form method="GET" class="filter-form" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
+        <div class="form-group" style="margin: 0;">
+            <label for="cliente_id">Filtrar por cliente</label>
+            <select name="cliente_id" id="cliente_id">
+                <option value="">Todos</option>
+                {% for cliente in clientes %}
+                <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>
+                    {{ cliente.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+            <label for="año">Año</label>
+            <select name="año" id="año">
+                <option value="">Todos</option>
+                {% for a in años %}
+                <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+            <label for="mes">Mes</label>
+            <select name="mes" id="mes">
+                <option value="">Todos</option>
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+    </div>
+</form>
+
+{% if lecturas %}
+<form method="POST" id="form-masivo">
+    <div style="margin-bottom: 15px; display: flex; gap: 10px;">
+        <button type="button" id="btn-seleccionar-todo" class="btn btn-secondary">Seleccionar Todo</button>
+        <button type="button" id="btn-deseleccionar-todo" class="btn btn-secondary">Deseleccionar Todo</button>
+        <span id="contador-seleccionados" style="padding: 8px;">0 lecturas seleccionadas</span>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="check-all"></th>
+                <th>Cliente</th>
+                <th>Medidor</th>
+                <th>Periodo</th>
+                <th>Lectura (m3)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lectura in lecturas %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="lecturas" value="{{ lectura.id }}" class="check-lectura">
+                </td>
+                <td>{{ lectura.cliente_nombre }}</td>
+                <td>{{ lectura.numero_medidor or 'Medidor ' ~ lectura.medidor_id }}</td>
+                <td>{{ lectura.mes }}/{{ lectura.año }}</td>
+                <td>{{ lectura.lectura_m3 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="form-actions" style="margin-top: 20px;">
+        <button type="submit" class="btn btn-primary btn-lg">Crear Boletas Seleccionadas</button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkAll = document.getElementById('check-all');
+    const checks = document.querySelectorAll('.check-lectura');
+    const contador = document.getElementById('contador-seleccionados');
+    const btnSelectAll = document.getElementById('btn-seleccionar-todo');
+    const btnDeselectAll = document.getElementById('btn-deseleccionar-todo');
+
+    function actualizarContador() {
+        const seleccionados = document.querySelectorAll('.check-lectura:checked').length;
+        contador.textContent = seleccionados + ' lecturas seleccionadas';
+    }
+
+    checkAll.addEventListener('change', function() {
+        checks.forEach(check => check.checked = this.checked);
+        actualizarContador();
+    });
+
+    checks.forEach(check => {
+        check.addEventListener('change', actualizarContador);
+    });
+
+    btnSelectAll.addEventListener('click', function() {
+        checks.forEach(check => check.checked = true);
+        checkAll.checked = true;
+        actualizarContador();
+    });
+
+    btnDeselectAll.addEventListener('click', function() {
+        checks.forEach(check => check.checked = false);
+        checkAll.checked = false;
+        actualizarContador();
+    });
+
+    document.getElementById('form-masivo').addEventListener('submit', function(e) {
+        const seleccionados = document.querySelectorAll('.check-lectura:checked').length;
+        if (seleccionados === 0) {
+            e.preventDefault();
+            alert('Debe seleccionar al menos una lectura');
+            return false;
+        }
+        return confirm('Se crearan ' + seleccionados + ' boletas. Continuar?');
+    });
+});
+</script>
+{% else %}
+<div class="alert alert-info">
+    No hay lecturas disponibles sin boleta para los filtros seleccionados.
+    <br><br>
+    Posibles razones:
+    <ul>
+        <li>Todas las lecturas ya tienen boleta asociada</li>
+        <li>No hay lecturas registradas</li>
+        <li>Los filtros no coinciden con ninguna lectura</li>
+    </ul>
+</div>
+{% endif %}
+
+<style>
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 16px;
+}
+</style>
+{% endblock %}

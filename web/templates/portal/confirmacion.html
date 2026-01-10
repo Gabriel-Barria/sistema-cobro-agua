@@ -1,0 +1,17 @@
+{% extends "portal/base_portal.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 40px;">
+    <div style="font-size: 48px; color: #28a745; margin-bottom: 20px;">&#10003;</div>
+    <h2 style="color: #28a745;">¡Pago Enviado Exitosamente!</h2>
+    <p style="font-size: 18px; margin: 20px 0;">
+        Su comprobante ha sido recibido y está en revisión.
+    </p>
+    <p>Recibirá una confirmación una vez que el administrador apruebe su pago.</p>
+
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('portal.mis_boletas') }}" class="btn-primary">Ver Mis Boletas</a>
+        <a href="{{ url_for('portal.salir') }}" class="btn-secondary" style="margin-left: 10px;">Cerrar Sesión</a>
+    </div>
+</div>
+{% endblock %}

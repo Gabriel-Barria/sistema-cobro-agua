@@ -32,14 +32,27 @@ def servir_foto(filename):
     return send_from_directory(APP_DIR, filename)
 
 
+@app.route('/comprobantes/<path:filename>')
+def servir_comprobante(filename):
+    """Sirve los comprobantes de pago desde el directorio de la app."""
+    comprobantes_dir = os.path.join(APP_DIR, 'comprobantes')
+    return send_from_directory(comprobantes_dir, filename)
+
+
 # Registrar blueprints
 from web.routes.lecturas import lecturas_bp
 from web.routes.clientes import clientes_bp
 from web.routes.medidores import medidores_bp
+from web.routes.boletas import boletas_bp
+from web.routes.mobile import mobile_bp
+from web.routes.portal import portal_bp
 
 app.register_blueprint(lecturas_bp, url_prefix='/lecturas')
 app.register_blueprint(clientes_bp, url_prefix='/clientes')
 app.register_blueprint(medidores_bp, url_prefix='/medidores')
+app.register_blueprint(boletas_bp, url_prefix='/boletas')
+app.register_blueprint(mobile_bp, url_prefix='/mobile')
+app.register_blueprint(portal_bp, url_prefix='/portal')
 
 
 # Filtros de plantilla
@@ -53,7 +66,7 @@ def mes_nombre(mes):
 
 @app.template_filter('fecha_formato')
 def fecha_formato(fecha):
-    """Convierte fecha a formato dd-mm-yyyy."""
+    """Convierte fecha a formato dd/mm/yyyy."""
     if not fecha:
         return '-'
     if isinstance(fecha, str):
@@ -61,8 +74,22 @@ def fecha_formato(fecha):
         if '-' in fecha and len(fecha) == 10:
             partes = fecha.split('-')
             if len(partes) == 3:
-                return f"{partes[2]}-{partes[1]}-{partes[0]}"
+                return f"{partes[2]}/{partes[1]}/{partes[0]}"
     return str(fecha)
+
+
+@app.template_filter('formato_pesos')
+def formato_pesos(monto):
+    """Formatea un monto en pesos con separador de miles (punto)."""
+    try:
+        # Convertir a float y formatear sin decimales
+        valor = float(monto)
+        # Formatear con separador de miles usando coma
+        formateado = "{:,.0f}".format(valor)
+        # Reemplazar coma por punto (formato chileno)
+        return formateado.replace(',', '.')
+    except (ValueError, TypeError):
+        return str(monto)
 
 
 def crear_app():

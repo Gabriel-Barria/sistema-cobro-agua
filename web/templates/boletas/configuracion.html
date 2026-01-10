@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Configuracion de Tarifas - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Configuracion de Tarifas</h1>
+    <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary">Volver a Boletas</a>
+</div>
+
+<form method="POST" class="form">
+    <div class="form-group">
+        <label for="cargo_fijo">Cargo Fijo Mensual ($)</label>
+        <input type="number" name="cargo_fijo" id="cargo_fijo"
+               value="{{ config.cargo_fijo if config else 0 }}"
+               step="0.01" min="0" required>
+        <small>Monto fijo que se cobra cada mes</small>
+    </div>
+
+    <div class="form-group">
+        <label for="precio_m3">Precio por m3 ($)</label>
+        <input type="number" name="precio_m3" id="precio_m3"
+               value="{{ config.precio_m3 if config else 0 }}"
+               step="0.01" min="0" required>
+        <small>Precio por cada metro cubico consumido</small>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Guardar Configuracion</button>
+    </div>
+</form>
+
+{% if config %}
+<div class="info-box" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 5px;">
+    <h3>Configuracion Actual</h3>
+    <p><strong>Cargo Fijo:</strong> ${{ "%.0f"|format(config.cargo_fijo) }}</p>
+    <p><strong>Precio por m3:</strong> ${{ "%.0f"|format(config.precio_m3) }}</p>
+    <p><small>Ultima actualizacion: {{ config.updated_at }}</small></p>
+</div>
+{% else %}
+<div class="alert alert-warning" style="margin-top: 20px;">
+    No hay configuracion de tarifas. Configure las tarifas antes de crear boletas.
+</div>
+{% endif %}
+
+<div class="info-box" style="margin-top: 20px; padding: 15px; background: #e8f4f8; border-radius: 5px;">
+    <h3>Datos de Pago (Fijos)</h3>
+    <p>Los siguientes datos apareceran en todas las boletas:</p>
+    <ul>
+        <li><strong>Banco:</strong> Banco Estado</li>
+        <li><strong>N de cuenta:</strong> 82970400962</li>
+        <li><strong>RUT:</strong> 65096733-k</li>
+        <li><strong>Tipo de Cuenta:</strong> Cuenta Vista o Chequera electronica</li>
+        <li><strong>Nombre:</strong> Comite de Trabajo Pasaje Bauche</li>
+        <li><strong>Email:</strong> comite.bauche@gmail.com</li>
+    </ul>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "portal/base_portal.html" %}
+
+{% block content %}
+<h2>Buscar mis Boletas</h2>
+<p>Ingrese su RUT para consultar sus boletas pendientes:</p>
+
+<form method="POST" action="{{ url_for('portal.buscar_rut') }}" style="max-width: 400px;">
+    <div style="margin-bottom: 15px;">
+        <label for="rut" style="display: block; margin-bottom: 5px; font-weight: bold;">RUT:</label>
+        <input type="text" name="rut" id="rut" placeholder="12345678-9" required
+               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;">
+        <small style="color: #666;">Ejemplo: 12345678-9 o 12.345.678-9</small>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label for="numero_medidor" style="display: block; margin-bottom: 5px; font-weight: bold;">Número de Medidor (opcional):</label>
+        <input type="text" name="numero_medidor" id="numero_medidor" placeholder="Opcional"
+               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box;">
+        <small style="color: #666;">Para mayor seguridad, puede ingresar su número de medidor</small>
+    </div>
+
+    <button type="submit" class="btn-primary" style="width: 100%;">Buscar</button>
+</form>
+
+<div style="margin-top: 30px; padding: 20px; background: #f0f0f0; border-radius: 5px;">
+    <h3>Instrucciones:</h3>
+    <ol>
+        <li>Ingrese su RUT (con o sin puntos y guión)</li>
+        <li>Opcionalmente, ingrese su número de medidor para verificación adicional</li>
+        <li>Verá sus boletas pendientes</li>
+        <li>Seleccione las boletas que desea pagar</li>
+        <li>Adjunte su comprobante de pago</li>
+        <li>Espere la aprobación del administrador</li>
+    </ol>
+</div>
+{% endblock %}

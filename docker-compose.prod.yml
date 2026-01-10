@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Servicio PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: lecturas-db
+    restart: always
+    environment:
+      POSTGRES_DB: lecturas
+      POSTGRES_USER: lecturas_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}  # Cambiar en producción
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=es_CL.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init_db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lecturas_user -d lecturas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lecturas-network
+
+  # Aplicación Flask
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lecturas-app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://lecturas_user:${POSTGRES_PASSWORD:-changeme}@postgres:5432/lecturas
+      - FLASK_ENV=production
+      - FLASK_APP=web/app.py
+      - SECRET_KEY=${SECRET_KEY:-change-this-secret-key}
+    volumes:
+      # Volúmenes persistentes para archivos
+      - fotos_data:/app/fotos
+      - comprobantes_data:/app/comprobantes
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lecturas-network
+
+# Volúmenes persistentes (named volumes)
+volumes:
+  postgres_data:
+    driver: local
+  fotos_data:
+    driver: local
+  comprobantes_data:
+    driver: local
+
+networks:
+  lecturas-network:
+    driver: bridge
