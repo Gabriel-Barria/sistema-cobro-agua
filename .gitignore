@@ -45,3 +45,19 @@ docker-compose.override.yml
 # OS
 .DS_Store
 Thumbs.db
+# Backups y scripts de desarrollo local
+*.backup_*
+*.tar.gz
+backup.bat
+scripts/
+test_*.py
+probar_*.py
+verificar_*.py
+crear_datos_prueba.py
+migrar_*.py
+migrate_*.py
+normalizar_*.py
+asignar_*.py
+check_*.py
+INSTRUCCIONES_BACKUP.md
+WORKFLOW.md

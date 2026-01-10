@@ -163,18 +163,45 @@ git checkout <commit-hash>
 
 ---
 
+## 💾 Gestión de Base de Datos
+
+### IMPORTANTE: Código en GitHub solo usa PostgreSQL
+
+El archivo `src/database.py` que está en GitHub **SOLO se conecta a PostgreSQL**.
+
+- **GitHub (dev y main)**: PostgreSQL únicamente
+- **Local (tu máquina)**: Puedes usar la versión con SQLite si lo necesitas
+
+**Si necesitas SQLite para desarrollo local:**
+```bash
+# Restaurar versión con soporte SQLite
+cp src/database.py.backup_sqlite src/database.py
+
+# IMPORTANTE: NO subir esta versión a Git
+# Mantener solo en tu máquina local
+```
+
+**Razón del cambio:**
+- El código en servidor/GitHub debe ser 100% PostgreSQL
+- Elimina confusión y posibles fallos por detección incorrecta
+- Garantiza que en EasyPanel siempre usa PostgreSQL
+
+---
+
 ## 📊 Estado Actual
 
 **Rama activa**: `dev` ✅
 **Ambiente DEV**: Configurado ✅
-**Ambiente PROD**: Pendiente de configurar
+**Base de datos DEV**: PostgreSQL ✅
 **Datos migrados en DEV**: 2566 registros ✅
+**Código**: PostgreSQL-only ✅
 
 ---
 
 **Próximos pasos:**
-1. Corregir errores en ambiente DEV
-2. Validar que todo funciona correctamente
-3. Configurar ambiente PROD
-4. Migrar datos a PROD
-5. Pasar código validado a rama `main`
+1. Probar que la aplicación funciona correctamente con PostgreSQL-only
+2. Verificar persistencia de datos entre redespliegues
+3. Validar que imágenes se muestran correctamente
+4. Configurar ambiente PROD cuando todo esté validado
+5. Migrar datos a PROD
+6. Pasar código validado a rama `main`
