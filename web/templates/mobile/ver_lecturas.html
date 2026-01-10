@@ -1,0 +1,103 @@
+{% extends "mobile/base.html" %}
+{% block title %}Ver Lecturas{% endblock %}
+{% block nav_title %}Ver Lecturas{% endblock %}
+
+{% block content %}
+<!-- Filtros opcionales -->
+<div class="filtros-wrapper">
+    <button class="btn-mobile btn-secondary btn-block" id="toggle-filtros">
+        Filtros
+    </button>
+
+    <form method="GET" class="filtros-form" id="filtros-form" style="display: none;">
+        <div class="form-row">
+            <select name="año" class="input-mobile">
+                <option value="">Todos los años</option>
+                {% for a in años %}
+                <option value="{{ a }}" {% if a == año_sel %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="mes" class="input-mobile">
+                <option value="">Todos los meses</option>
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m == mes_sel %}selected{% endif %}>{{ m|mes_nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-mobile btn-primary">Aplicar Filtros</button>
+            <a href="{{ url_for('mobile.ver_lecturas') }}" class="btn-mobile btn-secondary">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Contador de lecturas -->
+<div class="info-banner">
+    <p>{{ lecturas|length }} lecturas encontradas</p>
+</div>
+
+<!-- Lista de lecturas -->
+<div class="lecturas-grid">
+    {% if lecturas %}
+        {% for lectura in lecturas %}
+            <div class="lectura-card" data-lectura-id="{{ lectura.id }}">
+                <div class="card-header">
+                    <h3 class="cliente-nombre">{{ lectura.cliente_nombre }}</h3>
+                    <span class="badge-periodo">{{ lectura.mes|mes_nombre }} {{ lectura.año }}</span>
+                </div>
+                <div class="card-body">
+                    <p><strong>Medidor:</strong> {{ lectura.numero_medidor or 'S/N' }}</p>
+                    <p><strong>Lectura:</strong> {{ lectura.lectura_m3 }} m³</p>
+                    <p><strong>Fecha:</strong> {{ lectura.fecha_lectura|fecha_formato }}</p>
+                    {% if lectura.foto_nombre and lectura.foto_nombre != 'sin_foto' %}
+                    <p><strong>Foto:</strong> <a href="{{ url_for('servir_foto', filename=lectura.foto_path) }}" target="_blank">Ver</a></p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <button class="btn-mobile btn-secondary" onclick="abrirEdicion({{ lectura.id }})">
+                        Editar
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p>No hay lecturas registradas</p>
+            {% if año_sel or mes_sel %}
+            <p class="text-muted">Intenta limpiar los filtros o seleccionar otro período</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de edición -->
+<div id="modal-editar" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Editar Lectura</h2>
+            <button class="modal-close" onclick="cerrarModal('modal-editar')">&times;</button>
+        </div>
+        <div id="form-editar-container">
+            <!-- Cargado dinámicamente -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle filtros
+document.getElementById('toggle-filtros').addEventListener('click', function() {
+    const form = document.getElementById('filtros-form');
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+        this.textContent = 'Ocultar Filtros';
+    } else {
+        form.style.display = 'none';
+        this.textContent = 'Filtros';
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+
+{% block title %}Nueva Lectura Multiple - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Nueva Lectura Multiple</h1>
+    <a href="{{ url_for('lecturas.listar') }}" class="btn btn-secondary">Cancelar</a>
+</div>
+
+<form method="POST" class="form" id="form-multiple">
+    <div class="form-group">
+        <label for="medidor_id">Medidor *</label>
+        <select name="medidor_id" id="medidor_id" required>
+            <option value="">Seleccione un medidor</option>
+            {% for m in medidores %}
+            <option value="{{ m.id }}">{{ m.cliente_nombre }} - Medidor #{{ m.id }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="lectura_m3">Lectura (m3) *</label>
+        <input type="number" name="lectura_m3" id="lectura_m3" min="0" required>
+        <small>Este valor se aplicara a todas las lecturas creadas.</small>
+    </div>
+
+    <fieldset class="form-fieldset">
+        <legend>Rango de Periodos</legend>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="año_desde">Desde - Año</label>
+                <select id="año_desde" required>
+                    {% for a in años %}
+                    <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mes_desde">Desde - Mes</label>
+                <select id="mes_desde" required>
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}">{{ m|mes_nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="año_hasta">Hasta - Año</label>
+                <select id="año_hasta" required>
+                    {% for a in años %}
+                    <option value="{{ a }}">{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="mes_hasta">Hasta - Mes</label>
+                <select id="mes_hasta" required>
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}">{{ m|mes_nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <button type="button" id="btn-calcular" class="btn btn-secondary">Calcular Periodos</button>
+    </fieldset>
+
+    <fieldset class="form-fieldset" id="fieldset-fechas" style="display: none;">
+        <legend>Fechas de Lectura</legend>
+
+        <div id="fechas-status" class="info-box"></div>
+
+        <div id="fechas-manuales" style="display: none;">
+            <p class="warning-text">No se encontraron todas las fechas. Ingrese el dia para cada periodo faltante:</p>
+            <div id="inputs-dias"></div>
+        </div>
+
+        <div id="tabla-periodos-container">
+            <table class="data-table" id="tabla-periodos">
+                <thead>
+                    <tr>
+                        <th>Periodo</th>
+                        <th>Fecha de Lectura</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <input type="hidden" name="periodos_data" id="periodos_data">
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="btn-submit" disabled>Crear Lecturas</button>
+    </div>
+</form>
+
+<style>
+.form-fieldset {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+}
+.form-fieldset legend {
+    font-weight: bold;
+    padding: 0 10px;
+}
+.info-box {
+    padding: 10px;
+    background: #e7f3ff;
+    border: 1px solid #b3d7ff;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+.warning-text {
+    color: #856404;
+    background: #fff3cd;
+    padding: 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+.dia-input {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.dia-input label {
+    min-width: 150px;
+}
+.dia-input input {
+    width: 80px;
+}
+#tabla-periodos {
+    margin-top: 15px;
+}
+</style>
+
+<script>
+const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+               'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+let periodosCalculados = [];
+let fechasData = [];
+
+document.getElementById('btn-calcular').addEventListener('click', calcularPeriodos);
+
+function calcularPeriodos() {
+    const anioDesde = parseInt(document.getElementById('año_desde').value);
+    const mesDesde = parseInt(document.getElementById('mes_desde').value);
+    const anioHasta = parseInt(document.getElementById('año_hasta').value);
+    const mesHasta = parseInt(document.getElementById('mes_hasta').value);
+
+    // Validar rango
+    if (anioDesde > anioHasta || (anioDesde === anioHasta && mesDesde > mesHasta)) {
+        alert('El periodo "Desde" debe ser anterior o igual al periodo "Hasta"');
+        return;
+    }
+
+    // Generar lista de periodos
+    periodosCalculados = [];
+    let anio = anioDesde;
+    let mes = mesDesde;
+
+    while (anio < anioHasta || (anio === anioHasta && mes <= mesHasta)) {
+        periodosCalculados.push({ anio, mes });
+        mes++;
+        if (mes > 12) {
+            mes = 1;
+            anio++;
+        }
+    }
+
+    if (periodosCalculados.length === 0) {
+        alert('No hay periodos en el rango seleccionado');
+        return;
+    }
+
+    // Mostrar seccion de fechas
+    document.getElementById('fieldset-fechas').style.display = 'block';
+    document.getElementById('fechas-status').innerHTML = `Calculando fechas para ${periodosCalculados.length} periodos...`;
+
+    // Consultar API para obtener fechas comunes
+    fetch('{{ url_for("lecturas.api_fechas_comunes") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ periodos: periodosCalculados })
+    })
+    .then(response => response.json())
+    .then(data => {
+        fechasData = data.fechas;
+        mostrarResultadoFechas(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('fechas-status').innerHTML = 'Error al consultar fechas. Por favor ingrese las fechas manualmente.';
+        mostrarInputsManuales(periodosCalculados.map(p => ({...p, dia: null, mes_lectura: p.mes === 12 ? 1 : p.mes + 1, anio_lectura: p.mes === 12 ? p.anio + 1 : p.anio})));
+    });
+}
+
+function mostrarResultadoFechas(data) {
+    const { fechas, todas_encontradas } = data;
+
+    if (todas_encontradas) {
+        document.getElementById('fechas-status').innerHTML =
+            `Se encontraron las fechas mas comunes para los ${fechas.length} periodos.`;
+        document.getElementById('fechas-manuales').style.display = 'none';
+        actualizarTabla(fechas);
+        habilitarSubmit();
+    } else {
+        const faltantes = fechas.filter(f => f.dia === null);
+        document.getElementById('fechas-status').innerHTML =
+            `Se encontraron fechas para ${fechas.length - faltantes.length} de ${fechas.length} periodos.`;
+        document.getElementById('fechas-manuales').style.display = 'block';
+        mostrarInputsManuales(faltantes);
+        actualizarTabla(fechas);
+    }
+}
+
+function mostrarInputsManuales(periodosFaltantes) {
+    const container = document.getElementById('inputs-dias');
+    container.innerHTML = '';
+
+    periodosFaltantes.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'dia-input';
+        div.innerHTML = `
+            <label>${MESES[p.mes]} ${p.anio}:</label>
+            <input type="number" min="1" max="31"
+                   data-anio="${p.anio}" data-mes="${p.mes}"
+                   data-mes-lectura="${p.mes_lectura}" data-anio-lectura="${p.anio_lectura}"
+                   class="input-dia" placeholder="Dia">
+            <span>(Lectura en ${MESES[p.mes_lectura]} ${p.anio_lectura})</span>
+        `;
+        container.appendChild(div);
+    });
+
+    // Agregar listener para verificar cuando se completan todos
+    container.querySelectorAll('.input-dia').forEach(input => {
+        input.addEventListener('input', verificarDiasCompletos);
+    });
+}
+
+function verificarDiasCompletos() {
+    const inputs = document.querySelectorAll('.input-dia');
+    let todosCompletos = true;
+
+    inputs.forEach(input => {
+        const valor = parseInt(input.value);
+        if (!valor || valor < 1 || valor > 31) {
+            todosCompletos = false;
+        }
+    });
+
+    if (todosCompletos) {
+        // Actualizar fechasData con los dias ingresados
+        inputs.forEach(input => {
+            const anio = parseInt(input.dataset.anio);
+            const mes = parseInt(input.dataset.mes);
+            const dia = parseInt(input.value);
+
+            const idx = fechasData.findIndex(f => f.anio === anio && f.mes === mes);
+            if (idx !== -1) {
+                fechasData[idx].dia = dia;
+            }
+        });
+
+        actualizarTabla(fechasData);
+        habilitarSubmit();
+    } else {
+        document.getElementById('btn-submit').disabled = true;
+    }
+}
+
+function actualizarTabla(fechas) {
+    const tbody = document.querySelector('#tabla-periodos tbody');
+    tbody.innerHTML = '';
+
+    fechas.forEach(f => {
+        const tr = document.createElement('tr');
+        let fechaStr = '-';
+
+        if (f.dia) {
+            fechaStr = `${f.dia.toString().padStart(2, '0')}-${f.mes_lectura.toString().padStart(2, '0')}-${f.anio_lectura}`;
+        }
+
+        tr.innerHTML = `
+            <td>${MESES[f.mes]} ${f.anio}</td>
+            <td>${fechaStr}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function habilitarSubmit() {
+    // Preparar datos para envio
+    const periodosParaEnviar = fechasData.map(f => {
+        // Formato fecha: YYYY-MM-DD
+        const fechaLectura = `${f.anio_lectura}-${f.mes_lectura.toString().padStart(2, '0')}-${f.dia.toString().padStart(2, '0')}`;
+        return {
+            anio: f.anio,
+            mes: f.mes,
+            fecha_lectura: fechaLectura
+        };
+    });
+
+    document.getElementById('periodos_data').value = JSON.stringify(periodosParaEnviar);
+    document.getElementById('btn-submit').disabled = false;
+}
+
+// Validacion antes de enviar
+document.getElementById('form-multiple').addEventListener('submit', function(e) {
+    const medidor = document.getElementById('medidor_id').value;
+    const lectura = document.getElementById('lectura_m3').value;
+    const periodos = document.getElementById('periodos_data').value;
+
+    if (!medidor || !lectura || !periodos) {
+        e.preventDefault();
+        alert('Complete todos los campos requeridos');
+        return false;
+    }
+
+    const periodosData = JSON.parse(periodos);
+    if (periodosData.length === 0) {
+        e.preventDefault();
+        alert('Debe calcular los periodos primero');
+        return false;
+    }
+
+    return confirm(`Se crearan ${periodosData.length} lecturas. ¿Continuar?`);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,166 @@
+{% extends "mobile/base.html" %}
+{% block title %}Registrar Lecturas{% endblock %}
+{% block nav_title %}Registrar Lecturas{% endblock %}
+
+{% block content %}
+<!-- Selector de período sticky -->
+<div class="periodo-selector sticky">
+    <form method="GET" class="periodo-form">
+        <select name="año" id="año-select" class="input-mobile" onchange="this.form.submit()">
+            {% for a in años %}
+            <option value="{{ a }}" {% if a == año %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+
+        <select name="mes" id="mes-select" class="input-mobile" onchange="this.form.submit()">
+            {% for m in range(1, 13) %}
+            <option value="{{ m }}" {% if m == mes %}selected{% endif %}>{{ m|mes_nombre }}</option>
+            {% endfor %}
+        </select>
+
+        <button type="submit" class="btn-mobile btn-primary">Filtrar</button>
+    </form>
+</div>
+
+<!-- Banner informativo -->
+<div class="info-banner">
+    <p>{{ clientes|length }} clientes sin lectura en {{ mes|mes_nombre }} {{ año }}</p>
+</div>
+
+<!-- Lista de clientes sin lectura -->
+<div class="clientes-grid">
+    {% if clientes %}
+        {% for cliente in clientes %}
+            <div class="cliente-card" data-cliente-id="{{ cliente.cliente_id }}" data-num-medidores="{{ cliente.num_medidores }}">
+                <div class="card-header">
+                    <h3 class="cliente-nombre">{{ cliente.cliente_nombre }}</h3>
+                    <span class="badge">{{ cliente.num_medidores }} medidor{% if cliente.num_medidores > 1 %}es{% endif %}</span>
+                </div>
+                <div class="card-body">
+                    {% if cliente.num_medidores == 1 %}
+                        <p class="medidor-info">
+                            <strong>Medidor:</strong> {{ cliente.medidores[0].numero }}<br>
+                            <strong>Dirección:</strong> {{ cliente.medidores[0].direccion or 'Sin dirección' }}
+                        </p>
+                    {% else %}
+                        <p class="medidor-info">Múltiples medidores - seleccionar</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <button class="btn-mobile btn-primary btn-block"
+                            onclick="abrirRegistro({{ cliente.cliente_id }}, {{ cliente.num_medidores }}, '{{ cliente.cliente_nombre|e }}')">
+                        Registrar Lectura
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <p>Todos los clientes tienen lectura registrada para {{ mes|mes_nombre }} {{ año }}</p>
+            <p class="text-muted">Intenta seleccionar otro período</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal de selección de medidor -->
+<div id="modal-medidores" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Seleccione Medidor</h2>
+            <button class="modal-close" onclick="cerrarModal('modal-medidores')">&times;</button>
+        </div>
+        <div id="medidores-list" class="medidores-list">
+            <!-- Cargado dinámicamente -->
+        </div>
+    </div>
+</div>
+
+<!-- Modal de formulario de registro -->
+<div id="modal-registro" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-registro-titulo">Registrar Lectura</h2>
+            <button class="modal-close" onclick="cerrarModal('modal-registro')">&times;</button>
+        </div>
+        <form id="form-registro-lectura" class="form-mobile" enctype="multipart/form-data">
+            <input type="hidden" id="medidor-id" name="medidor_id">
+            <input type="hidden" id="año" name="año" value="{{ año }}">
+            <input type="hidden" id="mes" name="mes" value="{{ mes }}">
+
+            <div class="form-group">
+                <label for="lectura-m3" class="form-label">Lectura (m³) *</label>
+                <input type="number"
+                       id="lectura-m3"
+                       name="lectura_m3"
+                       class="input-mobile"
+                       required
+                       min="0"
+                       placeholder="Ej: 1234"
+                       inputmode="numeric"
+                       pattern="[0-9]*"
+                       autofocus>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Fecha de Lectura</label>
+                <p class="form-note">La fecha se registrará automáticamente al guardar</p>
+            </div>
+
+            <div class="form-group">
+                <label for="foto" class="form-label">Foto del Medidor *</label>
+                <input type="file"
+                       id="foto"
+                       name="foto"
+                       class="input-mobile input-file"
+                       accept="image/*"
+                       capture="environment"
+                       required
+                       onchange="mostrarPreview(this)">
+                <small class="form-hint">La foto debe mostrar claramente el número del medidor</small>
+
+                <!-- Preview de la foto -->
+                <div id="foto-preview-container" style="display: none;" class="foto-preview">
+                    <img id="foto-preview" src="" alt="Preview" class="foto-preview-img">
+                    <button type="button" class="btn-mobile btn-secondary btn-small" onclick="cambiarFoto()">
+                        Cambiar Foto
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn-mobile btn-secondary" onclick="cerrarModal('modal-registro')">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn-mobile btn-primary" id="btn-guardar">
+                    Guardar Lectura
+                </button>
+            </div>
+
+            <div id="form-mensaje" class="form-mensaje" style="display: none;"></div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Función para mostrar preview de foto
+function mostrarPreview(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('foto-preview').src = e.target.result;
+            document.getElementById('foto-preview-container').style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Función para cambiar foto
+function cambiarFoto() {
+    document.getElementById('foto').value = '';
+    document.getElementById('foto-preview-container').style.display = 'none';
+    document.getElementById('foto').click();
+}
+</script>
+{% endblock %}

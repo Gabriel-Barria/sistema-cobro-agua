@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Nuevo Medidor - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Nuevo Medidor</h1>
+    <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Cancelar</a>
+</div>
+
+<form method="POST" class="form">
+    <div class="form-group">
+        <label for="cliente_id">Cliente *</label>
+        <select name="cliente_id" id="cliente_id" required>
+            <option value="">Seleccione un cliente</option>
+            {% for c in clientes %}
+            <option value="{{ c.id }}">{{ c.nombre }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="numero_medidor">Numero de Medidor</label>
+        <input type="text" name="numero_medidor" id="numero_medidor" placeholder="Ej: 12345">
+    </div>
+
+    <div class="form-group">
+        <label for="direccion">Direccion</label>
+        <input type="text" name="direccion" id="direccion" placeholder="Direccion del medidor">
+    </div>
+
+    <div class="form-group">
+        <label for="fecha_inicio">Fecha de Inicio</label>
+        <input type="date" name="fecha_inicio" id="fecha_inicio">
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Crear Medidor</button>
+    </div>
+</form>
+{% endblock %}

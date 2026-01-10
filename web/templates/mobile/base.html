@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lecturas Móvil{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile.css') }}">
+</head>
+<body>
+    <!-- Navegación móvil -->
+    <nav class="mobile-nav">
+        <div class="nav-header">
+            <button class="hamburger" id="hamburger-btn" aria-label="Menú">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1 class="nav-title">{% block nav_title %}Lecturas{% endblock %}</h1>
+        </div>
+
+        <!-- Menú lateral deslizable -->
+        <div class="nav-menu" id="nav-menu">
+            <div class="nav-overlay" id="nav-overlay"></div>
+            <div class="nav-sidebar">
+                <div class="nav-close">
+                    <button id="close-menu" aria-label="Cerrar menú">&times;</button>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('mobile.registro_lecturas') }}">Registrar Lecturas</a></li>
+                    <li><a href="{{ url_for('mobile.ver_lecturas') }}">Ver Lecturas</a></li>
+                    <li class="nav-divider"></li>
+                    <li><a href="{{ url_for('index') }}">Volver a Desktop</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido principal -->
+    <main class="mobile-container">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/mobile.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
