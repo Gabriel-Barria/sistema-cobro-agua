@@ -21,8 +21,8 @@ COPY . .
 # Hacer el script de inicio ejecutable
 RUN chmod +x /app/start.sh
 
-# Crear directorio para la base de datos y fotos
-RUN mkdir -p /app/data /app/fotos
+# Crear directorio para la base de datos (fotos y comprobantes ya vienen con COPY)
+RUN mkdir -p /app/data
 
 # Variables de entorno
 ENV FLASK_APP=web/app.py
