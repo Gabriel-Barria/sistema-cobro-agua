@@ -30,4 +30,5 @@ ENV PYTHONUNBUFFERED=1
 EXPOSE 5000
 
 # Comando para ejecutar la aplicacion
-CMD ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=5000"]
+# Comando para ejecutar la aplicacion con Gunicorn (servidor WSGI de producción)
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "web.app:app"]
