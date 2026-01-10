@@ -14,6 +14,7 @@
         <ul class="nav-links">
             <li><a href="{{ url_for('index') }}">Inicio</a></li>
             <li><a href="{{ url_for('lecturas.listar') }}">Lecturas</a></li>
+            <li><a href="{{ url_for('boletas.listar') }}">Boletas</a></li>
             <li><a href="{{ url_for('clientes.listar') }}">Clientes</a></li>
             <li><a href="{{ url_for('medidores.listar') }}">Medidores</a></li>
         </ul>
@@ -37,47 +38,79 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Función para ordenar tabla
+        function sortTable(th, updateUrl = true) {
+            const table = th.closest('table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const colIndex = Array.from(th.parentNode.children).indexOf(th);
+            const isAsc = th.classList.contains('asc');
+            const newOrder = isAsc ? 'desc' : 'asc';
+
+            // Limpiar clases de ordenamiento
+            th.parentNode.querySelectorAll('th').forEach(h => {
+                h.classList.remove('asc', 'desc');
+            });
+
+            // Ordenar filas
+            rows.sort(function(a, b) {
+                const aCell = a.children[colIndex];
+                const bCell = b.children[colIndex];
+
+                // Usar data-sort si existe, sino usar el texto
+                const aVal = aCell.dataset.sort || aCell.textContent.trim();
+                const bVal = bCell.dataset.sort || bCell.textContent.trim();
+
+                // Intentar ordenar como número
+                const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
+                const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
+
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAsc ? bNum - aNum : aNum - bNum;
+                }
+
+                // Ordenar como texto
+                return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+            });
+
+            // Aplicar nueva clase
+            th.classList.add(newOrder);
+
+            // Reinsertar filas ordenadas
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Actualizar URL con parámetros de ordenamiento
+            if (updateUrl) {
+                const url = new URL(window.location);
+                url.searchParams.set('sort_by', colIndex);
+                url.searchParams.set('sort_order', newOrder);
+                window.history.replaceState({}, '', url);
+            }
+        }
+
+        // Agregar event listeners a columnas sortable
         document.querySelectorAll('th.sortable').forEach(function(th) {
             th.addEventListener('click', function() {
-                const table = th.closest('table');
-                const tbody = table.querySelector('tbody');
-                const rows = Array.from(tbody.querySelectorAll('tr'));
-                const colIndex = Array.from(th.parentNode.children).indexOf(th);
-                const isAsc = th.classList.contains('asc');
-
-                // Limpiar clases de ordenamiento
-                th.parentNode.querySelectorAll('th').forEach(h => {
-                    h.classList.remove('asc', 'desc');
-                });
-
-                // Ordenar filas
-                rows.sort(function(a, b) {
-                    const aCell = a.children[colIndex];
-                    const bCell = b.children[colIndex];
-
-                    // Usar data-sort si existe, sino usar el texto
-                    const aVal = aCell.dataset.sort || aCell.textContent.trim();
-                    const bVal = bCell.dataset.sort || bCell.textContent.trim();
-
-                    // Intentar ordenar como número
-                    const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
-                    const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
-
-                    if (!isNaN(aNum) && !isNaN(bNum)) {
-                        return isAsc ? bNum - aNum : aNum - bNum;
-                    }
-
-                    // Ordenar como texto
-                    return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
-                });
-
-                // Aplicar nueva clase
-                th.classList.add(isAsc ? 'desc' : 'asc');
-
-                // Reinsertar filas ordenadas
-                rows.forEach(row => tbody.appendChild(row));
+                sortTable(th, true);
             });
         });
+
+        // Aplicar ordenamiento inicial desde URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sortBy = urlParams.get('sort_by');
+        const sortOrder = urlParams.get('sort_order');
+
+        if (sortBy !== null && sortOrder !== null) {
+            const headers = document.querySelectorAll('th.sortable');
+            const targetHeader = headers[parseInt(sortBy)];
+
+            if (targetHeader) {
+                // Aplicar clase opuesta para que sortTable la invierta correctamente
+                const oppositeOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+                targetHeader.classList.add(oppositeOrder);
+                sortTable(targetHeader, false);
+            }
+        }
     });
     </script>
 </body>

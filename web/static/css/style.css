@@ -62,7 +62,8 @@ body {
     color: #2c3e50;
 }
 
-.header-actions {
+.header-actions,
+.header-buttons {
     display: flex;
     gap: 0.5rem;
 }

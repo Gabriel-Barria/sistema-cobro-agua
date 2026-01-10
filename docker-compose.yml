@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # PRODUCCIÓN - Datos reales (NO TOCAR)
   web:
     build: .
     container_name: lecturas-app
@@ -9,7 +10,26 @@ services:
     volumes:
       - ./db:/app/db
       - ./fotos:/app/fotos
+      - ./comprobantes:/app/comprobantes
     environment:
       - FLASK_ENV=production
       - FLASK_APP=web/app.py
+      - DB_NAME=lecturas.db
+    restart: unless-stopped
+
+  # DESARROLLO - Datos de prueba (para hacer cambios)
+  dev:
+    build: .
+    container_name: lecturas-app-dev
+    ports:
+      - "5001:5000"
+    volumes:
+      - ./db_dev:/app/db
+      - ./fotos_dev:/app/fotos
+      - ./comprobantes_dev:/app/comprobantes
+    environment:
+      - FLASK_ENV=development
+      - FLASK_APP=web/app.py
+      - DB_NAME=lecturas_dev.db
+      - FLASK_DEBUG=1
     restart: unless-stopped

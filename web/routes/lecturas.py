@@ -2,15 +2,17 @@
 Rutas para gestión de lecturas
 """
 import os
+import json
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 
 from src.models import (
     listar_lecturas, obtener_lectura, crear_lectura, actualizar_lectura,
     eliminar_lectura, contar_lecturas, obtener_años_disponibles,
     listar_clientes, listar_medidores, obtener_o_crear_medidor,
-    obtener_clientes_incompletos
+    obtener_clientes_incompletos, obtener_fechas_comunes_por_periodo,
+    crear_lecturas_multiple
 )
 from src.database import BASE_DIR
 
@@ -31,6 +33,7 @@ def listar():
     año = request.args.get('año', type=int)
     mes = request.args.get('mes', type=int)
     cliente_id = request.args.get('cliente_id', type=int)
+    medidor_id = request.args.get('medidor_id', type=int)
     page = request.args.get('page', 1, type=int)
     per_page = 20
 
@@ -44,26 +47,29 @@ def listar():
     # Obtener lecturas
     offset = (page - 1) * per_page
     lecturas = listar_lecturas(
-        año=año, mes=mes, cliente_id=cliente_id,
+        año=año, mes=mes, cliente_id=cliente_id, medidor_id=medidor_id,
         limit=per_page, offset=offset,
         orden_col=orden_col, orden_dir=orden_dir,
         solo_incompletos=incompletos
     )
-    total = contar_lecturas(año=año, mes=mes, cliente_id=cliente_id, solo_incompletos=incompletos)
+    total = contar_lecturas(año=año, mes=mes, cliente_id=cliente_id, medidor_id=medidor_id, solo_incompletos=incompletos)
 
     # Datos para filtros
     años = obtener_años_disponibles()
     clientes = listar_clientes()
+    medidores = listar_medidores(cliente_id) if cliente_id else listar_medidores()
     clientes_incompletos = obtener_clientes_incompletos() if incompletos else []
 
     return render_template('lecturas/lista.html',
                            lecturas=lecturas,
                            años=años,
                            clientes=clientes,
+                           medidores=medidores,
                            clientes_incompletos=clientes_incompletos,
                            año_sel=año,
                            mes_sel=mes,
                            cliente_sel=cliente_id,
+                           medidor_sel=medidor_id,
                            page=page,
                            total=total,
                            per_page=per_page,
@@ -193,3 +199,114 @@ def eliminar(lectura_id):
     eliminar_lectura(lectura_id)
     flash('Lectura eliminada', 'success')
     return redirect(url_for('lecturas.listar'))
+
+
+@lecturas_bp.route('/multiple', methods=['GET', 'POST'])
+def crear_multiple():
+    """Formulario para crear múltiples lecturas a la vez."""
+    if request.method == 'POST':
+        medidor_id = request.form.get('medidor_id', type=int)
+        lectura_m3 = request.form.get('lectura_m3', type=int)
+        periodos_json = request.form.get('periodos_data')
+
+        # Validar campos básicos
+        if not medidor_id or lectura_m3 is None:
+            flash('Medidor y lectura son requeridos', 'error')
+            return redirect(url_for('lecturas.crear_multiple'))
+
+        if not periodos_json:
+            flash('Debe seleccionar al menos un periodo', 'error')
+            return redirect(url_for('lecturas.crear_multiple'))
+
+        try:
+            periodos_data = json.loads(periodos_json)
+        except json.JSONDecodeError:
+            flash('Error en los datos de periodos', 'error')
+            return redirect(url_for('lecturas.crear_multiple'))
+
+        if not periodos_data:
+            flash('Debe seleccionar al menos un periodo', 'error')
+            return redirect(url_for('lecturas.crear_multiple'))
+
+        # Convertir 'anio' a 'año' para compatibilidad con el modelo
+        for p in periodos_data:
+            if 'anio' in p and 'año' not in p:
+                p['año'] = p['anio']
+
+        # Crear las lecturas
+        resultado = crear_lecturas_multiple(medidor_id, lectura_m3, periodos_data)
+
+        creados = len(resultado['creados'])
+        omitidos = resultado['omitidos']
+
+        if creados > 0 and omitidos > 0:
+            flash(f'Se crearon {creados} lecturas. Se omitieron {omitidos} porque ya existian.', 'success')
+        elif creados > 0:
+            flash(f'Se crearon {creados} lecturas exitosamente', 'success')
+        else:
+            flash(f'No se crearon lecturas. {omitidos} periodos ya tenian lecturas registradas.', 'warning')
+
+        return redirect(url_for('lecturas.listar'))
+
+    # GET: mostrar formulario
+    medidores = listar_medidores()
+    años = list(range(2020, datetime.now().year + 2))
+
+    return render_template('lecturas/crear_multiple.html', medidores=medidores, años=años)
+
+
+@lecturas_bp.route('/api/medidores')
+def api_medidores():
+    """API para obtener medidores, opcionalmente filtrado por cliente."""
+    cliente_id = request.args.get('cliente_id', type=int)
+    medidores = listar_medidores(cliente_id) if cliente_id else listar_medidores()
+
+    return jsonify([{
+        'id': m['id'],
+        'cliente_id': m['cliente_id'],
+        'cliente_nombre': m['cliente_nombre'],
+        'numero_medidor': m['numero_medidor'],
+        'direccion': m['direccion']
+    } for m in medidores])
+
+
+@lecturas_bp.route('/api/fechas-comunes', methods=['POST'])
+def api_fechas_comunes():
+    """API para obtener las fechas más comunes por periodo."""
+    data = request.get_json(force=True)
+
+    if not data or 'periodos' not in data:
+        return jsonify({'error': 'Periodos requeridos'}), 400
+
+    # Aceptar tanto 'año' como 'anio' para compatibilidad
+    periodos = [(p.get('año') or p.get('anio'), p['mes']) for p in data['periodos']]
+    fechas = obtener_fechas_comunes_por_periodo(periodos)
+
+    # Convertir keys de tuplas a strings para JSON
+    resultado = []
+    todas_encontradas = True
+
+    for (anio, mes), dia in fechas.items():
+        if dia is None:
+            todas_encontradas = False
+
+        # Calcular mes/año de lectura (mes siguiente)
+        if mes == 12:
+            mes_lectura = 1
+            anio_lectura = anio + 1
+        else:
+            mes_lectura = mes + 1
+            anio_lectura = anio
+
+        resultado.append({
+            'anio': anio,
+            'mes': mes,
+            'dia': dia,
+            'mes_lectura': mes_lectura,
+            'anio_lectura': anio_lectura
+        })
+
+    return jsonify({
+        'fechas': resultado,
+        'todas_encontradas': todas_encontradas
+    })

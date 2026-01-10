@@ -8,11 +8,13 @@
     <a href="{{ url_for('clientes.detalle', cliente_id=cliente.id) }}" class="btn btn-secondary">Cancelar</a>
 </div>
 
-<div class="edit-context">
-    <p><strong>Nombre:</strong> {{ cliente.nombre }}</p>
-</div>
-
 <form method="POST" class="form">
+    <div class="form-group">
+        <label for="nombre">Nombre *</label>
+        <input type="text" name="nombre" id="nombre" value="{{ cliente.nombre }}" required>
+        <small>Nombre corto/identificador del cliente (se guarda en minusculas)</small>
+    </div>
+
     <div class="form-group">
         <label for="nombre_completo">Nombre Completo</label>
         <input type="text" name="nombre_completo" id="nombre_completo" value="{{ cliente.nombre_completo or '' }}" placeholder="Nombre legal completo">

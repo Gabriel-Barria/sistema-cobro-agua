@@ -20,8 +20,37 @@
         <dd>{{ medidor.direccion or 'No registrada' }}</dd>
 
         <dt>Estado</dt>
-        <dd>{% if medidor.activo %}Activo{% else %}Inactivo{% endif %}</dd>
+        <dd>
+            {% if medidor.activo %}
+            <span class="badge badge-success">Activo</span>
+            {% else %}
+            <span class="badge badge-secondary">Inactivo</span>
+            {% endif %}
+        </dd>
+
+        {% if medidor.fecha_inicio %}
+        <dt>Fecha de Inicio</dt>
+        <dd>{{ medidor.fecha_inicio|fecha_formato }}</dd>
+        {% endif %}
+
+        {% if medidor.fecha_baja %}
+        <dt>Fecha de Baja</dt>
+        <dd>{{ medidor.fecha_baja|fecha_formato }}</dd>
+        {% endif %}
+
+        {% if medidor.motivo_baja %}
+        <dt>Motivo de Baja</dt>
+        <dd>{{ medidor.motivo_baja }}</dd>
+        {% endif %}
     </dl>
+
+    <div class="form-actions" style="margin-top: 20px;">
+        {% if medidor.activo %}
+        <button type="button" class="btn btn-warning" onclick="mostrarModalDesactivar()">Desactivar Medidor</button>
+        {% else %}
+        <button type="button" class="btn btn-success" onclick="mostrarModalReactivar()">Reactivar Medidor</button>
+        {% endif %}
+    </div>
 </div>
 
 <h2>Historial de Lecturas</h2>
@@ -52,4 +81,61 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Modal Desactivar -->
+<div id="modalDesactivar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Desactivar Medidor</h3>
+        <form method="POST" action="{{ url_for('medidores.desactivar', medidor_id=medidor.id) }}">
+            <div class="form-group">
+                <label for="fecha_baja">Fecha de Baja *</label>
+                <input type="date" id="fecha_baja" name="fecha_baja" required>
+            </div>
+            <div class="form-group">
+                <label for="motivo_baja">Motivo de Baja</label>
+                <textarea id="motivo_baja" name="motivo_baja" rows="3" placeholder="Ingrese el motivo de la desactivacion"></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-warning">Confirmar Desactivacion</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalDesactivar()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Reactivar -->
+<div id="modalReactivar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Reactivar Medidor</h3>
+        <form method="POST" action="{{ url_for('medidores.reactivar', medidor_id=medidor.id) }}">
+            <div class="form-group">
+                <label for="fecha_inicio_reactivar">Fecha de Inicio (opcional)</label>
+                <input type="date" id="fecha_inicio_reactivar" name="fecha_inicio">
+                <small>Si no especifica una fecha, se mantendra la fecha de inicio original</small>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success">Confirmar Reactivacion</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalReactivar()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function mostrarModalDesactivar() {
+    document.getElementById('modalDesactivar').style.display = 'flex';
+}
+
+function cerrarModalDesactivar() {
+    document.getElementById('modalDesactivar').style.display = 'none';
+}
+
+function mostrarModalReactivar() {
+    document.getElementById('modalReactivar').style.display = 'flex';
+}
+
+function cerrarModalReactivar() {
+    document.getElementById('modalReactivar').style.display = 'none';
+}
+</script>
 {% endblock %}

@@ -2,8 +2,13 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependencias del sistema
+# Instalar dependencias del sistema para WeasyPrint
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar requirements e instalar dependencias

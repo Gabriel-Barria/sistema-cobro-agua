@@ -5,7 +5,10 @@
 {% block content %}
 <div class="page-header">
     <h1>Lecturas</h1>
-    <a href="{{ url_for('lecturas.crear') }}" class="btn btn-primary">Nueva Lectura</a>
+    <div class="header-buttons">
+        <a href="{{ url_for('lecturas.crear') }}" class="btn btn-primary">Nueva Lectura</a>
+        <a href="{{ url_for('lecturas.crear_multiple') }}" class="btn btn-secondary">Lectura Multiple</a>
+    </div>
 </div>
 
 <div class="filters">
@@ -24,12 +27,19 @@
             {% endfor %}
         </select>
 
-        <select name="cliente_id">
+        <select name="cliente_id" id="cliente_id">
             <option value="">Todos los clientes</option>
             {% for c in clientes %}
             {% if not incompletos or c.id in clientes_incompletos %}
             <option value="{{ c.id }}" {% if c.id == cliente_sel %}selected{% endif %}>{{ c.nombre }}</option>
             {% endif %}
+            {% endfor %}
+        </select>
+
+        <select name="medidor_id" id="medidor_id">
+            <option value="">Todos los medidores</option>
+            {% for m in medidores %}
+            <option value="{{ m.id }}" {% if m.id == medidor_sel %}selected{% endif %}>{{ m.cliente_nombre }} - #{{ m.id }}</option>
             {% endfor %}
         </select>
 
@@ -49,19 +59,19 @@
     <thead>
         <tr>
             <th class="sortable {% if orden_col == 'id' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, incompletos=1 if incompletos else None, orden='id', dir='desc' if orden_col == 'id' and orden_dir == 'asc' else 'asc') }}">ID</a>
+                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='id', dir='desc' if orden_col == 'id' and orden_dir == 'asc' else 'asc') }}">ID</a>
             </th>
             <th class="sortable {% if orden_col == 'cliente' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, incompletos=1 if incompletos else None, orden='cliente', dir='desc' if orden_col == 'cliente' and orden_dir == 'asc' else 'asc') }}">Cliente</a>
+                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='cliente', dir='desc' if orden_col == 'cliente' and orden_dir == 'asc' else 'asc') }}">Cliente</a>
             </th>
             <th class="sortable {% if orden_col == 'periodo' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, incompletos=1 if incompletos else None, orden='periodo', dir='desc' if orden_col == 'periodo' and orden_dir == 'asc' else 'asc') }}">Periodo</a>
+                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='periodo', dir='desc' if orden_col == 'periodo' and orden_dir == 'asc' else 'asc') }}">Periodo</a>
             </th>
             <th class="sortable {% if orden_col == 'lectura_m3' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, incompletos=1 if incompletos else None, orden='lectura_m3', dir='desc' if orden_col == 'lectura_m3' and orden_dir == 'asc' else 'asc') }}">Lectura (m3)</a>
+                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='lectura_m3', dir='desc' if orden_col == 'lectura_m3' and orden_dir == 'asc' else 'asc') }}">Lectura (m3)</a>
             </th>
             <th class="sortable {% if orden_col == 'fecha_lectura' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, incompletos=1 if incompletos else None, orden='fecha_lectura', dir='desc' if orden_col == 'fecha_lectura' and orden_dir == 'asc' else 'asc') }}">Fecha Lectura</a>
+                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='fecha_lectura', dir='desc' if orden_col == 'fecha_lectura' and orden_dir == 'asc' else 'asc') }}">Fecha Lectura</a>
             </th>
             <th>Acciones</th>
         </tr>
@@ -90,14 +100,48 @@
 {% if total > per_page %}
 <div class="pagination">
     {% if page > 1 %}
-    <a href="{{ url_for('lecturas.listar', page=page-1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="btn">&laquo; Anterior</a>
+    <a href="{{ url_for('lecturas.listar', page=page-1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="btn">&laquo; Anterior</a>
     {% endif %}
 
     <span>Pagina {{ page }} de {{ (total // per_page) + 1 }}</span>
 
     {% if page * per_page < total %}
-    <a href="{{ url_for('lecturas.listar', page=page+1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="btn">Siguiente &raquo;</a>
+    <a href="{{ url_for('lecturas.listar', page=page+1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="btn">Siguiente &raquo;</a>
     {% endif %}
 </div>
 {% endif %}
+
+<script>
+document.getElementById('cliente_id').addEventListener('change', function() {
+    const clienteId = this.value;
+    const medidorSelect = document.getElementById('medidor_id');
+
+    // Limpiar seleccion de medidor
+    medidorSelect.value = '';
+
+    // Obtener medidores filtrados
+    let url = '{{ url_for("lecturas.api_medidores") }}';
+    if (clienteId) {
+        url += '?cliente_id=' + clienteId;
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(medidores => {
+            // Limpiar opciones existentes
+            medidorSelect.innerHTML = '<option value="">Todos los medidores</option>';
+
+            // Agregar nuevas opciones
+            medidores.forEach(m => {
+                const option = document.createElement('option');
+                option.value = m.id;
+                option.textContent = m.cliente_nombre + ' - #' + m.id;
+                medidorSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error al cargar medidores:', error);
+        });
+});
+</script>
 {% endblock %}
