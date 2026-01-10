@@ -27,6 +27,8 @@ comprobantes_dev/
 .env
 .env.local
 .env.production
+.env.dev
+.env.test
 
 # Docker
 docker-compose.override.yml
