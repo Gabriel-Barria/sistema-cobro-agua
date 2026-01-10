@@ -25,6 +25,11 @@ def index():
     stats = obtener_estadisticas()
     return render_template('index.html', stats=stats)
 
+@app.route('/health')
+def health():
+    """Health check endpoint para EasyPanel/Docker."""
+    return {'status': 'ok', 'service': 'sistema-cobro-agua'}, 200
+
 
 @app.route('/foto/<path:filename>')
 def servir_foto(filename):
