@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar el codigo de la aplicacion
 COPY . .
 
+# Hacer el script de inicio ejecutable
+RUN chmod +x /app/start.sh
+
 # Crear directorio para la base de datos y fotos
 RUN mkdir -p /app/data /app/fotos
 
@@ -29,6 +32,5 @@ ENV PYTHONUNBUFFERED=1
 # Exponer puerto
 EXPOSE 5000
 
-# Comando para ejecutar la aplicacion
-# Comando para ejecutar la aplicacion con Gunicorn (servidor WSGI de producción)
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "web.app:app"]
+# Usar script de inicio que garantiza uso de Gunicorn
+CMD ["/app/start.sh"]
