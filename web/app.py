@@ -33,8 +33,9 @@ def health():
 
 @app.route('/foto/<path:filename>')
 def servir_foto(filename):
-    """Sirve las fotos desde el directorio de la app."""
-    return send_from_directory(APP_DIR, filename)
+    """Sirve las fotos desde el directorio de fotos de la app."""
+    fotos_dir = os.path.join(APP_DIR, 'fotos')
+    return send_from_directory(fotos_dir, filename)
 
 
 @app.route('/comprobantes/<path:filename>')
