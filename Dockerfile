@@ -32,5 +32,5 @@ ENV PYTHONUNBUFFERED=1
 # Exponer puerto
 EXPOSE 5000
 
-# Usar script de inicio que garantiza uso de Gunicorn
-CMD ["/app/start.sh"]
+# ENTRYPOINT no puede ser sobrescrito facilmente (a diferencia de CMD)
+ENTRYPOINT ["/app/start.sh"]

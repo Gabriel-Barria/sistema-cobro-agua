@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Script de inicio para producción con Gunicorn
 
 echo "Iniciando aplicación con Gunicorn..."
