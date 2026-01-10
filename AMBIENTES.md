@@ -190,18 +190,58 @@ cp src/database.py.backup_sqlite src/database.py
 
 ## 📊 Estado Actual
 
+### Ambiente DEV
 **Rama activa**: `dev` ✅
 **Ambiente DEV**: Configurado ✅
 **Base de datos DEV**: PostgreSQL ✅
 **Datos migrados en DEV**: 2566 registros ✅
 **Código**: PostgreSQL-only ✅
 
+### Ambiente PROD
+**Base de datos PROD**: PostgreSQL ✅
+**Host**: 72.61.39.72:5444 ✅
+**Datos migrados en PROD**: ✅
+- 53 clientes
+- 58 medidores
+- 1235 lecturas
+- 1219 boletas
+- 1 configuración
+**Integridad verificada**: ✅
+
+---
+
+## 🚀 Configurar Ambiente PROD en EasyPanel
+
+Para activar el ambiente de producción:
+
+### 1. Crear nuevo servicio en EasyPanel
+- Nombre: `sistema-cobro-agua-prod`
+- Tipo: App
+- Repository: `https://github.com/Gabriel-Barria/sistema-cobro-agua.git`
+- Branch: `main` (cuando esté listo para producción)
+- Port: 5000
+
+### 2. Variables de entorno en EasyPanel PROD
+```
+POSTGRES_PASSWORD=2558742dc4315fbeb7e9
+DATABASE_URL=postgresql://postgres:2558742dc4315fbeb7e9@72.61.39.72:5444/sistema-cobro-agua?sslmode=disable
+SECRET_KEY=96843b0cf8375fdad5147cb535b8cb7fac5412c0ad11608b4ab9feb71ead8701
+FLASK_ENV=production
+FLASK_APP=web/app.py
+```
+
+### 3. Volúmenes persistentes
+Configurar volúmenes para:
+- `/app/fotos` - Fotos de lecturas
+- `/app/comprobantes` - Comprobantes de pago
+
 ---
 
 **Próximos pasos:**
-1. Probar que la aplicación funciona correctamente con PostgreSQL-only
-2. Verificar persistencia de datos entre redespliegues
-3. Validar que imágenes se muestran correctamente
-4. Configurar ambiente PROD cuando todo esté validado
-5. Migrar datos a PROD
-6. Pasar código validado a rama `main`
+1. ✅ ~~Migrar datos a PROD~~ - COMPLETADO
+2. Probar aplicación en DEV con PostgreSQL-only
+3. Verificar persistencia de datos entre redespliegues en DEV
+4. Validar que imágenes se muestran correctamente en DEV
+5. Cuando DEV esté 100% validado, hacer merge a `main`
+6. Configurar ambiente PROD en EasyPanel
+7. Subir fotos y comprobantes a PROD
