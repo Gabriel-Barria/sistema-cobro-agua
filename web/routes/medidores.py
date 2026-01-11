@@ -3,6 +3,7 @@ Rutas para gestión de medidores
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
+from web.auth import admin_required
 from src.models import (
     listar_medidores, obtener_medidor, listar_lecturas,
     crear_medidor, actualizar_medidor, eliminar_medidor,
@@ -13,6 +14,7 @@ medidores_bp = Blueprint('medidores', __name__)
 
 
 @medidores_bp.route('/')
+@admin_required
 def listar():
     """Lista todos los medidores."""
     medidores = listar_medidores()
@@ -20,6 +22,7 @@ def listar():
 
 
 @medidores_bp.route('/nuevo', methods=['GET', 'POST'])
+@admin_required
 def crear():
     """Formulario para crear nuevo medidor."""
     if request.method == 'POST':
@@ -41,6 +44,7 @@ def crear():
 
 
 @medidores_bp.route('/<int:medidor_id>')
+@admin_required
 def detalle(medidor_id):
     """Muestra detalle de un medidor con historial de lecturas."""
     medidor = obtener_medidor(medidor_id)
@@ -55,6 +59,7 @@ def detalle(medidor_id):
 
 
 @medidores_bp.route('/<int:medidor_id>/editar', methods=['GET', 'POST'])
+@admin_required
 def editar(medidor_id):
     """Edita datos de un medidor."""
     medidor = obtener_medidor(medidor_id)
@@ -81,6 +86,7 @@ def editar(medidor_id):
 
 
 @medidores_bp.route('/<int:medidor_id>/eliminar', methods=['POST'])
+@admin_required
 def eliminar(medidor_id):
     """Elimina un medidor."""
     medidor = obtener_medidor(medidor_id)
@@ -97,6 +103,7 @@ def eliminar(medidor_id):
 
 
 @medidores_bp.route('/<int:medidor_id>/desactivar', methods=['POST'])
+@admin_required
 def desactivar(medidor_id):
     """Desactiva un medidor."""
     medidor = obtener_medidor(medidor_id)
@@ -124,6 +131,7 @@ def desactivar(medidor_id):
 
 
 @medidores_bp.route('/<int:medidor_id>/reactivar', methods=['POST'])
+@admin_required
 def reactivar(medidor_id):
     """Reactiva un medidor."""
     medidor = obtener_medidor(medidor_id)

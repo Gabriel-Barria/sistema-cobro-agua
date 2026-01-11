@@ -17,7 +17,16 @@
             <li><a href="{{ url_for('boletas.listar') }}">Boletas</a></li>
             <li><a href="{{ url_for('clientes.listar') }}">Clientes</a></li>
             <li><a href="{{ url_for('medidores.listar') }}">Medidores</a></li>
+            {% if session.get('rol') == 'administrador' %}
+            <li><a href="{{ url_for('usuarios.lista') }}" class="{% if request.endpoint and 'usuarios' in request.endpoint %}active{% endif %}">Usuarios</a></li>
+            {% endif %}
         </ul>
+        {% if session.get('usuario_id') %}
+        <div class="user-section" style="display: flex; align-items: center; gap: 1rem; margin-left: auto;">
+            <span style="color: #fff;">{{ session.get('nombre_completo', 'Usuario') }}</span>
+            <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.5rem 1rem; background: #dc3545; color: white; text-decoration: none; border-radius: 4px;">Cerrar Sesión</a>
+        </div>
+        {% endif %}
     </nav>
 
     <main class="container">

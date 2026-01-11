@@ -7,6 +7,7 @@ from datetime import datetime
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 
+from web.auth import admin_required
 from src.models import (
     listar_lecturas, obtener_lectura, crear_lectura, actualizar_lectura,
     eliminar_lectura, contar_lecturas, obtener_años_disponibles,
@@ -27,6 +28,7 @@ def allowed_file(filename):
 
 
 @lecturas_bp.route('/')
+@admin_required
 def listar():
     """Lista todas las lecturas con filtros."""
     # Parámetros de filtro
@@ -79,6 +81,7 @@ def listar():
 
 
 @lecturas_bp.route('/<int:lectura_id>')
+@admin_required
 def detalle(lectura_id):
     """Muestra detalle de una lectura con su foto."""
     lectura = obtener_lectura(lectura_id)
@@ -90,6 +93,7 @@ def detalle(lectura_id):
 
 
 @lecturas_bp.route('/nueva', methods=['GET', 'POST'])
+@admin_required
 def crear():
     """Formulario para crear nueva lectura."""
     if request.method == 'POST':
@@ -156,6 +160,7 @@ def crear():
 
 
 @lecturas_bp.route('/<int:lectura_id>/editar', methods=['GET', 'POST'])
+@admin_required
 def editar(lectura_id):
     """Formulario para editar una lectura."""
     lectura = obtener_lectura(lectura_id)
@@ -183,6 +188,7 @@ def editar(lectura_id):
 
 
 @lecturas_bp.route('/<int:lectura_id>/eliminar', methods=['POST'])
+@admin_required
 def eliminar(lectura_id):
     """Elimina una lectura."""
     lectura = obtener_lectura(lectura_id)
@@ -202,6 +208,7 @@ def eliminar(lectura_id):
 
 
 @lecturas_bp.route('/multiple', methods=['GET', 'POST'])
+@admin_required
 def crear_multiple():
     """Formulario para crear múltiples lecturas a la vez."""
     if request.method == 'POST':
@@ -256,6 +263,7 @@ def crear_multiple():
 
 
 @lecturas_bp.route('/api/medidores')
+@admin_required
 def api_medidores():
     """API para obtener medidores, opcionalmente filtrado por cliente."""
     cliente_id = request.args.get('cliente_id', type=int)
@@ -271,6 +279,7 @@ def api_medidores():
 
 
 @lecturas_bp.route('/api/fechas-comunes', methods=['POST'])
+@admin_required
 def api_fechas_comunes():
     """API para obtener las fechas más comunes por periodo."""
     data = request.get_json(force=True)

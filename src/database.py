@@ -78,9 +78,40 @@ def get_connection():
 
 
 def crear_tablas():
-    """En PostgreSQL, las tablas se crean vía init_db.sql en Docker"""
-    print("✓ PostgreSQL: Las tablas se crean automáticamente vía init_db.sql")
-    return
+    """Crea las tablas necesarias en PostgreSQL (especialmente tabla usuarios)"""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Tabla de usuarios del sistema (staff)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                nombre_completo VARCHAR(100) NOT NULL,
+                rol VARCHAR(20) NOT NULL CHECK (rol IN ('administrador', 'registrador')),
+                activo SMALLINT DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Índice para búsqueda rápida por username
+        cursor.execute('''
+            CREATE INDEX IF NOT EXISTS idx_usuarios_username
+            ON usuarios(username)
+        ''')
+
+        conn.commit()
+        print("✓ PostgreSQL: Tabla 'usuarios' creada/verificada exitosamente")
+
+    except Exception as e:
+        print(f"✗ Error al crear tablas: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def inicializar_db():

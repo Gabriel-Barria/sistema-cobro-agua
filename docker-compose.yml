@@ -32,4 +32,11 @@ services:
       - FLASK_APP=web/app.py
       - DB_NAME=lecturas_dev.db
       - FLASK_DEBUG=1
+      - DATABASE_URL=postgresql://lecturas_user:test_password_123@lecturas-db:5432/lecturas
+    networks:
+      - app_lecturas-network
     restart: unless-stopped
+
+networks:
+  app_lecturas-network:
+    external: true
