@@ -29,6 +29,7 @@ YYYY-MM-DD_NNN_descripcion.sql
 | Fecha | Script | Descripcion | Commit |
 |-------|--------|-------------|--------|
 | 2026-01-11 | 001_crear_tabla_usuarios.sql | Tabla para autenticacion con roles | feat: Implementar sistema de autenticacion con roles |
+| 2026-01-11 | 002_historial_pagos.sql | Historial de intentos de pago + eliminar campos obsoletos | feat: Agregar historial de intentos de pago |
 
 ## Ejecucion en Produccion
 

@@ -11,7 +11,9 @@ from src.models import buscar_cliente_por_rut, listar_medidores, obtener_cliente
 from src.models_boletas import (
     obtener_boletas_pendientes_por_cliente,
     marcar_boletas_en_revision,
-    obtener_boleta
+    obtener_boleta,
+    obtener_ultimo_rechazo,
+    obtener_intento_en_revision
 )
 
 portal_bp = Blueprint('portal', __name__)
@@ -112,6 +114,16 @@ def mis_boletas():
     # Obtener boletas (pendientes + en revisión)
     boletas_pendientes = obtener_boletas_pendientes_por_cliente(cliente_id, estado=0)
     boletas_en_revision = obtener_boletas_pendientes_por_cliente(cliente_id, estado=1)
+
+    # Agregar info de último rechazo a cada boleta pendiente
+    for boleta in boletas_pendientes:
+        ultimo_rechazo = obtener_ultimo_rechazo(boleta['id'])
+        boleta['ultimo_rechazo'] = ultimo_rechazo
+
+    # Agregar info del intento actual a cada boleta en revisión
+    for boleta in boletas_en_revision:
+        intento_actual = obtener_intento_en_revision(boleta['id'])
+        boleta['intento_actual'] = intento_actual
 
     return render_template('portal/mis_boletas.html',
                           cliente=cliente,

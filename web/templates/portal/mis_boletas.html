@@ -26,7 +26,7 @@
             <div class="boleta-card-header">
                 <input type="checkbox" name="boletas" value="{{ boleta.id }}" class="boleta-check">
                 <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
-                {% if boleta.motivo_rechazo %}
+                {% if boleta.ultimo_rechazo %}
                     <span class="boleta-estado boleta-estado-rechazada">Rechazada</span>
                 {% else %}
                     <span class="boleta-estado boleta-estado-pendiente">Pendiente</span>
@@ -45,13 +45,11 @@
                     <span class="boleta-detail-label">Total</span>
                     <span class="boleta-detail-value boleta-total">${{ boleta.total|formato_pesos }}</span>
                 </div>
-                {% if boleta.motivo_rechazo %}
+                {% if boleta.ultimo_rechazo %}
                 <div class="boleta-rechazo">
                     <strong>Motivo de rechazo:</strong>
-                    {{ boleta.motivo_rechazo }}
-                    {% if boleta.comprobante_anterior %}
-                        <br><a href="/{{ boleta.comprobante_anterior }}" target="_blank">Ver comprobante anterior</a>
-                    {% endif %}
+                    {{ boleta.ultimo_rechazo.motivo_rechazo }}
+                    <br><a href="/{{ boleta.ultimo_rechazo.comprobante_path }}" target="_blank">Ver comprobante rechazado</a>
                 </div>
                 {% endif %}
             </div>
@@ -84,9 +82,9 @@
                 <td>{{ boleta.consumo_m3 }}</td>
                 <td class="text-right">${{ boleta.total|formato_pesos }}</td>
                 <td>
-                    {% if boleta.motivo_rechazo %}
+                    {% if boleta.ultimo_rechazo %}
                         <span style="color: var(--portal-danger);">Rechazada</span>
-                        <br><small>{{ boleta.motivo_rechazo }}</small>
+                        <br><small>{{ boleta.ultimo_rechazo.motivo_rechazo }}</small>
                     {% else %}
                         <span style="color: var(--portal-warning);">Pendiente</span>
                     {% endif %}
@@ -234,7 +232,7 @@ function validarFormulario() {
             </div>
             <div class="boleta-detail">
                 <span class="boleta-detail-label">Fecha Envio</span>
-                <span class="boleta-detail-value">{{ boleta.fecha_envio_revision }}</span>
+                <span class="boleta-detail-value">{{ boleta.intento_actual.fecha_envio if boleta.intento_actual else '-' }}</span>
             </div>
             {% if boleta.comprobante_path %}
             <div class="boleta-detail">
@@ -264,7 +262,7 @@ function validarFormulario() {
             <td>{{ boleta.numero_boleta }}</td>
             <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
             <td class="text-right">${{ boleta.total|formato_pesos }}</td>
-            <td>{{ boleta.fecha_envio_revision }}</td>
+            <td>{{ boleta.intento_actual.fecha_envio if boleta.intento_actual else '-' }}</td>
             <td>
                 {% if boleta.comprobante_path %}
                     <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver Comprobante</a>

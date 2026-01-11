@@ -65,14 +65,34 @@ CREATE TABLE IF NOT EXISTS boletas (
     fecha_pago DATE,
     metodo_pago TEXT,
     comprobante_path TEXT,
-    estado_anterior INTEGER DEFAULT NULL,
-    fecha_envio_revision DATE DEFAULT NULL,
-    fecha_aprobacion DATE DEFAULT NULL,
-    fecha_rechazo DATE DEFAULT NULL,
-    motivo_rechazo TEXT DEFAULT NULL,
-    comprobante_anterior TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (lectura_id) REFERENCES lecturas(id)
+);
+
+-- Tabla de usuarios del sistema (staff)
+CREATE TABLE IF NOT EXISTS usuarios (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    nombre_completo VARCHAR(100) NOT NULL,
+    rol VARCHAR(20) NOT NULL CHECK (rol IN ('administrador', 'registrador')),
+    activo SMALLINT DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de historial de intentos de pago
+CREATE TABLE IF NOT EXISTS historial_pagos (
+    id SERIAL PRIMARY KEY,
+    boleta_id INTEGER NOT NULL,
+    comprobante_path TEXT NOT NULL,
+    fecha_envio DATE NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'en_revision',
+    fecha_procesamiento DATE,
+    motivo_rechazo TEXT,
+    metodo_pago TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (boleta_id) REFERENCES boletas(id) ON DELETE CASCADE
 );
 
 -- Índices
@@ -85,3 +105,5 @@ CREATE INDEX IF NOT EXISTS idx_boletas_lectura ON boletas(lectura_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_medidor ON boletas(medidor_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_pagada ON boletas(pagada);
 CREATE INDEX IF NOT EXISTS idx_boletas_periodo ON boletas(periodo_año, periodo_mes);
+CREATE INDEX IF NOT EXISTS idx_usuarios_username ON usuarios(username);
+CREATE INDEX IF NOT EXISTS idx_historial_boleta ON historial_pagos(boleta_id);

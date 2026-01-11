@@ -16,7 +16,8 @@ from src.models_boletas import (
     obtener_lectura_anterior, calcular_consumo,
     obtener_lecturas_sin_boleta, obtener_años_disponibles,
     obtener_estadisticas_boletas,
-    aprobar_boletas, rechazar_boletas
+    aprobar_boletas, rechazar_boletas,
+    obtener_historial_pagos
 )
 from src.models import listar_clientes, listar_medidores, obtener_lectura
 
@@ -135,7 +136,10 @@ def detalle(boleta_id):
         flash('Boleta no encontrada', 'error')
         return redirect(url_for('boletas.listar'))
 
-    return render_template('boletas/detalle.html', boleta=boleta)
+    # Obtener historial de intentos de pago
+    historial = obtener_historial_pagos(boleta_id)
+
+    return render_template('boletas/detalle.html', boleta=boleta, historial=historial)
 
 
 # =============================================================================

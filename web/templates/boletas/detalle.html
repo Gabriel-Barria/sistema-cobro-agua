@@ -97,6 +97,54 @@
     </table>
 </div>
 
+{% if historial %}
+<div class="detail-section" style="margin-top: 20px;">
+    <h3>Historial de Intentos de Pago</h3>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Fecha Envio</th>
+                <th>Estado</th>
+                <th>Fecha Procesamiento</th>
+                <th>Detalle</th>
+                <th>Comprobante</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for intento in historial %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ intento.fecha_envio }}</td>
+                <td>
+                    {% if intento.estado == 'aprobado' %}
+                        <span class="badge badge-success">Aprobado</span>
+                    {% elif intento.estado == 'rechazado' %}
+                        <span class="badge badge-danger">Rechazado</span>
+                    {% else %}
+                        <span class="badge badge-warning">En Revision</span>
+                    {% endif %}
+                </td>
+                <td>{{ intento.fecha_procesamiento or '-' }}</td>
+                <td>
+                    {% if intento.estado == 'rechazado' %}
+                        {{ intento.motivo_rechazo }}
+                    {% elif intento.estado == 'aprobado' %}
+                        {{ intento.metodo_pago|capitalize if intento.metodo_pago else '-' }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/{{ intento.comprobante_path }}" target="_blank">Ver</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
 <div class="actions-section" style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 5px;">
     <h3>Acciones</h3>
 
@@ -171,6 +219,7 @@
     font-weight: bold;
 }
 .badge-success { background: #28a745; color: white; }
+.badge-warning { background: #ffc107; color: black; }
 .badge-danger { background: #dc3545; color: white; }
 .btn-success { background: #28a745; color: white; }
 .btn-warning { background: #ffc107; color: black; }
