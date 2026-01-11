@@ -15,6 +15,9 @@
             <li><a href="{{ url_for('index') }}">Inicio</a></li>
             <li><a href="{{ url_for('lecturas.listar') }}">Lecturas</a></li>
             <li><a href="{{ url_for('boletas.listar') }}">Boletas</a></li>
+            {% if session.get('rol') == 'administrador' %}
+            <li><a href="{{ url_for('boletas.historial_pagos') }}">Historial Pagos</a></li>
+            {% endif %}
             <li><a href="{{ url_for('clientes.listar') }}">Clientes</a></li>
             <li><a href="{{ url_for('medidores.listar') }}">Medidores</a></li>
             {% if session.get('rol') == 'administrador' %}

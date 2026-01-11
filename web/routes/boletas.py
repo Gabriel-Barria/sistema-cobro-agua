@@ -17,7 +17,7 @@ from src.models_boletas import (
     obtener_lecturas_sin_boleta, obtener_años_disponibles,
     obtener_estadisticas_boletas,
     aprobar_boletas, rechazar_boletas,
-    obtener_historial_pagos
+    obtener_historial_pagos, listar_historial_pagos
 )
 from src.models import listar_clientes, listar_medidores, obtener_lectura
 
@@ -56,6 +56,21 @@ def configuracion():
 
     config = obtener_configuracion()
     return render_template('boletas/configuracion.html', config=config)
+
+
+# =============================================================================
+# HISTORIAL DE PAGOS
+# =============================================================================
+
+@boletas_bp.route('/historial-pagos')
+@admin_required
+def historial_pagos():
+    """Lista todos los intentos de pago."""
+    estado = request.args.get('estado')
+    historial = listar_historial_pagos(estado)
+    return render_template('boletas/historial_pagos.html',
+                          historial=historial,
+                          estado_filtro=estado)
 
 
 # =============================================================================

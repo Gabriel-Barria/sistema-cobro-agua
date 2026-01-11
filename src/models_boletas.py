@@ -427,8 +427,10 @@ def marcar_boletas_en_revision(boleta_ids: List[int], comprobante_path: str) -> 
 
     conn = get_connection()
     cursor = conn.cursor()
+    fecha_envio = date.today().isoformat()
 
     try:
+        updated_count = 0
         for boleta_id in boleta_ids:
             # Actualizar estado de la boleta
             cursor.execute('''
@@ -437,15 +439,18 @@ def marcar_boletas_en_revision(boleta_ids: List[int], comprobante_path: str) -> 
                     comprobante_path = %s
                 WHERE id = %s AND pagada = 0
             ''', (comprobante_path, boleta_id))
+            updated_count += cursor.rowcount
 
-            # Registrar en historial
-            crear_intento_pago(boleta_id, comprobante_path)
+            # Registrar en historial (misma transacción)
+            cursor.execute('''
+                INSERT INTO historial_pagos (boleta_id, comprobante_path, fecha_envio, estado)
+                VALUES (%s, %s, %s, 'en_revision')
+            ''', (boleta_id, comprobante_path, fecha_envio))
 
         conn.commit()
-        affected = cursor.rowcount
         conn.close()
 
-        return affected > 0
+        return updated_count > 0
 
     except Exception as e:
         conn.rollback()
@@ -474,9 +479,16 @@ def aprobar_boletas(boleta_ids: List[int], metodo_pago: str = 'transferencia') -
     fecha_pago = date.today().isoformat()
 
     try:
+        updated_count = 0
         for boleta_id in boleta_ids:
-            # Actualizar historial
-            actualizar_intento_aprobado(boleta_id, metodo_pago)
+            # Actualizar historial (misma transacción)
+            cursor.execute('''
+                UPDATE historial_pagos
+                SET estado = 'aprobado',
+                    fecha_procesamiento = %s,
+                    metodo_pago = %s
+                WHERE boleta_id = %s AND estado = 'en_revision'
+            ''', (fecha_pago, metodo_pago, boleta_id))
 
             # Actualizar estado de la boleta
             cursor.execute('''
@@ -486,12 +498,12 @@ def aprobar_boletas(boleta_ids: List[int], metodo_pago: str = 'transferencia') -
                     metodo_pago = %s
                 WHERE id = %s AND pagada = 1
             ''', (fecha_pago, metodo_pago, boleta_id))
+            updated_count += cursor.rowcount
 
         conn.commit()
-        affected = cursor.rowcount
         conn.close()
 
-        return affected > 0
+        return updated_count > 0
 
     except Exception as e:
         conn.rollback()
@@ -516,11 +528,19 @@ def rechazar_boletas(boleta_ids: List[int], motivo: str) -> bool:
 
     conn = get_connection()
     cursor = conn.cursor()
+    fecha_procesamiento = date.today().isoformat()
 
     try:
+        updated_count = 0
         for boleta_id in boleta_ids:
-            # Actualizar historial antes de cambiar la boleta
-            actualizar_intento_rechazado(boleta_id, motivo)
+            # Actualizar historial (misma transacción)
+            cursor.execute('''
+                UPDATE historial_pagos
+                SET estado = 'rechazado',
+                    fecha_procesamiento = %s,
+                    motivo_rechazo = %s
+                WHERE boleta_id = %s AND estado = 'en_revision'
+            ''', (fecha_procesamiento, motivo, boleta_id))
 
             # Cambiar estado de la boleta
             cursor.execute('''
@@ -529,12 +549,12 @@ def rechazar_boletas(boleta_ids: List[int], motivo: str) -> bool:
                     pagada = 0
                 WHERE id = %s AND pagada = 1
             ''', (boleta_id,))
+            updated_count += cursor.rowcount
 
         conn.commit()
-        affected = cursor.rowcount
         conn.close()
 
-        return affected > 0
+        return updated_count > 0
 
     except Exception as e:
         conn.rollback()
@@ -712,3 +732,37 @@ def obtener_intento_en_revision(boleta_id: int) -> Optional[Dict]:
     intento = cursor.fetchone()
     conn.close()
     return dict(intento) if intento else None
+
+
+def listar_historial_pagos(estado: str = None) -> List[Dict]:
+    """
+    Lista todos los intentos de pago con información de la boleta.
+
+    Args:
+        estado: Filtrar por estado ('en_revision', 'aprobado', 'rechazado') o None para todos
+
+    Returns:
+        Lista de intentos con datos de boleta y cliente
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = '''
+        SELECT h.id, h.boleta_id, h.comprobante_path, h.fecha_envio, h.estado,
+               h.fecha_procesamiento, h.motivo_rechazo, h.metodo_pago, h.created_at,
+               b.numero_boleta, b.cliente_nombre, b.total, b.periodo_mes, b.periodo_año
+        FROM historial_pagos h
+        JOIN boletas b ON h.boleta_id = b.id
+    '''
+
+    if estado:
+        query += ' WHERE h.estado = %s'
+        query += ' ORDER BY h.id DESC'
+        cursor.execute(query, (estado,))
+    else:
+        query += ' ORDER BY h.id DESC'
+        cursor.execute(query)
+
+    historial = cursor.fetchall()
+    conn.close()
+    return [dict(h) for h in historial]
