@@ -3,7 +3,8 @@
 {% block nav_title %}Ver Lecturas{% endblock %}
 
 {% block content %}
-<!-- Filtros opcionales -->
+{% if es_admin %}
+<!-- Filtros opcionales (solo admin) -->
 <div class="filtros-wrapper">
     <button class="btn-mobile btn-secondary btn-block" id="toggle-filtros">
         Filtros
@@ -32,6 +33,12 @@
         </div>
     </form>
 </div>
+{% else %}
+<!-- Solo mostrar período actual -->
+<div class="periodo-info">
+    <p><strong>Período:</strong> {{ mes_sel|mes_nombre }} {{ año_sel }}</p>
+</div>
+{% endif %}
 
 <!-- Contador de lecturas -->
 <div class="info-banner">
@@ -87,8 +94,9 @@
 {% endblock %}
 
 {% block extra_js %}
+{% if es_admin %}
 <script>
-// Toggle filtros
+// Toggle filtros (solo admin)
 document.getElementById('toggle-filtros').addEventListener('click', function() {
     const form = document.getElementById('filtros-form');
     if (form.style.display === 'none') {
@@ -100,4 +108,5 @@ document.getElementById('toggle-filtros').addEventListener('click', function() {
     }
 });
 </script>
+{% endif %}
 {% endblock %}

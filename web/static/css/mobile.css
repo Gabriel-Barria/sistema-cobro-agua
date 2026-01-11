@@ -280,6 +280,27 @@ body {
     flex: 1;
 }
 
+/* Período Info (para usuarios no-admin) */
+.periodo-info {
+    background-color: var(--color-white);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.periodo-info.sticky {
+    position: sticky;
+    top: 56px;
+    z-index: 100;
+}
+
+.periodo-info p {
+    margin: 0;
+    font-size: 1rem;
+}
+
 /* ====================================
    Filtros (Ver Lecturas)
    ==================================== */

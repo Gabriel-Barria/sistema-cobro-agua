@@ -1,7 +1,7 @@
 """
 Blueprint Mobile - Interfaz mobile-first para registro de lecturas
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
@@ -32,12 +32,26 @@ def registro_lecturas():
     """
     Vista de registro de lecturas mobile.
     Muestra lista de clientes SIN lectura en el período seleccionado.
+
+    Regla de negocio: Las lecturas se realizan entre día 5-15 del mes.
+    El período corresponde SIEMPRE al mes anterior.
     """
     from src.models import obtener_clientes_sin_lectura
 
-    # Obtener parámetros de período (año, mes)
-    año = request.args.get('año', datetime.now().year, type=int)
-    mes = request.args.get('mes', datetime.now().month, type=int)
+    # Calcular período automático (mes anterior)
+    hoy = datetime.now()
+    año_auto = hoy.year if hoy.month > 1 else hoy.year - 1
+    mes_auto = hoy.month - 1 if hoy.month > 1 else 12
+
+    # Si es admin, permite override via parámetros GET
+    es_admin = session.get('rol') == 'administrador'
+    if es_admin:
+        año = request.args.get('año', año_auto, type=int)
+        mes = request.args.get('mes', mes_auto, type=int)
+    else:
+        # Registrador: siempre usa período calculado
+        año = año_auto
+        mes = mes_auto
 
     # Filtrado AUTOMÁTICO: solo clientes sin lectura en período
     clientes_pendientes = obtener_clientes_sin_lectura(año, mes)
@@ -51,7 +65,8 @@ def registro_lecturas():
                           clientes=clientes_pendientes,
                           año=año,
                           mes=mes,
-                          años=años)
+                          años=años,
+                          es_admin=es_admin)
 
 
 @mobile_bp.route('/api/medidores/<int:cliente_id>')
@@ -144,12 +159,24 @@ def crear_lectura_mobile():
 def ver_lecturas():
     """
     Vista de listado de lecturas existentes con opción de editar.
-    Filtrado opcional por año/mes.
+    Filtrado según rol: admin puede filtrar, registrador ve período actual.
     """
-    año = request.args.get('año', type=int)  # Opcional
-    mes = request.args.get('mes', type=int)  # Opcional
+    # Calcular período automático (mes anterior)
+    hoy = datetime.now()
+    año_auto = hoy.year if hoy.month > 1 else hoy.year - 1
+    mes_auto = hoy.month - 1 if hoy.month > 1 else 12
 
-    # Usar función existente con filtros opcionales
+    es_admin = session.get('rol') == 'administrador'
+    if es_admin:
+        # Admin: permite filtros, default al período calculado
+        año = request.args.get('año', año_auto, type=int)
+        mes = request.args.get('mes', mes_auto, type=int)
+    else:
+        # Registrador: siempre período fijo
+        año = año_auto
+        mes = mes_auto
+
+    # Usar función existente con filtros
     lecturas = listar_lecturas(año=año, mes=mes, limit=200, offset=0)
 
     # Obtener años disponibles para filtros
@@ -161,7 +188,8 @@ def ver_lecturas():
                           lecturas=lecturas,
                           año_sel=año,
                           mes_sel=mes,
-                          años=años)
+                          años=años,
+                          es_admin=es_admin)
 
 
 @mobile_bp.route('/api/validar-edicion/<int:lectura_id>')

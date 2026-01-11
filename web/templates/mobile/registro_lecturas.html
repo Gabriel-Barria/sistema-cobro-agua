@@ -3,7 +3,8 @@
 {% block nav_title %}Registrar Lecturas{% endblock %}
 
 {% block content %}
-<!-- Selector de período sticky -->
+{% if es_admin %}
+<!-- Selector de período sticky (solo admin) -->
 <div class="periodo-selector sticky">
     <form method="GET" class="periodo-form">
         <select name="año" id="año-select" class="input-mobile" onchange="this.form.submit()">
@@ -21,6 +22,12 @@
         <button type="submit" class="btn-mobile btn-primary">Filtrar</button>
     </form>
 </div>
+{% else %}
+<!-- Mostrar período actual sin opción de cambiar -->
+<div class="periodo-info sticky">
+    <p><strong>Período:</strong> {{ mes|mes_nombre }} {{ año }}</p>
+</div>
+{% endif %}
 
 <!-- Banner informativo -->
 <div class="info-banner">
