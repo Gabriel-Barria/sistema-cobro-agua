@@ -8,6 +8,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.utils import secure_filename
 
 from web.auth import admin_required
+from src.models_boletas import obtener_boleta_por_lectura
 from src.models import (
     listar_lecturas, obtener_lectura, crear_lectura, actualizar_lectura,
     eliminar_lectura, contar_lecturas, obtener_años_disponibles,
@@ -196,9 +197,16 @@ def eliminar(lectura_id):
         flash('Lectura no encontrada', 'error')
         return redirect(url_for('lecturas.listar'))
 
+    # Verificar si tiene boleta asociada
+    boleta = obtener_boleta_por_lectura(lectura_id)
+    if boleta:
+        flash('No se puede eliminar: esta lectura tiene una boleta asociada', 'error')
+        return redirect(url_for('lecturas.detalle', lectura_id=lectura_id))
+
     # Eliminar foto si existe
     if lectura['foto_path']:
-        foto_completa = os.path.join(FOTOS_DIR, lectura['foto_path'])
+        # foto_path ya incluye 'fotos/', usar BASE_DIR directamente
+        foto_completa = os.path.join(BASE_DIR, lectura['foto_path'])
         if os.path.exists(foto_completa):
             os.remove(foto_completa)
 
