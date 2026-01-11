@@ -11,15 +11,22 @@ from flask import Flask, render_template, send_from_directory
 
 from src.database import inicializar_db, BASE_DIR
 from src.models import obtener_estadisticas
+from web.auth import admin_required
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'lecturas-medidores-secret-key'
+
+# Configuración de sesiones seguras
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'lecturas-medidores-secret-key-dev')
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['PERMANENT_SESSION_LIFETIME'] = 3600  # 1 hora
 
 # Directorio base de la app
 APP_DIR = BASE_DIR
 
 
 @app.route('/')
+@admin_required
 def index():
     """Página principal con estadísticas."""
     stats = obtener_estadisticas()
@@ -46,6 +53,8 @@ def servir_comprobante(filename):
 
 
 # Registrar blueprints
+from web.routes.auth import auth_bp
+from web.routes.usuarios import usuarios_bp
 from web.routes.lecturas import lecturas_bp
 from web.routes.clientes import clientes_bp
 from web.routes.medidores import medidores_bp
@@ -53,6 +62,8 @@ from web.routes.boletas import boletas_bp
 from web.routes.mobile import mobile_bp
 from web.routes.portal import portal_bp
 
+app.register_blueprint(auth_bp)
+app.register_blueprint(usuarios_bp)
 app.register_blueprint(lecturas_bp, url_prefix='/lecturas')
 app.register_blueprint(clientes_bp, url_prefix='/clientes')
 app.register_blueprint(medidores_bp, url_prefix='/medidores')

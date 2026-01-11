@@ -3,6 +3,7 @@ Rutas para gestión de clientes
 """
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
+from web.auth import admin_required
 from src.models import (
     listar_clientes, obtener_cliente, actualizar_cliente,
     crear_cliente, eliminar_cliente, buscar_cliente_por_nombre
@@ -12,6 +13,7 @@ clientes_bp = Blueprint('clientes', __name__)
 
 
 @clientes_bp.route('/')
+@admin_required
 def listar():
     """Lista todos los clientes."""
     clientes = listar_clientes()
@@ -19,6 +21,7 @@ def listar():
 
 
 @clientes_bp.route('/nuevo', methods=['GET', 'POST'])
+@admin_required
 def crear():
     """Formulario para crear nuevo cliente."""
     if request.method == 'POST':
@@ -43,6 +46,7 @@ def crear():
 
 
 @clientes_bp.route('/<int:cliente_id>')
+@admin_required
 def detalle(cliente_id):
     """Muestra detalle de un cliente."""
     cliente = obtener_cliente(cliente_id)
@@ -54,6 +58,7 @@ def detalle(cliente_id):
 
 
 @clientes_bp.route('/<int:cliente_id>/editar', methods=['GET', 'POST'])
+@admin_required
 def editar(cliente_id):
     """Edita datos de un cliente."""
     cliente = obtener_cliente(cliente_id)
@@ -81,6 +86,7 @@ def editar(cliente_id):
 
 
 @clientes_bp.route('/<int:cliente_id>/eliminar', methods=['POST'])
+@admin_required
 def eliminar(cliente_id):
     """Elimina un cliente."""
     cliente = obtener_cliente(cliente_id)

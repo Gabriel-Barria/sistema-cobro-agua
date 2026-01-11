@@ -7,6 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.utils import secure_filename
 from weasyprint import HTML
 
+from web.auth import admin_required
 from src.models_boletas import (
     obtener_configuracion, guardar_configuracion,
     crear_boleta, obtener_boleta, obtener_boleta_por_lectura,
@@ -37,6 +38,7 @@ def allowed_file(filename):
 # =============================================================================
 
 @boletas_bp.route('/configuracion', methods=['GET', 'POST'])
+@admin_required
 def configuracion():
     """Configuracion de tarifas para boletas."""
     if request.method == 'POST':
@@ -60,6 +62,7 @@ def configuracion():
 # =============================================================================
 
 @boletas_bp.route('/')
+@admin_required
 def listar():
     """Lista boletas con filtros."""
     # Obtener parametros de filtro
@@ -124,6 +127,7 @@ def listar():
 # =============================================================================
 
 @boletas_bp.route('/<int:boleta_id>')
+@admin_required
 def detalle(boleta_id):
     """Muestra detalle de una boleta."""
     boleta = obtener_boleta(boleta_id)
@@ -139,6 +143,7 @@ def detalle(boleta_id):
 # =============================================================================
 
 @boletas_bp.route('/crear', methods=['GET', 'POST'])
+@admin_required
 def crear():
     """Formulario para crear una boleta desde una lectura."""
     config = obtener_configuracion()
@@ -215,6 +220,7 @@ def crear():
 # =============================================================================
 
 @boletas_bp.route('/crear-masivo', methods=['GET', 'POST'])
+@admin_required
 def crear_masivo():
     """Crear multiples boletas a la vez."""
     config = obtener_configuracion()
@@ -302,6 +308,7 @@ def crear_masivo():
 # =============================================================================
 
 @boletas_bp.route('/<int:boleta_id>/marcar-pagada', methods=['POST'])
+@admin_required
 def marcar_pagada(boleta_id):
     """Marca una boleta como pagada."""
     boleta = obtener_boleta(boleta_id)
@@ -345,6 +352,7 @@ def marcar_pagada(boleta_id):
 
 
 @boletas_bp.route('/<int:boleta_id>/desmarcar-pagada', methods=['POST'])
+@admin_required
 def desmarcar_pagada(boleta_id):
     """Desmarca una boleta como pagada."""
     boleta = obtener_boleta(boleta_id)
@@ -374,6 +382,7 @@ def desmarcar_pagada(boleta_id):
 # =============================================================================
 
 @boletas_bp.route('/<int:boleta_id>/aprobar', methods=['POST'])
+@admin_required
 def aprobar(boleta_id):
     """Aprueba una boleta y TODAS las boletas que compartieron el mismo comprobante: En Revisión (1) → Pagada (2)"""
     boleta = obtener_boleta(boleta_id)
@@ -422,6 +431,7 @@ def aprobar(boleta_id):
 
 
 @boletas_bp.route('/<int:boleta_id>/rechazar', methods=['POST'])
+@admin_required
 def rechazar(boleta_id):
     """Rechaza una boleta y TODAS las boletas que compartieron el mismo comprobante: En Revisión (1) → Pendiente (0)"""
     boleta = obtener_boleta(boleta_id)
@@ -480,6 +490,7 @@ def rechazar(boleta_id):
 # =============================================================================
 
 @boletas_bp.route('/<int:boleta_id>/subir-comprobante', methods=['POST'])
+@admin_required
 def subir_comprobante(boleta_id):
     """Sube un comprobante de pago."""
     boleta = obtener_boleta(boleta_id)
@@ -539,6 +550,7 @@ def subir_comprobante(boleta_id):
 # =============================================================================
 
 @boletas_bp.route('/<int:boleta_id>/descargar')
+@admin_required
 def descargar(boleta_id):
     """Descarga la boleta en formato PDF."""
     boleta = obtener_boleta(boleta_id)
@@ -622,6 +634,7 @@ def descargar(boleta_id):
 # =============================================================================
 
 @boletas_bp.route('/<int:boleta_id>/eliminar', methods=['POST'])
+@admin_required
 def eliminar(boleta_id):
     """Elimina una boleta."""
     boleta = obtener_boleta(boleta_id)
@@ -642,6 +655,7 @@ def eliminar(boleta_id):
 # =============================================================================
 
 @boletas_bp.route('/exportar')
+@admin_required
 def exportar():
     """Exporta boletas filtradas a Excel."""
     from openpyxl import Workbook
@@ -814,6 +828,7 @@ def exportar():
 # =============================================================================
 
 @boletas_bp.route('/api/medidores/<int:cliente_id>')
+@admin_required
 def api_medidores(cliente_id):
     """Retorna medidores de un cliente en formato JSON."""
     from flask import jsonify

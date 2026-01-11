@@ -6,6 +6,7 @@ from datetime import datetime
 import os
 from werkzeug.utils import secure_filename
 
+from web.auth import registrador_required
 from src.models import (
     listar_clientes, listar_medidores, crear_lectura,
     obtener_lectura, actualizar_lectura, listar_lecturas,
@@ -26,6 +27,7 @@ def allowed_file(filename):
 
 
 @mobile_bp.route('/lecturas')
+@registrador_required
 def registro_lecturas():
     """
     Vista de registro de lecturas mobile.
@@ -53,6 +55,7 @@ def registro_lecturas():
 
 
 @mobile_bp.route('/api/medidores/<int:cliente_id>')
+@registrador_required
 def api_medidores_cliente(cliente_id):
     """
     API JSON: Retorna medidores activos de un cliente.
@@ -69,6 +72,7 @@ def api_medidores_cliente(cliente_id):
 
 
 @mobile_bp.route('/lecturas/crear', methods=['POST'])
+@registrador_required
 def crear_lectura_mobile():
     """
     Crea lectura desde interfaz móvil.
@@ -136,6 +140,7 @@ def crear_lectura_mobile():
 
 
 @mobile_bp.route('/ver-lecturas')
+@registrador_required
 def ver_lecturas():
     """
     Vista de listado de lecturas existentes con opción de editar.
@@ -160,6 +165,7 @@ def ver_lecturas():
 
 
 @mobile_bp.route('/api/validar-edicion/<int:lectura_id>')
+@registrador_required
 def validar_edicion_lectura(lectura_id):
     """
     Valida si una lectura puede ser editada.
@@ -179,6 +185,7 @@ def validar_edicion_lectura(lectura_id):
 
 
 @mobile_bp.route('/api/lectura/<int:lectura_id>')
+@registrador_required
 def api_obtener_lectura(lectura_id):
     """
     API JSON: Retorna datos de una lectura para edición.
@@ -191,6 +198,7 @@ def api_obtener_lectura(lectura_id):
 
 
 @mobile_bp.route('/lecturas/<int:lectura_id>/editar', methods=['POST'])
+@registrador_required
 def editar_lectura_mobile(lectura_id):
     """
     Actualiza una lectura existente.
