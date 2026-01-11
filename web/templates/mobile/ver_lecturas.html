@@ -40,9 +40,18 @@
 </div>
 {% endif %}
 
+<!-- Buscador de clientes -->
+<div class="search-box">
+    <input type="text"
+           id="buscar-cliente"
+           class="input-mobile"
+           placeholder="Buscar cliente por nombre..."
+           oninput="filtrarLecturas(this.value)">
+</div>
+
 <!-- Contador de lecturas -->
 <div class="info-banner">
-    <p>{{ lecturas|length }} lecturas encontradas</p>
+    <p><span id="lecturas-visibles">{{ lecturas|length }}</span> lecturas encontradas</p>
 </div>
 
 <!-- Lista de lecturas -->
@@ -94,8 +103,28 @@
 {% endblock %}
 
 {% block extra_js %}
-{% if es_admin %}
 <script>
+// Función para filtrar lecturas por nombre de cliente
+function filtrarLecturas(termino) {
+    const cards = document.querySelectorAll('.lectura-card');
+    const terminoLower = termino.toLowerCase().trim();
+    let visibles = 0;
+
+    cards.forEach(card => {
+        const nombre = card.querySelector('.cliente-nombre').textContent.toLowerCase();
+        if (nombre.includes(terminoLower)) {
+            card.style.display = '';
+            visibles++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // Actualizar contador
+    document.getElementById('lecturas-visibles').textContent = visibles;
+}
+
+{% if es_admin %}
 // Toggle filtros (solo admin)
 document.getElementById('toggle-filtros').addEventListener('click', function() {
     const form = document.getElementById('filtros-form');
@@ -107,6 +136,6 @@ document.getElementById('toggle-filtros').addEventListener('click', function() {
         this.textContent = 'Filtros';
     }
 });
-</script>
 {% endif %}
+</script>
 {% endblock %}

@@ -29,9 +29,18 @@
 </div>
 {% endif %}
 
+<!-- Buscador de clientes -->
+<div class="search-box">
+    <input type="text"
+           id="buscar-cliente"
+           class="input-mobile"
+           placeholder="Buscar cliente por nombre..."
+           oninput="filtrarClientes(this.value)">
+</div>
+
 <!-- Banner informativo -->
 <div class="info-banner">
-    <p>{{ clientes|length }} clientes sin lectura en {{ mes|mes_nombre }} {{ año }}</p>
+    <p><span id="clientes-visibles">{{ clientes|length }}</span> clientes sin lectura en {{ mes|mes_nombre }} {{ año }}</p>
 </div>
 
 <!-- Lista de clientes sin lectura -->
@@ -151,6 +160,26 @@
 
 {% block extra_js %}
 <script>
+// Función para filtrar clientes por nombre
+function filtrarClientes(termino) {
+    const cards = document.querySelectorAll('.cliente-card');
+    const terminoLower = termino.toLowerCase().trim();
+    let visibles = 0;
+
+    cards.forEach(card => {
+        const nombre = card.querySelector('.cliente-nombre').textContent.toLowerCase();
+        if (nombre.includes(terminoLower)) {
+            card.style.display = '';
+            visibles++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    // Actualizar contador
+    document.getElementById('clientes-visibles').textContent = visibles;
+}
+
 // Función para mostrar preview de foto
 function mostrarPreview(input) {
     if (input.files && input.files[0]) {

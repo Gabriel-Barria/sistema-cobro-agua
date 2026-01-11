@@ -302,6 +302,18 @@ body {
 }
 
 /* ====================================
+   Buscador de Clientes
+   ==================================== */
+
+.search-box {
+    margin-bottom: var(--spacing-md);
+}
+
+.search-box input {
+    width: 100%;
+}
+
+/* ====================================
    Filtros (Ver Lecturas)
    ==================================== */
 
