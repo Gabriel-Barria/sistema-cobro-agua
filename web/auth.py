@@ -30,7 +30,10 @@ def admin_required(f):
 
         if session.get('rol') != 'administrador':
             flash('No tienes permisos para acceder a esta página', 'error')
-            return redirect(url_for('index'))
+            # Registradores van a mobile, otros al login
+            if session.get('rol') == 'registrador':
+                return redirect(url_for('mobile.registro_lecturas'))
+            return redirect(url_for('auth.login'))
 
         return f(*args, **kwargs)
     return decorated_function
