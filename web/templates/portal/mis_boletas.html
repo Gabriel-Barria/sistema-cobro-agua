@@ -1,89 +1,183 @@
 {% extends "portal/base_portal.html" %}
 
 {% block content %}
-<h2>Mis Boletas - {{ cliente.nombre }}</h2>
-<p><strong>RUT:</strong> {{ session.get('cliente_rut') }}</p>
+<h2>Mis Boletas</h2>
 
-<hr>
+<div class="cliente-info">
+    <p><strong>Cliente:</strong> {{ cliente.nombre }}</p>
+    <p><strong>RUT:</strong> {{ session.get('cliente_rut') }}</p>
+</div>
 
 {% if boletas_pendientes %}
 <h3>Boletas Pendientes de Pago</h3>
+
 <form method="POST" action="{{ url_for('portal.pagar') }}" enctype="multipart/form-data" id="pagarForm">
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+
+    <!-- Select All -->
+    <div class="select-all-bar">
+        <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
+        <label for="selectAll">Seleccionar todas</label>
+    </div>
+
+    <!-- Vista Mobile: Cards -->
+    <div class="boletas-list">
+        {% for boleta in boletas_pendientes %}
+        <div class="boleta-card">
+            <div class="boleta-card-header">
+                <input type="checkbox" name="boletas" value="{{ boleta.id }}" class="boleta-check">
+                <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
+                {% if boleta.motivo_rechazo %}
+                    <span class="boleta-estado boleta-estado-rechazada">Rechazada</span>
+                {% else %}
+                    <span class="boleta-estado boleta-estado-pendiente">Pendiente</span>
+                {% endif %}
+            </div>
+            <div class="boleta-card-body">
+                <div class="boleta-detail">
+                    <span class="boleta-detail-label">Periodo</span>
+                    <span class="boleta-detail-value">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
+                </div>
+                <div class="boleta-detail">
+                    <span class="boleta-detail-label">Consumo</span>
+                    <span class="boleta-detail-value">{{ boleta.consumo_m3 }} m3</span>
+                </div>
+                <div class="boleta-detail">
+                    <span class="boleta-detail-label">Total</span>
+                    <span class="boleta-detail-value boleta-total">${{ boleta.total|formato_pesos }}</span>
+                </div>
+                {% if boleta.motivo_rechazo %}
+                <div class="boleta-rechazo">
+                    <strong>Motivo de rechazo:</strong>
+                    {{ boleta.motivo_rechazo }}
+                    {% if boleta.comprobante_anterior %}
+                        <br><a href="/{{ boleta.comprobante_anterior }}" target="_blank">Ver comprobante anterior</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Vista Desktop: Tabla -->
+    <table class="tabla-desktop">
         <thead>
-            <tr style="background: #f0f0f0;">
-                <th style="padding: 10px; border: 1px solid #ddd;">
-                    <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
+            <tr>
+                <th class="text-center">
+                    <input type="checkbox" id="selectAllDesktop" onclick="toggleAll(this)">
                 </th>
-                <th style="padding: 10px; border: 1px solid #ddd;">N° Boleta</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Período</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Consumo (m³)</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Total</th>
-                <th style="padding: 10px; border: 1px solid #ddd;">Estado</th>
+                <th>N° Boleta</th>
+                <th>Periodo</th>
+                <th>Consumo (m3)</th>
+                <th class="text-right">Total</th>
+                <th>Estado</th>
             </tr>
         </thead>
         <tbody>
             {% for boleta in boletas_pendientes %}
             <tr>
-                <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
-                    <input type="checkbox" name="boletas" value="{{ boleta.id }}" class="boleta-check">
+                <td class="text-center">
+                    <input type="checkbox" name="boletas" value="{{ boleta.id }}" class="boleta-check-desktop">
                 </td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ boleta.numero_boleta }}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">{{ boleta.consumo_m3 }}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">${{ boleta.total|formato_pesos }}</td>
-                <td style="padding: 10px; border: 1px solid #ddd;">
+                <td>{{ boleta.numero_boleta }}</td>
+                <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
+                <td>{{ boleta.consumo_m3 }}</td>
+                <td class="text-right">${{ boleta.total|formato_pesos }}</td>
+                <td>
                     {% if boleta.motivo_rechazo %}
-                        <span style="color: #d9534f;">Rechazada</span>
+                        <span style="color: var(--portal-danger);">Rechazada</span>
                         <br><small>{{ boleta.motivo_rechazo }}</small>
-                        {% if boleta.comprobante_anterior %}
-                            <br><a href="/{{ boleta.comprobante_anterior }}" target="_blank" style="font-size: 12px;">Ver comprobante anterior</a>
-                        {% endif %}
                     {% else %}
-                        <span style="color: #f0ad4e;">Pendiente</span>
+                        <span style="color: var(--portal-warning);">Pendiente</span>
                     {% endif %}
                 </td>
             </tr>
             {% endfor %}
-            <tr style="background: #f9f9f9; font-weight: bold;">
-                <td colspan="4" style="padding: 10px; text-align: right;">Total Seleccionado:</td>
-                <td style="padding: 10px;" id="totalSeleccionado">$0</td>
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-right">Total Seleccionado:</td>
+                <td class="text-right" id="totalSeleccionadoDesktop">$0</td>
                 <td></td>
             </tr>
-        </tbody>
+        </tfoot>
     </table>
 
-    <div style="margin-bottom: 15px;">
-        <label for="comprobante" style="display: block; margin-bottom: 5px; font-weight: bold;">Adjuntar Comprobante de Pago:</label>
-        <input type="file" name="comprobante" id="comprobante" accept=".png,.jpg,.jpeg,.gif,.pdf" required
-               style="display: block; margin-top: 5px;">
-        <small style="color: #666;">Un solo comprobante para todas las boletas seleccionadas. Formatos: PNG, JPG, PDF (máx. 5MB)</small>
+    <!-- Resumen de Pago -->
+    <div class="pago-resumen">
+        <div class="pago-resumen-label">Total a Pagar</div>
+        <div class="pago-resumen-total" id="totalSeleccionado">$0</div>
     </div>
 
-    <button type="submit" class="btn-primary" onclick="return validarFormulario()">Enviar Pago</button>
+    <!-- Comprobante -->
+    <div class="form-group">
+        <label for="comprobante" class="form-label">Adjuntar Comprobante de Pago:</label>
+        <input type="file"
+               name="comprobante"
+               id="comprobante"
+               class="form-file"
+               accept=".png,.jpg,.jpeg,.gif,.pdf"
+               required>
+        <small class="form-hint">Un solo comprobante para todas las boletas seleccionadas. Formatos: PNG, JPG, PDF (max. 5MB)</small>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block" onclick="return validarFormulario()">Enviar Pago</button>
 </form>
 
 <script>
 function toggleAll(checkbox) {
-    const checks = document.querySelectorAll('.boleta-check');
-    checks.forEach(c => c.checked = checkbox.checked);
+    // Toggle both mobile and desktop checkboxes
+    const checksMobile = document.querySelectorAll('.boleta-check');
+    const checksDesktop = document.querySelectorAll('.boleta-check-desktop');
+
+    checksMobile.forEach(c => c.checked = checkbox.checked);
+    checksDesktop.forEach(c => c.checked = checkbox.checked);
+
+    // Sync the other select-all checkbox
+    document.getElementById('selectAll').checked = checkbox.checked;
+    document.getElementById('selectAllDesktop').checked = checkbox.checked;
+
     actualizarTotal();
 }
 
 function actualizarTotal() {
-    const checks = document.querySelectorAll('.boleta-check:checked');
+    // Get checked items from both views
+    const checksMobile = document.querySelectorAll('.boleta-check:checked');
+    const checksDesktop = document.querySelectorAll('.boleta-check-desktop:checked');
+
     let total = 0;
-    checks.forEach(check => {
-        const row = check.closest('tr');
-        const totalText = row.cells[4].textContent.replace('$', '').replace(/\./g, '');
+
+    // Use mobile checks for calculation (same values)
+    checksMobile.forEach(check => {
+        const card = check.closest('.boleta-card');
+        const totalText = card.querySelector('.boleta-total').textContent.replace('$', '').replace(/\./g, '');
         total += parseInt(totalText) || 0;
     });
+
     const formatted = total.toLocaleString('es-CL');
     document.getElementById('totalSeleccionado').textContent = '$' + formatted;
+    document.getElementById('totalSeleccionadoDesktop').textContent = '$' + formatted;
 }
 
-document.querySelectorAll('.boleta-check').forEach(check => {
-    check.addEventListener('change', actualizarTotal);
+// Sync checkboxes between mobile and desktop
+document.querySelectorAll('.boleta-check').forEach((check, index) => {
+    check.addEventListener('change', function() {
+        const desktopChecks = document.querySelectorAll('.boleta-check-desktop');
+        if (desktopChecks[index]) {
+            desktopChecks[index].checked = this.checked;
+        }
+        actualizarTotal();
+    });
+});
+
+document.querySelectorAll('.boleta-check-desktop').forEach((check, index) => {
+    check.addEventListener('change', function() {
+        const mobileChecks = document.querySelectorAll('.boleta-check');
+        if (mobileChecks[index]) {
+            mobileChecks[index].checked = this.checked;
+        }
+        actualizarTotal();
+    });
 });
 
 function validarFormulario() {
@@ -99,46 +193,79 @@ function validarFormulario() {
         return false;
     }
 
-    // Validar tamaño del archivo (5MB)
     if (comprobante.files[0].size > 5 * 1024 * 1024) {
         alert('El archivo no debe superar 5MB');
         return false;
     }
 
-    return confirm('¿Está seguro de enviar el pago de ' + checks.length + ' boleta(s)?');
+    return confirm('Esta seguro de enviar el pago de ' + checks.length + ' boleta(s)?');
 }
 </script>
 
 {% else %}
-<div style="padding: 30px; text-align: center; background: #d4edda; border-radius: 5px;">
-    <h3 style="color: #155724;">No tiene boletas pendientes de pago</h3>
-    <p>Todas sus boletas están al día.</p>
+<div class="no-boletas">
+    <div class="no-boletas-icon">&#10003;</div>
+    <h3>No tiene boletas pendientes de pago</h3>
+    <p>Todas sus boletas estan al dia.</p>
 </div>
 {% endif %}
 
 {% if boletas_en_revision %}
-<hr style="margin: 30px 0;">
-<h3>Boletas En Revisión</h3>
-<p style="color: #666;">Estas boletas están siendo revisadas por el administrador:</p>
+<hr>
+<h3>Boletas En Revision</h3>
+<p class="text-muted">Estas boletas estan siendo revisadas por el administrador:</p>
 
-<table style="width: 100%; border-collapse: collapse;">
+<!-- Vista Mobile: Cards -->
+<div class="boletas-list">
+    {% for boleta in boletas_en_revision %}
+    <div class="boleta-card">
+        <div class="boleta-card-header">
+            <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
+            <span class="boleta-estado boleta-estado-revision">En Revision</span>
+        </div>
+        <div class="boleta-card-body">
+            <div class="boleta-detail">
+                <span class="boleta-detail-label">Periodo</span>
+                <span class="boleta-detail-value">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
+            </div>
+            <div class="boleta-detail">
+                <span class="boleta-detail-label">Total</span>
+                <span class="boleta-detail-value boleta-total">${{ boleta.total|formato_pesos }}</span>
+            </div>
+            <div class="boleta-detail">
+                <span class="boleta-detail-label">Fecha Envio</span>
+                <span class="boleta-detail-value">{{ boleta.fecha_envio_revision }}</span>
+            </div>
+            {% if boleta.comprobante_path %}
+            <div class="boleta-detail">
+                <span class="boleta-detail-label">Comprobante</span>
+                <span class="boleta-detail-value"><a href="/{{ boleta.comprobante_path }}" target="_blank">Ver</a></span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Vista Desktop: Tabla -->
+<table class="tabla-desktop">
     <thead>
-        <tr style="background: #f0f0f0;">
-            <th style="padding: 10px; border: 1px solid #ddd;">N° Boleta</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Período</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Total</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Fecha Envío</th>
-            <th style="padding: 10px; border: 1px solid #ddd;">Comprobante</th>
+        <tr>
+            <th>N° Boleta</th>
+            <th>Periodo</th>
+            <th class="text-right">Total</th>
+            <th>Fecha Envio</th>
+            <th>Comprobante</th>
         </tr>
     </thead>
     <tbody>
         {% for boleta in boletas_en_revision %}
         <tr>
-            <td style="padding: 10px; border: 1px solid #ddd;">{{ boleta.numero_boleta }}</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">${{ boleta.total|formato_pesos }}</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">{{ boleta.fecha_envio_revision }}</td>
-            <td style="padding: 10px; border: 1px solid #ddd;">
+            <td>{{ boleta.numero_boleta }}</td>
+            <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
+            <td class="text-right">${{ boleta.total|formato_pesos }}</td>
+            <td>{{ boleta.fecha_envio_revision }}</td>
+            <td>
                 {% if boleta.comprobante_path %}
                     <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver Comprobante</a>
                 {% endif %}
@@ -149,7 +276,7 @@ function validarFormulario() {
 </table>
 {% endif %}
 
-<div style="margin-top: 30px;">
-    <a href="{{ url_for('portal.salir') }}" class="btn-secondary">Cerrar Sesión</a>
+<div class="btn-group mt-3">
+    <a href="{{ url_for('portal.salir') }}" class="btn btn-secondary">Cerrar Sesion</a>
 </div>
 {% endblock %}

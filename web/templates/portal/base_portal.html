@@ -4,98 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Portal de Pagos{% endblock %}</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
-        .portal-container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .portal-header {
-            background: #2c3e50;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px 5px 0 0;
-        }
-        .portal-header h1 {
-            margin: 0;
-            font-size: 24px;
-        }
-        .portal-header p {
-            margin: 10px 0 0 0;
-            font-size: 14px;
-        }
-        .portal-header a {
-            color: #3498db;
-            text-decoration: none;
-        }
-        .portal-header a:hover {
-            text-decoration: underline;
-        }
-        .portal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 0 0 5px 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .btn-primary {
-            background: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-primary:hover {
-            background: #2980b9;
-        }
-        .btn-secondary {
-            background: #95a5a6;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-secondary:hover {
-            background: #7f8c8d;
-        }
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
 </head>
 <body>
     <div class="portal-container">
-        <div class="portal-header">
-            <h1>Portal de Pagos - Sistema de Lecturas</h1>
+        <header class="portal-header">
+            <h1>Portal de Pagos</h1>
             {% if session.get('cliente_id') %}
-                <p><a href="{{ url_for('portal.salir') }}">Cerrar Sesión</a></p>
+                <p><a href="{{ url_for('portal.salir') }}">Cerrar Sesion</a></p>
             {% endif %}
-        </div>
-        <div class="portal-content">
+        </header>
+        <main class="portal-content">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -105,7 +24,7 @@
             {% endwith %}
 
             {% block content %}{% endblock %}
-        </div>
+        </main>
     </div>
 </body>
 </html>
