@@ -593,7 +593,8 @@ def descargar(boleta_id):
         if lectura_actual:
             if lectura_actual.get('foto_path') and lectura_actual.get('foto_path') != '':
                 # Convertir ruta relativa a absoluta para WeasyPrint
-                foto_lectura = os.path.join(BASE_DIR, lectura_actual['foto_path'])
+                # foto_path viene como 'medidor_X/...' sin prefijo de carpeta
+                foto_lectura = os.path.join(BASE_DIR, 'fotos', lectura_actual['foto_path'])
             fecha_lectura_actual = lectura_actual.get('fecha_lectura')
 
     # Obtener la lectura anterior y su fecha
