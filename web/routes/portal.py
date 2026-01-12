@@ -2,12 +2,14 @@
 Blueprint del Portal de Clientes
 Permite a los clientes buscar por RUT, ver boletas pendientes y pagar
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session, make_response
+from io import BytesIO
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, make_response, send_file
 from werkzeug.utils import secure_filename
+from weasyprint import HTML
 import os
 from datetime import date, datetime
 from src.database import get_connection, BASE_DIR
-from src.models import buscar_cliente_por_rut, listar_medidores, obtener_cliente, obtener_medidor
+from src.models import buscar_cliente_por_rut, listar_medidores, obtener_cliente, obtener_medidor, obtener_lectura
 from src.models_boletas import (
     obtener_boletas_pendientes_por_cliente,
     marcar_boletas_en_revision,
@@ -222,6 +224,94 @@ def confirmacion():
         return redirect(url_for('portal.buscar'))
 
     return render_template('portal/confirmacion.html')
+
+
+@portal_bp.route('/descargar/<int:boleta_id>')
+def descargar_boleta(boleta_id):
+    """Descarga PDF de boleta verificando ownership."""
+    cliente_id = session.get('cliente_id')
+    if not cliente_id:
+        flash('Debe ingresar su RUT primero', 'error')
+        return redirect(url_for('portal.buscar'))
+
+    # Obtener boleta
+    boleta = obtener_boleta(boleta_id)
+    if not boleta:
+        flash('Boleta no encontrada', 'error')
+        return redirect(url_for('portal.mis_boletas'))
+
+    # Verificar ownership
+    medidor = obtener_medidor(boleta['medidor_id'])
+    if medidor['cliente_id'] != cliente_id:
+        flash('Acceso denegado', 'error')
+        return redirect(url_for('portal.mis_boletas'))
+
+    # Nombres de meses en espanol
+    meses = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    }
+
+    # Obtener la lectura actual asociada para la foto del medidor y fecha
+    lectura_actual = None
+    foto_lectura = None
+    fecha_lectura_actual = None
+    if boleta['lectura_id']:
+        lectura_actual = obtener_lectura(boleta['lectura_id'])
+        if lectura_actual:
+            if lectura_actual.get('foto_path') and lectura_actual.get('foto_path') != '':
+                foto_lectura = os.path.join(BASE_DIR, lectura_actual['foto_path'])
+            fecha_lectura_actual = lectura_actual.get('fecha_lectura')
+
+    # Obtener la lectura anterior y su fecha
+    fecha_lectura_anterior = None
+    if boleta['lectura_anterior'] is not None:
+        medidor_id = boleta['medidor_id']
+        año = boleta['periodo_año']
+        mes = boleta['periodo_mes']
+
+        # Calcular periodo anterior
+        if mes == 1:
+            mes_anterior = 12
+            año_anterior = año - 1
+        else:
+            mes_anterior = mes - 1
+            año_anterior = año
+
+        # Buscar lectura anterior
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT fecha_lectura FROM lecturas
+            WHERE medidor_id = %s AND año = %s AND mes = %s
+        ''', (medidor_id, año_anterior, mes_anterior))
+        lectura_ant = cursor.fetchone()
+        conn.close()
+
+        if lectura_ant:
+            fecha_lectura_anterior = lectura_ant['fecha_lectura']
+
+    # Renderizar template HTML
+    html_string = render_template('boletas/boleta_pdf.html',
+                                   boleta=boleta,
+                                   meses=meses,
+                                   foto_lectura=foto_lectura,
+                                   fecha_lectura_actual=fecha_lectura_actual,
+                                   fecha_lectura_anterior=fecha_lectura_anterior)
+
+    # Generar PDF usando WeasyPrint
+    pdf_file = BytesIO()
+    HTML(string=html_string, base_url=BASE_DIR).write_pdf(pdf_file)
+    pdf_file.seek(0)
+
+    # Devolver PDF como descarga
+    return send_file(
+        pdf_file,
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'boleta_{boleta["numero_boleta"]}.pdf'
+    )
 
 
 @portal_bp.route('/salir')

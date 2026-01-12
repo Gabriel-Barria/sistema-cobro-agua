@@ -1,204 +1,85 @@
 {% extends "portal/base_portal.html" %}
 
 {% block content %}
-<h2>Mis Boletas</h2>
-
 <div class="cliente-info">
     <p><strong>Cliente:</strong> {{ cliente.nombre }}</p>
     <p><strong>RUT:</strong> {{ session.get('cliente_rut') }}</p>
 </div>
 
 {% if boletas_pendientes %}
-<h3>Boletas Pendientes de Pago</h3>
-
-<form method="POST" action="{{ url_for('portal.pagar') }}" enctype="multipart/form-data" id="pagarForm">
-
-    <!-- Select All -->
-    <div class="select-all-bar">
-        <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
-        <label for="selectAll">Seleccionar todas</label>
+<!-- Sticky Bar de Pago -->
+<div class="pago-sticky-bar">
+    <div class="pago-sticky-info">
+        <span class="pago-sticky-count">{{ boletas_pendientes|length }} boleta{% if boletas_pendientes|length > 1 %}s{% endif %} pendiente{% if boletas_pendientes|length > 1 %}s{% endif %}</span>
+        <span class="pago-sticky-total" id="totalStickyBar">$0</span>
     </div>
+    <button type="button" class="btn btn-primary btn-pagar" onclick="abrirModalPago()">
+        Pagar
+    </button>
+</div>
 
-    <!-- Vista Mobile: Cards -->
-    <div class="boletas-list">
-        {% for boleta in boletas_pendientes %}
-        <div class="boleta-card">
-            <div class="boleta-card-header">
-                <input type="checkbox" name="boletas" value="{{ boleta.id }}" class="boleta-check">
+<!-- Select All -->
+<div class="select-all-bar">
+    <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
+    <label for="selectAll">Seleccionar todas</label>
+</div>
+
+<!-- Lista de Boletas Pendientes -->
+<div class="boletas-lista-compact">
+    {% for boleta in boletas_pendientes %}
+    <div class="boleta-item {% if boleta.ultimo_rechazo %}boleta-rechazada{% endif %}" data-total="{{ boleta.total }}">
+        <div class="boleta-row">
+            <input type="checkbox" name="boletas" value="{{ boleta.id }}"
+                   class="boleta-check" onchange="actualizarTotal()">
+            <div class="boleta-info-compact">
                 <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
-                {% if boleta.ultimo_rechazo %}
-                    <span class="boleta-estado boleta-estado-rechazada">Rechazada</span>
-                {% else %}
-                    <span class="boleta-estado boleta-estado-pendiente">Pendiente</span>
-                {% endif %}
+                <span class="boleta-periodo">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
             </div>
-            <div class="boleta-card-body">
-                <div class="boleta-detail">
-                    <span class="boleta-detail-label">Periodo</span>
-                    <span class="boleta-detail-value">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
-                </div>
-                <div class="boleta-detail">
-                    <span class="boleta-detail-label">Consumo</span>
-                    <span class="boleta-detail-value">{{ boleta.consumo_m3 }} m3</span>
-                </div>
-                <div class="boleta-detail">
-                    <span class="boleta-detail-label">Total</span>
-                    <span class="boleta-detail-value boleta-total">${{ boleta.total|formato_pesos }}</span>
-                </div>
-                {% if boleta.ultimo_rechazo %}
-                <div class="boleta-rechazo">
-                    <strong>Motivo de rechazo:</strong>
-                    {{ boleta.ultimo_rechazo.motivo_rechazo }}
-                    <br><a href="/{{ boleta.ultimo_rechazo.comprobante_path }}" target="_blank">Ver comprobante rechazado</a>
-                </div>
-                {% endif %}
+            <div class="boleta-monto">${{ boleta.total|formato_pesos }}</div>
+            <div class="boleta-acciones">
+                <a href="{{ url_for('portal.descargar_boleta', boleta_id=boleta.id) }}"
+                   class="btn-icon" title="Descargar PDF">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                </a>
+                <button type="button" class="btn-icon btn-expandir"
+                        onclick="toggleDetalle({{ boleta.id }})" title="Ver detalle">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </button>
             </div>
         </div>
-        {% endfor %}
+
+        <!-- Detalle expandible -->
+        <div class="boleta-detalle" id="detalle-{{ boleta.id }}">
+            <div class="detalle-grid">
+                <div class="detalle-item">
+                    <span class="detalle-label">Consumo</span>
+                    <span class="detalle-value">{{ boleta.consumo_m3 }} m3</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Cargo fijo</span>
+                    <span class="detalle-value">${{ boleta.cargo_fijo|formato_pesos }}</span>
+                </div>
+                <div class="detalle-item">
+                    <span class="detalle-label">Precio m3</span>
+                    <span class="detalle-value">${{ boleta.precio_m3|formato_pesos }}</span>
+                </div>
+            </div>
+            {% if boleta.ultimo_rechazo %}
+            <div class="alerta-rechazo">
+                <strong>Pago rechazado:</strong> {{ boleta.ultimo_rechazo.motivo_rechazo }}
+                <br><a href="/{{ boleta.ultimo_rechazo.comprobante_path }}" target="_blank">Ver comprobante anterior</a>
+            </div>
+            {% endif %}
+        </div>
     </div>
-
-    <!-- Vista Desktop: Tabla -->
-    <table class="tabla-desktop">
-        <thead>
-            <tr>
-                <th class="text-center">
-                    <input type="checkbox" id="selectAllDesktop" onclick="toggleAll(this)">
-                </th>
-                <th>N° Boleta</th>
-                <th>Periodo</th>
-                <th>Consumo (m3)</th>
-                <th class="text-right">Total</th>
-                <th>Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for boleta in boletas_pendientes %}
-            <tr>
-                <td class="text-center">
-                    <input type="checkbox" name="boletas" value="{{ boleta.id }}" class="boleta-check-desktop">
-                </td>
-                <td>{{ boleta.numero_boleta }}</td>
-                <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
-                <td>{{ boleta.consumo_m3 }}</td>
-                <td class="text-right">${{ boleta.total|formato_pesos }}</td>
-                <td>
-                    {% if boleta.ultimo_rechazo %}
-                        <span style="color: var(--portal-danger);">Rechazada</span>
-                        <br><small>{{ boleta.ultimo_rechazo.motivo_rechazo }}</small>
-                    {% else %}
-                        <span style="color: var(--portal-warning);">Pendiente</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="4" class="text-right">Total Seleccionado:</td>
-                <td class="text-right" id="totalSeleccionadoDesktop">$0</td>
-                <td></td>
-            </tr>
-        </tfoot>
-    </table>
-
-    <!-- Resumen de Pago -->
-    <div class="pago-resumen">
-        <div class="pago-resumen-label">Total a Pagar</div>
-        <div class="pago-resumen-total" id="totalSeleccionado">$0</div>
-    </div>
-
-    <!-- Comprobante -->
-    <div class="form-group">
-        <label for="comprobante" class="form-label">Adjuntar Comprobante de Pago:</label>
-        <input type="file"
-               name="comprobante"
-               id="comprobante"
-               class="form-file"
-               accept=".png,.jpg,.jpeg,.gif,.pdf"
-               required>
-        <small class="form-hint">Un solo comprobante para todas las boletas seleccionadas. Formatos: PNG, JPG, PDF (max. 5MB)</small>
-    </div>
-
-    <button type="submit" class="btn btn-primary btn-block" onclick="return validarFormulario()">Enviar Pago</button>
-</form>
-
-<script>
-function toggleAll(checkbox) {
-    // Toggle both mobile and desktop checkboxes
-    const checksMobile = document.querySelectorAll('.boleta-check');
-    const checksDesktop = document.querySelectorAll('.boleta-check-desktop');
-
-    checksMobile.forEach(c => c.checked = checkbox.checked);
-    checksDesktop.forEach(c => c.checked = checkbox.checked);
-
-    // Sync the other select-all checkbox
-    document.getElementById('selectAll').checked = checkbox.checked;
-    document.getElementById('selectAllDesktop').checked = checkbox.checked;
-
-    actualizarTotal();
-}
-
-function actualizarTotal() {
-    // Get checked items from both views
-    const checksMobile = document.querySelectorAll('.boleta-check:checked');
-    const checksDesktop = document.querySelectorAll('.boleta-check-desktop:checked');
-
-    let total = 0;
-
-    // Use mobile checks for calculation (same values)
-    checksMobile.forEach(check => {
-        const card = check.closest('.boleta-card');
-        const totalText = card.querySelector('.boleta-total').textContent.replace('$', '').replace(/\./g, '');
-        total += parseInt(totalText) || 0;
-    });
-
-    const formatted = total.toLocaleString('es-CL');
-    document.getElementById('totalSeleccionado').textContent = '$' + formatted;
-    document.getElementById('totalSeleccionadoDesktop').textContent = '$' + formatted;
-}
-
-// Sync checkboxes between mobile and desktop
-document.querySelectorAll('.boleta-check').forEach((check, index) => {
-    check.addEventListener('change', function() {
-        const desktopChecks = document.querySelectorAll('.boleta-check-desktop');
-        if (desktopChecks[index]) {
-            desktopChecks[index].checked = this.checked;
-        }
-        actualizarTotal();
-    });
-});
-
-document.querySelectorAll('.boleta-check-desktop').forEach((check, index) => {
-    check.addEventListener('change', function() {
-        const mobileChecks = document.querySelectorAll('.boleta-check');
-        if (mobileChecks[index]) {
-            mobileChecks[index].checked = this.checked;
-        }
-        actualizarTotal();
-    });
-});
-
-function validarFormulario() {
-    const checks = document.querySelectorAll('.boleta-check:checked');
-    if (checks.length === 0) {
-        alert('Debe seleccionar al menos una boleta');
-        return false;
-    }
-
-    const comprobante = document.getElementById('comprobante');
-    if (!comprobante.files.length) {
-        alert('Debe adjuntar un comprobante de pago');
-        return false;
-    }
-
-    if (comprobante.files[0].size > 5 * 1024 * 1024) {
-        alert('El archivo no debe superar 5MB');
-        return false;
-    }
-
-    return confirm('Esta seguro de enviar el pago de ' + checks.length + ' boleta(s)?');
-}
-</script>
+    {% endfor %}
+</div>
 
 {% else %}
 <div class="no-boletas">
@@ -209,72 +90,195 @@ function validarFormulario() {
 {% endif %}
 
 {% if boletas_en_revision %}
-<hr>
-<h3>Boletas En Revision</h3>
-<p class="text-muted">Estas boletas estan siendo revisadas por el administrador:</p>
-
-<!-- Vista Mobile: Cards -->
-<div class="boletas-list">
-    {% for boleta in boletas_en_revision %}
-    <div class="boleta-card">
-        <div class="boleta-card-header">
-            <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
-            <span class="boleta-estado boleta-estado-revision">En Revision</span>
-        </div>
-        <div class="boleta-card-body">
-            <div class="boleta-detail">
-                <span class="boleta-detail-label">Periodo</span>
-                <span class="boleta-detail-value">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
-            </div>
-            <div class="boleta-detail">
-                <span class="boleta-detail-label">Total</span>
-                <span class="boleta-detail-value boleta-total">${{ boleta.total|formato_pesos }}</span>
-            </div>
-            <div class="boleta-detail">
-                <span class="boleta-detail-label">Fecha Envio</span>
-                <span class="boleta-detail-value">{{ boleta.intento_actual.fecha_envio if boleta.intento_actual else '-' }}</span>
-            </div>
-            {% if boleta.comprobante_path %}
-            <div class="boleta-detail">
-                <span class="boleta-detail-label">Comprobante</span>
-                <span class="boleta-detail-value"><a href="/{{ boleta.comprobante_path }}" target="_blank">Ver</a></span>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Vista Desktop: Tabla -->
-<table class="tabla-desktop">
-    <thead>
-        <tr>
-            <th>N° Boleta</th>
-            <th>Periodo</th>
-            <th class="text-right">Total</th>
-            <th>Fecha Envio</th>
-            <th>Comprobante</th>
-        </tr>
-    </thead>
-    <tbody>
+<!-- Seccion En Revision (colapsada por defecto) -->
+<details class="seccion-revision">
+    <summary>
+        <span class="revision-badge">{{ boletas_en_revision|length }}</span>
+        Boletas en revision
+    </summary>
+    <div class="boletas-lista-compact">
         {% for boleta in boletas_en_revision %}
-        <tr>
-            <td>{{ boleta.numero_boleta }}</td>
-            <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
-            <td class="text-right">${{ boleta.total|formato_pesos }}</td>
-            <td>{{ boleta.intento_actual.fecha_envio if boleta.intento_actual else '-' }}</td>
-            <td>
+        <div class="boleta-item en-revision">
+            <div class="boleta-row">
+                <div class="boleta-info-compact">
+                    <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
+                    <span class="boleta-estado-tag">En revision</span>
+                </div>
+                <div class="boleta-monto">${{ boleta.total|formato_pesos }}</div>
+                <div class="boleta-acciones">
+                    <a href="{{ url_for('portal.descargar_boleta', boleta_id=boleta.id) }}"
+                       class="btn-icon" title="Descargar PDF">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            <div class="boleta-revision-info">
+                <small>Enviado: {{ boleta.intento_actual.fecha_envio if boleta.intento_actual else '-' }}</small>
                 {% if boleta.comprobante_path %}
-                    <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver Comprobante</a>
+                <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver comprobante</a>
                 {% endif %}
-            </td>
-        </tr>
+            </div>
+        </div>
         {% endfor %}
-    </tbody>
-</table>
+    </div>
+</details>
 {% endif %}
 
-<div class="btn-group mt-3">
-    <a href="{{ url_for('portal.salir') }}" class="btn btn-secondary">Cerrar Sesion</a>
+<!-- Modal de Pago -->
+<div class="modal-overlay" id="modalPago">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Confirmar Pago</h3>
+            <button type="button" class="modal-close" onclick="cerrarModalPago()">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('portal.pagar') }}"
+              enctype="multipart/form-data" id="formPago">
+            <div class="modal-body">
+                <div class="pago-resumen-modal">
+                    <p><span id="cantidadSeleccionadas">0</span> boleta(s) seleccionada(s)</p>
+                    <p class="total-grande">Total: <strong id="totalModal">$0</strong></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="comprobante" class="form-label">Comprobante de pago:</label>
+                    <input type="file" name="comprobante" id="comprobante"
+                           class="form-file" accept=".png,.jpg,.jpeg,.pdf" required>
+                    <small class="form-hint">PNG, JPG o PDF (max. 5MB)</small>
+                </div>
+
+                <!-- Hidden inputs para boletas seleccionadas -->
+                <div id="boletasHidden"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalPago()">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    Enviar Pago
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
+
+<script>
+function toggleAll(checkbox) {
+    const checks = document.querySelectorAll('.boleta-check');
+    checks.forEach(c => c.checked = checkbox.checked);
+    actualizarTotal();
+}
+
+function actualizarTotal() {
+    const checks = document.querySelectorAll('.boleta-check:checked');
+    let total = 0;
+    let count = 0;
+
+    checks.forEach(check => {
+        const item = check.closest('.boleta-item');
+        const totalValue = parseInt(item.dataset.total) || 0;
+        total += totalValue;
+        count++;
+    });
+
+    const formatted = total.toLocaleString('es-CL');
+
+    // Actualizar sticky bar
+    document.getElementById('totalStickyBar').textContent = '$' + formatted;
+
+    // Actualizar modal
+    document.getElementById('totalModal').textContent = '$' + formatted;
+    document.getElementById('cantidadSeleccionadas').textContent = count;
+
+    // Actualizar boton pagar
+    const btnPagar = document.querySelector('.btn-pagar');
+    if (btnPagar) {
+        if (count > 0) {
+            btnPagar.textContent = 'Pagar $' + formatted;
+            btnPagar.disabled = false;
+        } else {
+            btnPagar.textContent = 'Pagar';
+            btnPagar.disabled = true;
+        }
+    }
+}
+
+function toggleDetalle(boletaId) {
+    const detalle = document.getElementById('detalle-' + boletaId);
+    const btn = detalle.previousElementSibling.querySelector('.btn-expandir');
+
+    if (detalle.classList.contains('show')) {
+        detalle.classList.remove('show');
+        btn.classList.remove('rotated');
+    } else {
+        detalle.classList.add('show');
+        btn.classList.add('rotated');
+    }
+}
+
+function abrirModalPago() {
+    const checks = document.querySelectorAll('.boleta-check:checked');
+    if (checks.length === 0) {
+        alert('Debe seleccionar al menos una boleta');
+        return;
+    }
+
+    // Copiar boletas seleccionadas al form del modal
+    const container = document.getElementById('boletasHidden');
+    container.innerHTML = '';
+    checks.forEach(check => {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'boletas';
+        hidden.value = check.value;
+        container.appendChild(hidden);
+    });
+
+    document.getElementById('modalPago').classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalPago() {
+    document.getElementById('modalPago').classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// Cerrar modal con Escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        cerrarModalPago();
+    }
+});
+
+// Cerrar modal al hacer click fuera
+document.getElementById('modalPago').addEventListener('click', function(e) {
+    if (e.target === this) {
+        cerrarModalPago();
+    }
+});
+
+// Validar formulario
+document.getElementById('formPago').addEventListener('submit', function(e) {
+    const comprobante = document.getElementById('comprobante');
+    if (!comprobante.files.length) {
+        e.preventDefault();
+        alert('Debe adjuntar un comprobante de pago');
+        return;
+    }
+
+    if (comprobante.files[0].size > 5 * 1024 * 1024) {
+        e.preventDefault();
+        alert('El archivo no debe superar 5MB');
+        return;
+    }
+});
+
+// Inicializar total al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarTotal();
+});
+</script>
 {% endblock %}

@@ -56,27 +56,37 @@ body {
     background: var(--portal-dark);
     color: var(--portal-white);
     padding: 1rem;
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .portal-header h1 {
     font-size: 1.25rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.portal-header p {
-    font-size: 0.875rem;
     margin: 0;
 }
 
-.portal-header a {
-    color: var(--portal-primary);
+.btn-salir {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    color: var(--portal-white);
     text-decoration: none;
+    transition: all var(--portal-transition);
 }
 
-.portal-header a:hover {
-    text-decoration: underline;
+.btn-salir:hover {
+    background: var(--portal-danger);
+    transform: scale(1.05);
+}
+
+.btn-salir svg {
+    flex-shrink: 0;
 }
 
 /* ====================================
@@ -596,6 +606,425 @@ body {
 .mb-1 { margin-bottom: 0.5rem; }
 .mb-2 { margin-bottom: 1rem; }
 .mb-3 { margin-bottom: 1.5rem; }
+
+/* ====================================
+   Sticky Bar de Pago
+   ==================================== */
+
+.pago-sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--portal-primary);
+    color: white;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: var(--portal-radius);
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.pago-sticky-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.pago-sticky-count {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.pago-sticky-total {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.btn-pagar {
+    padding: 10px 20px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.btn-pagar:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ====================================
+   Lista Compacta de Boletas
+   ==================================== */
+
+.boletas-lista-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.boleta-item {
+    background: white;
+    border-radius: var(--portal-radius);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid var(--portal-border);
+}
+
+.boleta-item.boleta-rechazada {
+    border-left: 4px solid var(--portal-danger);
+}
+
+.boleta-item.en-revision {
+    border-left: 4px solid var(--portal-primary);
+    opacity: 0.85;
+}
+
+.boleta-row {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    gap: 12px;
+}
+
+.boleta-row input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.boleta-info-compact {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.boleta-numero {
+    font-weight: 600;
+    color: var(--portal-dark);
+}
+
+.boleta-periodo {
+    font-size: 0.85rem;
+    color: var(--portal-gray);
+}
+
+.boleta-estado-tag {
+    font-size: 0.75rem;
+    background: #cce5ff;
+    color: #004085;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.boleta-monto {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--portal-primary);
+    white-space: nowrap;
+}
+
+.boleta-acciones {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--portal-gray);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all var(--portal-transition);
+}
+
+.btn-icon:hover {
+    background: var(--portal-light-gray);
+    color: var(--portal-primary);
+}
+
+.btn-expandir {
+    transition: transform var(--portal-transition);
+}
+
+.btn-expandir.rotated {
+    transform: rotate(180deg);
+}
+
+/* Detalle expandible */
+.boleta-detalle {
+    display: none;
+    background: var(--portal-light-gray);
+    padding: 12px;
+    border-top: 1px solid var(--portal-border);
+}
+
+.boleta-detalle.show {
+    display: block;
+}
+
+.detalle-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.detalle-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detalle-label {
+    font-size: 0.75rem;
+    color: var(--portal-gray);
+    text-transform: uppercase;
+}
+
+.detalle-value {
+    font-weight: 500;
+    color: var(--portal-dark);
+}
+
+.alerta-rechazo {
+    background: #fff3cd;
+    border-left: 4px solid #ffc107;
+    padding: 10px 12px;
+    margin-top: 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.alerta-rechazo strong {
+    color: #856404;
+}
+
+.alerta-rechazo a {
+    color: var(--portal-primary);
+}
+
+/* Info de revision */
+.boleta-revision-info {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--portal-light-gray);
+    font-size: 0.85rem;
+}
+
+.boleta-revision-info a {
+    color: var(--portal-primary);
+}
+
+/* ====================================
+   Seccion En Revision (Details)
+   ==================================== */
+
+.seccion-revision {
+    margin-top: 24px;
+    border: 1px solid var(--portal-border);
+    border-radius: var(--portal-radius);
+    overflow: hidden;
+}
+
+.seccion-revision summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--portal-light-gray);
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--portal-dark);
+    list-style: none;
+}
+
+.seccion-revision summary::-webkit-details-marker {
+    display: none;
+}
+
+.seccion-revision summary::after {
+    content: '';
+    margin-left: auto;
+    border: solid var(--portal-gray);
+    border-width: 0 2px 2px 0;
+    padding: 4px;
+    transform: rotate(45deg);
+    transition: transform var(--portal-transition);
+}
+
+.seccion-revision[open] summary::after {
+    transform: rotate(-135deg);
+}
+
+.revision-badge {
+    background: var(--portal-primary);
+    color: white;
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.seccion-revision .boletas-lista-compact {
+    padding: 12px;
+}
+
+/* ====================================
+   Modal de Pago
+   ==================================== */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 16px 16px 0 0;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+}
+
+.modal-overlay.show .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--portal-border);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--portal-dark);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--portal-gray);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--portal-dark);
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.pago-resumen-modal {
+    background: var(--portal-light-gray);
+    padding: 16px;
+    border-radius: var(--portal-radius);
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.pago-resumen-modal p {
+    margin: 0;
+}
+
+.pago-resumen-modal .total-grande {
+    font-size: 1.5rem;
+    margin-top: 8px;
+}
+
+.pago-resumen-modal .total-grande strong {
+    color: var(--portal-primary);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid var(--portal-border);
+}
+
+.modal-footer .btn {
+    flex: 1;
+}
+
+/* ====================================
+   Responsive - Desktop Modal
+   ==================================== */
+
+@media (min-width: 768px) {
+    .modal-overlay {
+        align-items: center;
+    }
+
+    .modal-content {
+        border-radius: 16px;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    .modal-overlay.show .modal-content {
+        transform: translateY(0) scale(1);
+    }
+
+    .detalle-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 400px) {
+    .detalle-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .pago-sticky-bar {
+        padding: 10px 12px;
+    }
+
+    .pago-sticky-total {
+        font-size: 1.1rem;
+    }
+
+    .btn-pagar {
+        padding: 8px 14px;
+        font-size: 0.9rem;
+    }
+}
 
 /* ====================================
    Accesibilidad
