@@ -100,8 +100,8 @@ def crear_lectura_mobile():
         mes = request.form.get('mes', type=int)
         foto = request.files.get('foto')
 
-        # Validar campos requeridos
-        if not medidor_id or not lectura_m3 or not año or not mes:
+        # Validar campos requeridos (lectura_m3 puede ser 0)
+        if not medidor_id or lectura_m3 is None or not año or not mes:
             return jsonify({'error': 'Campos requeridos faltantes'}), 400
 
         # Validar foto requerida

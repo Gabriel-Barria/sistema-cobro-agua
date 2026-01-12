@@ -104,8 +104,8 @@ def crear():
         año = request.form.get('año', type=int)
         mes = request.form.get('mes', type=int)
 
-        # Validar
-        if not all([medidor_id, lectura_m3, fecha_str, año, mes]):
+        # Validar (lectura_m3 puede ser 0)
+        if not medidor_id or lectura_m3 is None or not fecha_str or not año or not mes:
             flash('Todos los campos son requeridos', 'error')
             return redirect(url_for('lecturas.crear'))
 
