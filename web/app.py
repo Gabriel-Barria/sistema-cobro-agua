@@ -41,6 +41,9 @@ def health():
 @app.route('/foto/<path:filename>')
 def servir_foto(filename):
     """Sirve las fotos desde el directorio de fotos de la app."""
+    # Si filename empieza con 'fotos/', quitarlo para evitar duplicacion
+    if filename.startswith('fotos/'):
+        filename = filename[6:]  # Quitar 'fotos/'
     fotos_dir = os.path.join(APP_DIR, 'fotos')
     return send_from_directory(fotos_dir, filename)
 
