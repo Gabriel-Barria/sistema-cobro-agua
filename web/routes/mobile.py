@@ -131,7 +131,7 @@ def crear_lectura_mobile():
         foto.save(foto_path_completa)
 
         # Ruta relativa para BD
-        foto_path = f'fotos/medidor_{medidor_id}/{año}/{mes:02d}/{foto_nombre}'
+        foto_path = f'medidor_{medidor_id}/{año}/{mes:02d}/{foto_nombre}'
 
         # Crear lectura
         lectura_id = crear_lectura(

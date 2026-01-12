@@ -131,7 +131,7 @@ def crear():
                 destino = os.path.join(destino_dir, filename)
                 file.save(destino)
 
-                foto_path = f'fotos/medidor_{medidor_id}/{año}/{mes:02d}/{filename}'
+                foto_path = f'medidor_{medidor_id}/{año}/{mes:02d}/{filename}'
                 foto_nombre = filename
 
         # Ajustar foto_path para lecturas sin foto
