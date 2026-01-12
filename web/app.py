@@ -89,6 +89,9 @@ def fecha_formato(fecha):
     """Convierte fecha a formato dd/mm/yyyy."""
     if not fecha:
         return '-'
+    # Si es objeto date o datetime
+    if hasattr(fecha, 'strftime'):
+        return fecha.strftime('%d/%m/%Y')
     if isinstance(fecha, str):
         # Si viene como yyyy-mm-dd
         if '-' in fecha and len(fecha) == 10:
