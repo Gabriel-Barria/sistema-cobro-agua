@@ -94,10 +94,16 @@ def eliminar(medidor_id):
         flash('Medidor no encontrado', 'error')
         return redirect(url_for('medidores.listar'))
 
-    if eliminar_medidor(medidor_id):
-        flash('Medidor eliminado', 'success')
-    else:
+    exito, motivo = eliminar_medidor(medidor_id)
+
+    if exito:
+        flash('Medidor eliminado exitosamente', 'success')
+    elif motivo == "lecturas":
         flash('No se puede eliminar el medidor porque tiene lecturas asociadas', 'error')
+    elif motivo == "boletas":
+        flash('No se puede eliminar el medidor porque tiene boletas asociadas', 'error')
+    else:
+        flash('Error al eliminar el medidor', 'error')
 
     return redirect(url_for('medidores.listar'))
 

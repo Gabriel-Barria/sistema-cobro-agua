@@ -94,9 +94,13 @@ def eliminar(cliente_id):
         flash('Cliente no encontrado', 'error')
         return redirect(url_for('clientes.listar'))
 
-    if eliminar_cliente(cliente_id):
-        flash('Cliente eliminado', 'success')
-    else:
+    exito, motivo = eliminar_cliente(cliente_id)
+
+    if exito:
+        flash('Cliente eliminado exitosamente', 'success')
+    elif motivo == "medidores":
         flash('No se puede eliminar el cliente porque tiene medidores asociados', 'error')
+    else:
+        flash('Error al eliminar el cliente', 'error')
 
     return redirect(url_for('clientes.listar'))

@@ -7,6 +7,7 @@
     <h1>{{ cliente.nombre }}</h1>
     <div class="header-actions">
         <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn">Editar</a>
+        <button type="button" class="btn btn-danger" onclick="mostrarModalEliminar()">Eliminar</button>
         <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Volver</a>
     </div>
 </div>
@@ -32,4 +33,29 @@
 
 <h2>Lecturas</h2>
 <a href="{{ url_for('lecturas.listar', cliente_id=cliente.id) }}" class="btn">Ver todas las lecturas</a>
+
+<!-- Modal Eliminar Cliente -->
+<div id="modalEliminar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Eliminar Cliente</h3>
+        <p>Esta a punto de eliminar al cliente <strong>{{ cliente.nombre }}</strong>.</p>
+        <p class="text-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el cliente no tiene medidores asociados.</p>
+        <form method="POST" action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}">
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">Confirmar Eliminacion</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalEliminar()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function mostrarModalEliminar() {
+    document.getElementById('modalEliminar').style.display = 'flex';
+}
+
+function cerrarModalEliminar() {
+    document.getElementById('modalEliminar').style.display = 'none';
+}
+</script>
 {% endblock %}
