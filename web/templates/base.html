@@ -4,50 +4,165 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Sistema de Lecturas{% endblock %}</title>
+
+    <!-- Estilos -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fontawesome/css/all.min.css') }}">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">
-            <a href="{{ url_for('index') }}">Sistema de Lecturas</a>
+    <!-- Overlay para mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <!-- Header del sidebar -->
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <i class="fas fa-tint"></i>
+                <span class="sidebar-text">Sistema de Lecturas</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
-        <ul class="nav-links">
-            <li><a href="{{ url_for('index') }}">Inicio</a></li>
-            <li><a href="{{ url_for('lecturas.listar') }}">Lecturas</a></li>
-            <li><a href="{{ url_for('boletas.listar') }}">Boletas</a></li>
-            {% if session.get('rol') == 'administrador' %}
-            <li><a href="{{ url_for('boletas.historial_pagos') }}">Historial Pagos</a></li>
-            {% endif %}
-            <li><a href="{{ url_for('clientes.listar') }}">Clientes</a></li>
-            <li><a href="{{ url_for('medidores.listar') }}">Medidores</a></li>
-            {% if session.get('rol') == 'administrador' %}
-            <li><a href="{{ url_for('usuarios.lista') }}" class="{% if request.endpoint and 'usuarios' in request.endpoint %}active{% endif %}">Usuarios</a></li>
-            {% endif %}
-        </ul>
+
+        <!-- Navegación -->
+        <nav class="sidebar-nav">
+            <ul class="sidebar-menu">
+                <!-- Dashboard -->
+                <li class="menu-item">
+                    <a href="{{ url_for('index') }}" class="menu-link {% if request.endpoint == 'index' %}active{% endif %}">
+                        <i class="fas fa-home"></i>
+                        <span class="menu-text">Dashboard</span>
+                    </a>
+                </li>
+
+                <!-- Lecturas -->
+                <li class="menu-item">
+                    <a href="{{ url_for('lecturas.listar') }}" class="menu-link {% if request.endpoint and 'lecturas' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span class="menu-text">Lecturas</span>
+                    </a>
+                </li>
+
+                <!-- Boletas -->
+                <li class="menu-item has-submenu">
+                    <a href="{{ url_for('boletas.listar') }}" class="menu-link {% if request.endpoint and 'boletas' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        <span class="menu-text">Boletas</span>
+                    </a>
+                </li>
+
+                {% if session.get('rol') == 'administrador' %}
+                <!-- Historial de Pagos (solo admin) -->
+                <li class="menu-item menu-item-indent">
+                    <a href="{{ url_for('boletas.historial_pagos') }}" class="menu-link {% if request.endpoint == 'boletas.historial_pagos' %}active{% endif %}">
+                        <i class="fas fa-history"></i>
+                        <span class="menu-text">Historial Pagos</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Clientes -->
+                <li class="menu-item">
+                    <a href="{{ url_for('clientes.listar') }}" class="menu-link {% if request.endpoint and 'clientes' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span class="menu-text">Clientes</span>
+                    </a>
+                </li>
+
+                <!-- Medidores -->
+                <li class="menu-item">
+                    <a href="{{ url_for('medidores.listar') }}" class="menu-link {% if request.endpoint and 'medidores' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-gauge-high"></i>
+                        <span class="menu-text">Medidores</span>
+                    </a>
+                </li>
+
+                {% if session.get('rol') == 'administrador' %}
+                <!-- Usuarios (solo admin) -->
+                <li class="menu-item">
+                    <a href="{{ url_for('usuarios.lista') }}" class="menu-link {% if request.endpoint and 'usuarios' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-user-shield"></i>
+                        <span class="menu-text">Usuarios</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Separador -->
+                <li class="menu-separator"></li>
+
+                <!-- Interfaz Mobile -->
+                {% if session.get('rol') == 'administrador' %}
+                <li class="menu-item">
+                    <a href="/mobile/lecturas" class="menu-link">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span class="menu-text">Vista Mobile</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <!-- Portal Público -->
+                <li class="menu-item">
+                    <a href="/portal/" class="menu-link" target="_blank">
+                        <i class="fas fa-globe"></i>
+                        <span class="menu-text">Portal Público</span>
+                        <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 0.75rem;"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Footer del sidebar (Usuario) -->
         {% if session.get('usuario_id') %}
-        <div class="user-section" style="display: flex; align-items: center; gap: 1rem; margin-left: auto;">
-            <span style="color: #fff;">{{ session.get('nombre_completo', 'Usuario') }}</span>
-            <a href="{{ url_for('auth.logout') }}" class="btn-logout" style="padding: 0.5rem 1rem; background: #dc3545; color: white; text-decoration: none; border-radius: 4px;">Cerrar Sesión</a>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <span class="user-name">{{ session.get('nombre_completo', 'Usuario') }}</span>
+                    <span class="user-role">{{ session.get('rol', '').title() }}</span>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Cerrar Sesión">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
         </div>
         {% endif %}
-    </nav>
+    </aside>
 
-    <main class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+    <!-- Main content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top bar mobile -->
+        <div class="mobile-topbar">
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="mobile-title">Sistema de Lecturas</h1>
+        </div>
 
-        {% block content %}{% endblock %}
+        <!-- Contenedor del contenido -->
+        <div class="content-wrapper">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Sistema de Lecturas de Medidores</p>
+        </footer>
     </main>
 
-    <footer class="footer">
-        <p>Sistema de Lecturas de Medidores</p>
-    </footer>
-
+    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Función para ordenar tabla
