@@ -70,18 +70,48 @@ def obtener_o_crear_cliente(nombre: str) -> int:
     return crear_cliente(nombre)
 
 
-def listar_clientes() -> List[Dict]:
-    """Lista todos los clientes."""
+def listar_clientes(busqueda: str = None, con_medidores: str = None) -> List[Dict]:
+    """
+    Lista clientes con filtros opcionales.
+
+    Args:
+        busqueda: Texto para buscar en nombre, nombre_completo o RUT
+        con_medidores: 'si' para clientes con medidores, 'no' para sin medidores, None para todos
+
+    Returns:
+        Lista de clientes con conteo de medidores
+    """
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('''
+
+    query = '''
         SELECT c.*,
                COUNT(m.id) as num_medidores
         FROM clientes c
         LEFT JOIN medidores m ON c.id = m.cliente_id
-        GROUP BY c.id
-        ORDER BY c.nombre
-    ''')
+        WHERE 1=1
+    '''
+    params = []
+
+    if busqueda:
+        query += ''' AND (
+            LOWER(c.nombre) LIKE LOWER(%s) OR
+            LOWER(c.nombre_completo) LIKE LOWER(%s) OR
+            LOWER(c.rut) LIKE LOWER(%s)
+        )'''
+        busqueda_param = f'%{busqueda}%'
+        params.extend([busqueda_param, busqueda_param, busqueda_param])
+
+    query += ' GROUP BY c.id'
+
+    if con_medidores == 'si':
+        query += ' HAVING COUNT(m.id) > 0'
+    elif con_medidores == 'no':
+        query += ' HAVING COUNT(m.id) = 0'
+
+    query += ' ORDER BY c.nombre'
+
+    cursor.execute(query, params)
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -194,8 +224,19 @@ def obtener_o_crear_medidor(cliente_id: int) -> int:
     return crear_medidor(cliente_id)
 
 
-def listar_medidores(cliente_id: int = None) -> List[Dict]:
-    """Lista medidores con información del cliente, opcionalmente filtrado por cliente."""
+def listar_medidores(cliente_id: int = None, busqueda: str = None,
+                     estado: str = None) -> List[Dict]:
+    """
+    Lista medidores con filtros opcionales.
+
+    Args:
+        cliente_id: Filtrar por cliente específico
+        busqueda: Texto para buscar en numero_medidor, direccion o nombre de cliente
+        estado: 'activo' o 'inactivo', None para todos
+
+    Returns:
+        Lista de medidores con info del cliente y conteo de lecturas
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -205,12 +246,27 @@ def listar_medidores(cliente_id: int = None) -> List[Dict]:
         FROM medidores m
         JOIN clientes c ON m.cliente_id = c.id
         LEFT JOIN lecturas l ON m.id = l.medidor_id
+        WHERE 1=1
     '''
     params = []
 
     if cliente_id:
-        query += ' WHERE m.cliente_id = %s'
+        query += ' AND m.cliente_id = %s'
         params.append(cliente_id)
+
+    if busqueda:
+        query += ''' AND (
+            LOWER(m.numero_medidor) LIKE LOWER(%s) OR
+            LOWER(m.direccion) LIKE LOWER(%s) OR
+            LOWER(c.nombre) LIKE LOWER(%s)
+        )'''
+        busqueda_param = f'%{busqueda}%'
+        params.extend([busqueda_param, busqueda_param, busqueda_param])
+
+    if estado == 'activo':
+        query += ' AND m.activo = 1'
+    elif estado == 'inactivo':
+        query += ' AND m.activo = 0'
 
     query += ' GROUP BY m.id, c.nombre ORDER BY c.nombre'
 

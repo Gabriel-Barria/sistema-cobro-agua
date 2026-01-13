@@ -16,9 +16,20 @@ medidores_bp = Blueprint('medidores', __name__)
 @medidores_bp.route('/')
 @admin_required
 def listar():
-    """Lista todos los medidores."""
-    medidores = listar_medidores()
-    return render_template('medidores/lista.html', medidores=medidores)
+    """Lista todos los medidores con filtros."""
+    busqueda = request.args.get('busqueda', '').strip() or None
+    estado = request.args.get('estado', '').strip() or None
+    cliente_id = request.args.get('cliente_id', type=int) or None
+
+    medidores = listar_medidores(cliente_id=cliente_id, busqueda=busqueda, estado=estado)
+    clientes = listar_clientes()
+
+    return render_template('medidores/lista.html',
+                           medidores=medidores,
+                           clientes=clientes,
+                           busqueda=busqueda or '',
+                           estado=estado or '',
+                           cliente_id=cliente_id or '')
 
 
 @medidores_bp.route('/nuevo', methods=['GET', 'POST'])
