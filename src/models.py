@@ -267,8 +267,17 @@ def actualizar_medidor(medidor_id: int, numero_medidor: str = None,
     return affected > 0
 
 
-def eliminar_medidor(medidor_id: int) -> bool:
-    """Elimina un medidor (solo si no tiene lecturas)."""
+def eliminar_medidor(medidor_id: int) -> tuple:
+    """
+    Elimina un medidor (solo si no tiene lecturas ni boletas).
+
+    Returns:
+        tuple: (exito: bool, mensaje: str)
+            - (True, "ok") si se eliminó correctamente
+            - (False, "lecturas") si tiene lecturas asociadas
+            - (False, "boletas") si tiene boletas asociadas
+            - (False, "error") si hubo un error
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -276,13 +285,22 @@ def eliminar_medidor(medidor_id: int) -> bool:
     cursor.execute('SELECT COUNT(*) FROM lecturas WHERE medidor_id = %s', (medidor_id,))
     if cursor.fetchone()[0] > 0:
         conn.close()
-        return False
+        return (False, "lecturas")
+
+    # Verificar si tiene boletas
+    cursor.execute('SELECT COUNT(*) FROM boletas WHERE medidor_id = %s', (medidor_id,))
+    if cursor.fetchone()[0] > 0:
+        conn.close()
+        return (False, "boletas")
 
     cursor.execute('DELETE FROM medidores WHERE id = %s', (medidor_id,))
     conn.commit()
     affected = cursor.rowcount
     conn.close()
-    return affected > 0
+
+    if affected > 0:
+        return (True, "ok")
+    return (False, "error")
 
 
 def desactivar_medidor(medidor_id: int, fecha_baja: str, motivo_baja: str = None) -> bool:
@@ -343,8 +361,16 @@ def reactivar_medidor(medidor_id: int, fecha_inicio: str = None) -> bool:
     return affected > 0
 
 
-def eliminar_cliente(cliente_id: int) -> bool:
-    """Elimina un cliente (solo si no tiene medidores)."""
+def eliminar_cliente(cliente_id: int) -> tuple:
+    """
+    Elimina un cliente (solo si no tiene medidores).
+
+    Returns:
+        tuple: (exito: bool, mensaje: str)
+            - (True, "ok") si se eliminó correctamente
+            - (False, "medidores") si tiene medidores asociados
+            - (False, "error") si hubo un error
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -352,13 +378,16 @@ def eliminar_cliente(cliente_id: int) -> bool:
     cursor.execute('SELECT COUNT(*) FROM medidores WHERE cliente_id = %s', (cliente_id,))
     if cursor.fetchone()[0] > 0:
         conn.close()
-        return False
+        return (False, "medidores")
 
     cursor.execute('DELETE FROM clientes WHERE id = %s', (cliente_id,))
     conn.commit()
     affected = cursor.rowcount
     conn.close()
-    return affected > 0
+
+    if affected > 0:
+        return (True, "ok")
+    return (False, "error")
 
 
 # ============== LECTURAS ==============

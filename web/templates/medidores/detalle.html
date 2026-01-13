@@ -5,7 +5,11 @@
 {% block content %}
 <div class="page-header">
     <h1>Medidor #{{ medidor.id }}</h1>
-    <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Volver</a>
+    <div class="header-actions">
+        <a href="{{ url_for('medidores.editar', medidor_id=medidor.id) }}" class="btn">Editar</a>
+        <button type="button" class="btn btn-danger" onclick="mostrarModalEliminar()">Eliminar</button>
+        <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Volver</a>
+    </div>
 </div>
 
 <div class="detalle-info">
@@ -121,6 +125,21 @@
     </div>
 </div>
 
+<!-- Modal Eliminar -->
+<div id="modalEliminar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Eliminar Medidor</h3>
+        <p>Esta a punto de eliminar el medidor <strong>#{{ medidor.id }}</strong> del cliente <strong>{{ medidor.cliente_nombre }}</strong>.</p>
+        <p class="text-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el medidor no tiene lecturas ni boletas asociadas.</p>
+        <form method="POST" action="{{ url_for('medidores.eliminar', medidor_id=medidor.id) }}">
+            <div class="form-actions">
+                <button type="submit" class="btn btn-danger">Confirmar Eliminacion</button>
+                <button type="button" class="btn btn-secondary" onclick="cerrarModalEliminar()">Cancelar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 function mostrarModalDesactivar() {
     document.getElementById('modalDesactivar').style.display = 'flex';
@@ -136,6 +155,14 @@ function mostrarModalReactivar() {
 
 function cerrarModalReactivar() {
     document.getElementById('modalReactivar').style.display = 'none';
+}
+
+function mostrarModalEliminar() {
+    document.getElementById('modalEliminar').style.display = 'flex';
+}
+
+function cerrarModalEliminar() {
+    document.getElementById('modalEliminar').style.display = 'none';
 }
 </script>
 {% endblock %}
