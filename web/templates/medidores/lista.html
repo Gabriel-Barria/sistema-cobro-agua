@@ -8,6 +8,30 @@
     <a href="{{ url_for('medidores.crear') }}" class="btn btn-primary">Nuevo Medidor</a>
 </div>
 
+<!-- Filtros -->
+<div class="filters">
+    <form method="GET" class="filter-form">
+        <input type="text" name="busqueda" placeholder="Buscar medidor, direccion, cliente..." value="{{ busqueda }}" class="filter-input">
+        <select name="cliente_id">
+            <option value="">Todos los clientes</option>
+            {% for c in clientes %}
+            <option value="{{ c.id }}" {% if cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+            {% endfor %}
+        </select>
+        <select name="estado">
+            <option value="">Todos los estados</option>
+            <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activos</option>
+            <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+        </select>
+        <button type="submit" class="btn">Filtrar</button>
+        {% if busqueda or estado or cliente_id %}
+        <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Limpiar</a>
+        {% endif %}
+    </form>
+</div>
+
+<p class="total-results">Mostrando {{ medidores|length }} medidor(es)</p>
+
 <table class="data-table">
     <thead>
         <tr>

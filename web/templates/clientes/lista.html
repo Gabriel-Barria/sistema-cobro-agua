@@ -8,6 +8,24 @@
     <a href="{{ url_for('clientes.crear') }}" class="btn btn-primary">Nuevo Cliente</a>
 </div>
 
+<!-- Filtros -->
+<div class="filters">
+    <form method="GET" class="filter-form">
+        <input type="text" name="busqueda" placeholder="Buscar por nombre, RUT..." value="{{ busqueda }}" class="filter-input">
+        <select name="con_medidores">
+            <option value="">Todos los clientes</option>
+            <option value="si" {% if con_medidores == 'si' %}selected{% endif %}>Con medidores</option>
+            <option value="no" {% if con_medidores == 'no' %}selected{% endif %}>Sin medidores</option>
+        </select>
+        <button type="submit" class="btn">Filtrar</button>
+        {% if busqueda or con_medidores %}
+        <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Limpiar</a>
+        {% endif %}
+    </form>
+</div>
+
+<p class="total-results">Mostrando {{ clientes|length }} cliente(s)</p>
+
 <table class="data-table">
     <thead>
         <tr>

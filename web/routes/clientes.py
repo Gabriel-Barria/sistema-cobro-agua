@@ -15,9 +15,16 @@ clientes_bp = Blueprint('clientes', __name__)
 @clientes_bp.route('/')
 @admin_required
 def listar():
-    """Lista todos los clientes."""
-    clientes = listar_clientes()
-    return render_template('clientes/lista.html', clientes=clientes)
+    """Lista todos los clientes con filtros."""
+    busqueda = request.args.get('busqueda', '').strip() or None
+    con_medidores = request.args.get('con_medidores', '').strip() or None
+
+    clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores)
+
+    return render_template('clientes/lista.html',
+                           clientes=clientes,
+                           busqueda=busqueda or '',
+                           con_medidores=con_medidores or '')
 
 
 @clientes_bp.route('/nuevo', methods=['GET', 'POST'])
