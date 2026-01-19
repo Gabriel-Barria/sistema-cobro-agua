@@ -457,6 +457,29 @@ function aprobarBoleta(boletaId) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/boletas/${boletaId}/aprobar`;
+
+        // Agregar campos hidden para preservar filtros
+        const filtros = {
+            'cliente_id': '{{ filtros.cliente_id or "" }}',
+            'medidor_id': '{{ filtros.medidor_id or "" }}',
+            'año': '{{ filtros.año or "" }}',
+            'mes': '{{ filtros.mes or "" }}',
+            'pagada': '{{ filtros.pagada if filtros.pagada is not none else "" }}',
+            'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}',
+            'sort_by': '{{ filtros.sort_by or "" }}',
+            'sort_order': '{{ filtros.sort_order or "" }}'
+        };
+
+        for (const [key, value] of Object.entries(filtros)) {
+            if (value) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+        }
+
         document.body.appendChild(form);
         form.submit();
     }
@@ -470,11 +493,33 @@ function rechazarBoleta(boletaId) {
         form.method = 'POST';
         form.action = `/boletas/${boletaId}/rechazar`;
 
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'motivo';
-        input.value = motivo.trim();
-        form.appendChild(input);
+        const inputMotivo = document.createElement('input');
+        inputMotivo.type = 'hidden';
+        inputMotivo.name = 'motivo';
+        inputMotivo.value = motivo.trim();
+        form.appendChild(inputMotivo);
+
+        // Agregar campos hidden para preservar filtros
+        const filtros = {
+            'cliente_id': '{{ filtros.cliente_id or "" }}',
+            'medidor_id': '{{ filtros.medidor_id or "" }}',
+            'año': '{{ filtros.año or "" }}',
+            'mes': '{{ filtros.mes or "" }}',
+            'pagada': '{{ filtros.pagada if filtros.pagada is not none else "" }}',
+            'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}',
+            'sort_by': '{{ filtros.sort_by or "" }}',
+            'sort_order': '{{ filtros.sort_order or "" }}'
+        };
+
+        for (const [key, value] of Object.entries(filtros)) {
+            if (value) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+        }
 
         document.body.appendChild(form);
         form.submit();
