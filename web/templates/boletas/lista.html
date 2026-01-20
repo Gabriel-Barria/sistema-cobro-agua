@@ -215,11 +215,11 @@
             <form id="formPago" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="volver_a_lista" value="1">
                 <!-- Campos hidden para preservar filtros -->
-                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id or '' }}">
-                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id or '' }}">
-                <input type="hidden" name="año" value="{{ filtros.año or '' }}">
-                <input type="hidden" name="mes" value="{{ filtros.mes or '' }}">
-                <input type="hidden" name="pagada" value="{{ filtros.pagada or '' }}">
+                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
+                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
+                <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+                <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
+                <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
                 <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
                 <!-- Campos hidden para preservar ordenamiento -->
                 <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
@@ -259,11 +259,11 @@
             <form id="formDesmarcar" method="POST">
                 <input type="hidden" name="volver_a_lista" value="1">
                 <!-- Campos hidden para preservar filtros -->
-                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id or '' }}">
-                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id or '' }}">
-                <input type="hidden" name="año" value="{{ filtros.año or '' }}">
-                <input type="hidden" name="mes" value="{{ filtros.mes or '' }}">
-                <input type="hidden" name="pagada" value="{{ filtros.pagada or '' }}">
+                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
+                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
+                <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+                <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
+                <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
                 <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
                 <!-- Campos hidden para preservar ordenamiento -->
                 <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
@@ -290,11 +290,11 @@
             <form id="formComprobante" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="volver_a_lista" value="1">
                 <!-- Campos hidden para preservar filtros -->
-                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id or '' }}">
-                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id or '' }}">
-                <input type="hidden" name="año" value="{{ filtros.año or '' }}">
-                <input type="hidden" name="mes" value="{{ filtros.mes or '' }}">
-                <input type="hidden" name="pagada" value="{{ filtros.pagada or '' }}">
+                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
+                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
+                <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+                <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
+                <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
                 <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
                 <!-- Campos hidden para preservar ordenamiento -->
                 <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
