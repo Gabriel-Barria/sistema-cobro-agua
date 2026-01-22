@@ -17,15 +17,16 @@
             <option value="si" {% if con_medidores == 'si' %}selected{% endif %}>Con medidores</option>
             <option value="no" {% if con_medidores == 'no' %}selected{% endif %}>Sin medidores</option>
         </select>
-        <label style="display: flex; align-items: center; gap: 5px; margin: 0;">
-            <input type="checkbox" name="sin_telefono" value="1" {% if sin_telefono %}checked{% endif %}>
-            Sin telefono
-        </label>
+        <select name="filtro_telefono">
+            <option value="">Todos (telefono)</option>
+            <option value="con" {% if filtro_telefono == 'con' %}selected{% endif %}>Con telefono</option>
+            <option value="sin" {% if filtro_telefono == 'sin' %}selected{% endif %}>Sin telefono</option>
+        </select>
         <button type="submit" class="btn">Filtrar</button>
-        {% if busqueda or con_medidores or sin_telefono %}
+        {% if busqueda or con_medidores or filtro_telefono %}
         <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Limpiar</a>
         {% endif %}
-        <a href="{{ url_for('clientes.exportar', busqueda=busqueda, con_medidores=con_medidores, sin_telefono='1' if sin_telefono else '') }}"
+        <a href="{{ url_for('clientes.exportar', busqueda=busqueda, con_medidores=con_medidores, filtro_telefono=filtro_telefono) }}"
            class="btn btn-success" style="background: #28a745;">
             Exportar Excel
         </a>
@@ -83,7 +84,7 @@
                 <!-- Campos hidden para preservar filtros -->
                 <input type="hidden" name="busqueda" value="{{ busqueda }}">
                 <input type="hidden" name="con_medidores" value="{{ con_medidores }}">
-                <input type="hidden" name="sin_telefono" value="{{ '1' if sin_telefono else '' }}">
+                <input type="hidden" name="filtro_telefono" value="{{ filtro_telefono }}">
 
                 <div class="form-group">
                     <label for="edit_nombre">Nombre *</label>
