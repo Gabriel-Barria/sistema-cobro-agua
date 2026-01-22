@@ -35,6 +35,8 @@ def crear():
         nombre = request.form.get('nombre', '').strip().lower()
         nombre_completo = request.form.get('nombre_completo', '').strip() or None
         rut = request.form.get('rut', '').strip() or None
+        telefono = request.form.get('telefono', '').strip() or None
+        email = request.form.get('email', '').strip() or None
 
         if not nombre:
             flash('El nombre es requerido', 'error')
@@ -45,7 +47,7 @@ def crear():
             flash('Ya existe un cliente con ese nombre', 'error')
             return redirect(url_for('clientes.crear'))
 
-        cliente_id = crear_cliente(nombre, nombre_completo, rut)
+        cliente_id = crear_cliente(nombre, nombre_completo, rut, telefono, email)
         flash('Cliente creado exitosamente', 'success')
         return redirect(url_for('clientes.detalle', cliente_id=cliente_id))
 
@@ -77,6 +79,8 @@ def editar(cliente_id):
         nombre = request.form.get('nombre', '').strip().lower() or None
         nombre_completo = request.form.get('nombre_completo', '').strip() or None
         rut = request.form.get('rut', '').strip() or None
+        telefono = request.form.get('telefono', '').strip() or None
+        email = request.form.get('email', '').strip() or None
 
         # Verificar si el nuevo nombre ya existe (y no es el mismo cliente)
         if nombre and nombre != cliente['nombre']:
@@ -85,7 +89,8 @@ def editar(cliente_id):
                 flash('Ya existe otro cliente con ese nombre', 'error')
                 return redirect(url_for('clientes.editar', cliente_id=cliente_id))
 
-        actualizar_cliente(cliente_id, nombre=nombre, nombre_completo=nombre_completo, rut=rut)
+        actualizar_cliente(cliente_id, nombre=nombre, nombre_completo=nombre_completo,
+                          rut=rut, telefono=telefono, email=email)
         flash('Cliente actualizado', 'success')
         return redirect(url_for('clientes.detalle', cliente_id=cliente_id))
 

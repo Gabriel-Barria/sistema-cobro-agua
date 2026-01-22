@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS clientes (
     nombre TEXT NOT NULL UNIQUE,
     nombre_completo TEXT,
     rut TEXT,
+    telefono VARCHAR(20),
+    email VARCHAR(100),
     activo SMALLINT DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
