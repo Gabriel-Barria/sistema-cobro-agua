@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Saldo de {{ cliente.nombre }} - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Saldo de {{ cliente.nombre }}</h1>
+    <a href="{{ url_for('boletas.saldos_lista') }}" class="btn btn-secondary">Volver a Saldos</a>
+</div>
+
+<div class="resumen-grid">
+    <div class="resumen-card saldo">
+        <h3>Saldo a Favor</h3>
+        <div class="valor">${{ resumen.saldo_favor|formato_pesos }}</div>
+    </div>
+    <div class="resumen-card deuda">
+        <h3>Total Deuda</h3>
+        <div class="valor">${{ resumen.total_deuda|formato_pesos }}</div>
+    </div>
+    <div class="resumen-card">
+        <h3>Boletas Pendientes</h3>
+        <div class="valor">{{ resumen.boletas_pendientes }}</div>
+    </div>
+    <div class="resumen-card">
+        <h3>Pagos en Revision</h3>
+        <div class="valor">{{ resumen.pagos_en_revision }}</div>
+    </div>
+</div>
+
+<div class="section-actions">
+    <h3>Ajustar Saldo</h3>
+    <form method="POST" action="{{ url_for('boletas.ajustar_saldo', cliente_id=cliente.id) }}" class="ajuste-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="monto">Monto del ajuste *</label>
+                <input type="number" name="monto" id="monto" required step="1" placeholder="Positivo para agregar, negativo para descontar">
+                <small>Ingrese un monto positivo para aumentar el saldo o negativo para disminuirlo.</small>
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripcion *</label>
+                <input type="text" name="descripcion" id="descripcion" required placeholder="Motivo del ajuste">
+            </div>
+            <div class="form-group" style="align-self: end;">
+                <button type="submit" class="btn btn-primary" onclick="return confirm('Confirmar ajuste de saldo?')">Aplicar Ajuste</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<h3 style="margin-top: 30px;">Historial de Movimientos</h3>
+{% if movimientos %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Origen</th>
+            <th>Monto</th>
+            <th>Saldo Anterior</th>
+            <th>Saldo Nuevo</th>
+            <th>Descripcion</th>
+            <th>Referencia</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in movimientos %}
+        <tr>
+            <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>
+                {% if m.tipo == 'ingreso' %}
+                <span class="badge badge-success">Ingreso</span>
+                {% elif m.tipo == 'egreso' %}
+                <span class="badge badge-danger">Egreso</span>
+                {% else %}
+                <span class="badge badge-warning">Ajuste</span>
+                {% endif %}
+            </td>
+            <td>{{ m.origen|replace('_', ' ')|capitalize }}</td>
+            <td class="{% if m.monto > 0 %}monto-positivo{% else %}monto-negativo{% endif %}">
+                {% if m.monto > 0 %}+{% endif %}${{ m.monto|formato_pesos }}
+            </td>
+            <td>${{ m.saldo_anterior|formato_pesos }}</td>
+            <td>${{ m.saldo_nuevo|formato_pesos }}</td>
+            <td>{{ m.descripcion or '-' }}</td>
+            <td>
+                {% if m.numero_pago %}
+                <a href="{{ url_for('boletas.pago_detalle', pago_id=m.pago_id) }}">{{ m.numero_pago }}</a>
+                {% elif m.numero_boleta %}
+                <a href="{{ url_for('boletas.detalle', boleta_id=m.boleta_id) }}">{{ m.numero_boleta }}</a>
+                {% else %}
+                -
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<div style="text-align: center; padding: 40px; background: #f9f9f9; border-radius: 5px;">
+    <p>No hay movimientos registrados para este cliente.</p>
+</div>
+{% endif %}
+
+<style>
+.resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.resumen-card {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
+.resumen-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #666;
+}
+.resumen-card .valor {
+    font-size: 24px;
+    font-weight: bold;
+}
+.resumen-card.saldo {
+    background: #d4edda;
+}
+.resumen-card.saldo .valor {
+    color: #28a745;
+}
+.resumen-card.deuda {
+    background: #f8d7da;
+}
+.resumen-card.deuda .valor {
+    color: #dc3545;
+}
+
+.section-actions {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+.section-actions h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.ajuste-form .form-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    gap: 15px;
+    align-items: start;
+}
+.form-group {
+    margin-bottom: 0;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+.form-group small {
+    display: block;
+    color: #666;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+}
+.badge-success { background: #28a745; color: white; }
+.badge-danger { background: #dc3545; color: white; }
+.badge-warning { background: #ffc107; color: black; }
+
+.monto-positivo { color: #28a745; font-weight: 500; }
+.monto-negativo { color: #dc3545; font-weight: 500; }
+
+@media (max-width: 768px) {
+    .resumen-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .ajuste-form .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

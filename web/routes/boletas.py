@@ -7,7 +7,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from werkzeug.utils import secure_filename
 from weasyprint import HTML
 
-from web.auth import admin_required
+from web.auth import admin_required, get_current_user
 from src.models_boletas import (
     obtener_configuracion, guardar_configuracion,
     crear_boleta, obtener_boleta, obtener_boleta_por_lectura,
@@ -20,6 +20,11 @@ from src.models_boletas import (
     obtener_historial_pagos, listar_historial_pagos
 )
 from src.models import listar_clientes, listar_medidores, obtener_lectura
+from src.models_pagos import (
+    listar_pagos, obtener_pago, aprobar_pago, rechazar_pago,
+    registrar_pago_directo, listar_saldos_clientes, ajustar_saldo_cliente,
+    obtener_resumen_cuenta_cliente, obtener_saldo_cliente
+)
 
 boletas_bp = Blueprint('boletas', __name__)
 
@@ -881,3 +886,226 @@ def construir_url_con_filtros(endpoint):
     filtros = {k: v for k, v in filtros.items() if v}
 
     return url_for(endpoint, **filtros)
+
+
+# =============================================================================
+# NUEVO SISTEMA DE PAGOS
+# =============================================================================
+
+@boletas_bp.route('/pagos')
+@admin_required
+def pagos_lista():
+    """Lista todos los pagos registrados (nuevo historial unificado)."""
+    estado = request.args.get('estado')
+    cliente_id = request.args.get('cliente_id', type=int)
+
+    pagos = listar_pagos(cliente_id=cliente_id, estado=estado)
+    clientes = listar_clientes()
+
+    return render_template('boletas/pagos_lista.html',
+                          pagos=pagos,
+                          clientes=clientes,
+                          filtros={
+                              'estado': estado,
+                              'cliente_id': cliente_id
+                          })
+
+
+@boletas_bp.route('/pagos/<int:pago_id>')
+@admin_required
+def pago_detalle(pago_id):
+    """Muestra detalle de un pago con sus boletas asociadas."""
+    pago = obtener_pago(pago_id)
+    if not pago:
+        flash('Pago no encontrado', 'error')
+        return redirect(url_for('boletas.pagos_lista'))
+
+    return render_template('boletas/pago_detalle.html', pago=pago)
+
+
+@boletas_bp.route('/pagos/<int:pago_id>/aprobar', methods=['POST'])
+@admin_required
+def aprobar_pago_route(pago_id):
+    """Aprueba un pago en revisión."""
+    usuario = get_current_user()
+    usuario_id = usuario['id'] if usuario else None
+
+    exito, mensaje = aprobar_pago(pago_id, usuario_id)
+
+    if exito:
+        flash(mensaje, 'success')
+    else:
+        flash(mensaje, 'error')
+
+    return redirect(url_for('boletas.pagos_lista', estado='en_revision'))
+
+
+@boletas_bp.route('/pagos/<int:pago_id>/rechazar', methods=['POST'])
+@admin_required
+def rechazar_pago_route(pago_id):
+    """Rechaza un pago en revisión."""
+    motivo = request.form.get('motivo', '').strip()
+    if not motivo:
+        flash('Debe proporcionar un motivo de rechazo', 'error')
+        return redirect(url_for('boletas.pagos_lista', estado='en_revision'))
+
+    usuario = get_current_user()
+    usuario_id = usuario['id'] if usuario else None
+
+    exito, mensaje = rechazar_pago(pago_id, motivo, usuario_id)
+
+    if exito:
+        flash(mensaje, 'success')
+    else:
+        flash(mensaje, 'error')
+
+    return redirect(url_for('boletas.pagos_lista', estado='en_revision'))
+
+
+@boletas_bp.route('/registrar-pago', methods=['GET', 'POST'])
+@admin_required
+def registrar_pago_admin():
+    """Registra un pago directo desde el admin (ej: pago en efectivo)."""
+    from datetime import datetime
+    from decimal import Decimal
+
+    if request.method == 'POST':
+        cliente_id = request.form.get('cliente_id', type=int)
+        monto = request.form.get('monto', type=float)
+        metodo_pago = request.form.get('metodo_pago', 'efectivo')
+        boletas_ids = request.form.getlist('boletas')
+        fecha_pago_str = request.form.get('fecha_pago')
+        notas = request.form.get('notas', '').strip() or None
+
+        if not cliente_id or not monto or not boletas_ids:
+            flash('Debe seleccionar cliente, monto y al menos una boleta', 'error')
+            return redirect(url_for('boletas.registrar_pago_admin'))
+
+        try:
+            fecha_pago = datetime.strptime(fecha_pago_str, '%Y-%m-%d').date() if fecha_pago_str else None
+        except ValueError:
+            fecha_pago = None
+
+        usuario = get_current_user()
+        usuario_id = usuario['id'] if usuario else None
+
+        try:
+            boletas_ids = [int(b) for b in boletas_ids]
+            resultado = registrar_pago_directo(
+                cliente_id=cliente_id,
+                monto_total=Decimal(str(monto)),
+                boletas_ids=boletas_ids,
+                metodo_pago=metodo_pago,
+                usuario_id=usuario_id,
+                fecha_pago=fecha_pago,
+                notas=notas
+            )
+
+            msg = f'Pago {resultado["numero_pago"]} registrado. '
+            msg += f'${resultado["monto_aplicado"]:,.0f} aplicado a {len(resultado["boletas_afectadas"])} boleta(s).'
+            if resultado['saldo_generado'] > 0:
+                msg += f' ${resultado["saldo_generado"]:,.0f} agregado a saldo a favor.'
+
+            flash(msg, 'success')
+            return redirect(url_for('boletas.pago_detalle', pago_id=resultado['pago_id']))
+
+        except Exception as e:
+            flash(f'Error al registrar pago: {str(e)}', 'error')
+            return redirect(url_for('boletas.registrar_pago_admin'))
+
+    # GET: Mostrar formulario
+    cliente_id = request.args.get('cliente_id', type=int)
+    clientes = listar_clientes()
+
+    # Obtener boletas pendientes del cliente seleccionado
+    boletas_pendientes = []
+    if cliente_id:
+        boletas_pendientes = listar_boletas(cliente_id=cliente_id, pagada=0)
+
+    return render_template('boletas/registrar_pago.html',
+                          clientes=clientes,
+                          boletas_pendientes=boletas_pendientes,
+                          cliente_id=cliente_id)
+
+
+# =============================================================================
+# SALDOS DE CLIENTES
+# =============================================================================
+
+@boletas_bp.route('/saldos')
+@admin_required
+def saldos_lista():
+    """Lista todos los clientes con su saldo a favor."""
+    saldos = listar_saldos_clientes()
+    return render_template('boletas/saldos_lista.html', saldos=saldos)
+
+
+@boletas_bp.route('/saldos/<int:cliente_id>')
+@admin_required
+def saldo_detalle(cliente_id):
+    """Muestra detalle del saldo de un cliente."""
+    from src.models import obtener_cliente
+    from src.models_pagos import obtener_historial_movimientos
+
+    cliente = obtener_cliente(cliente_id)
+    if not cliente:
+        flash('Cliente no encontrado', 'error')
+        return redirect(url_for('boletas.saldos_lista'))
+
+    resumen = obtener_resumen_cuenta_cliente(cliente_id)
+    movimientos = obtener_historial_movimientos(cliente_id)
+
+    return render_template('boletas/saldo_detalle.html',
+                          cliente=cliente,
+                          resumen=resumen,
+                          movimientos=movimientos)
+
+
+@boletas_bp.route('/saldos/<int:cliente_id>/ajustar', methods=['POST'])
+@admin_required
+def ajustar_saldo(cliente_id):
+    """Realiza un ajuste manual al saldo del cliente."""
+    from decimal import Decimal
+
+    monto = request.form.get('monto', type=float)
+    descripcion = request.form.get('descripcion', '').strip()
+
+    if monto is None or not descripcion:
+        flash('Debe proporcionar monto y descripción', 'error')
+        return redirect(url_for('boletas.saldo_detalle', cliente_id=cliente_id))
+
+    usuario = get_current_user()
+    usuario_id = usuario['id'] if usuario else None
+
+    exito, mensaje = ajustar_saldo_cliente(
+        cliente_id=cliente_id,
+        monto=Decimal(str(monto)),
+        descripcion=descripcion,
+        usuario_id=usuario_id
+    )
+
+    if exito:
+        flash(mensaje, 'success')
+    else:
+        flash(mensaje, 'error')
+
+    return redirect(url_for('boletas.saldo_detalle', cliente_id=cliente_id))
+
+
+# =============================================================================
+# API: BOLETAS PENDIENTES POR CLIENTE
+# =============================================================================
+
+@boletas_bp.route('/api/boletas-pendientes/<int:cliente_id>')
+@admin_required
+def api_boletas_pendientes(cliente_id):
+    """Retorna boletas pendientes de un cliente en formato JSON."""
+    from flask import jsonify
+    boletas = listar_boletas(cliente_id=cliente_id, pagada=0)
+    return jsonify([{
+        'id': b['id'],
+        'numero_boleta': b['numero_boleta'],
+        'periodo': f"{b['periodo_mes']}/{b['periodo_año']}",
+        'total': float(b['total']),
+        'saldo_pendiente': float(b.get('saldo_pendiente', b['total']))
+    } for b in boletas])
