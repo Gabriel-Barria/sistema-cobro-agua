@@ -19,16 +19,16 @@ def listar():
     """Lista todos los clientes con filtros."""
     busqueda = request.args.get('busqueda', '').strip() or None
     con_medidores = request.args.get('con_medidores', '').strip() or None
-    sin_telefono = request.args.get('sin_telefono') == '1'
+    filtro_telefono = request.args.get('filtro_telefono', '').strip() or None
 
     clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores,
-                               sin_telefono=sin_telefono)
+                               filtro_telefono=filtro_telefono)
 
     return render_template('clientes/lista.html',
                            clientes=clientes,
                            busqueda=busqueda or '',
                            con_medidores=con_medidores or '',
-                           sin_telefono=sin_telefono)
+                           filtro_telefono=filtro_telefono or '')
 
 
 @clientes_bp.route('/nuevo', methods=['GET', 'POST'])
@@ -105,7 +105,7 @@ def editar(cliente_id):
             filtros = {
                 'busqueda': request.form.get('busqueda', '').strip() or None,
                 'con_medidores': request.form.get('con_medidores', '').strip() or None,
-                'sin_telefono': request.form.get('sin_telefono') or None
+                'filtro_telefono': request.form.get('filtro_telefono', '').strip() or None
             }
             # Limpiar valores None
             filtros = {k: v for k, v in filtros.items() if v}
@@ -148,11 +148,11 @@ def exportar():
     # Obtener parametros de filtro
     busqueda = request.args.get('busqueda', '').strip() or None
     con_medidores = request.args.get('con_medidores', '').strip() or None
-    sin_telefono = request.args.get('sin_telefono') == '1'
+    filtro_telefono = request.args.get('filtro_telefono', '').strip() or None
 
     # Obtener clientes con filtros
     clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores,
-                               sin_telefono=sin_telefono)
+                               filtro_telefono=filtro_telefono)
 
     # Crear workbook
     wb = Workbook()
@@ -182,7 +182,7 @@ def exportar():
 
     # Filtros aplicados
     row = 3
-    if any([busqueda, con_medidores, sin_telefono]):
+    if any([busqueda, con_medidores, filtro_telefono]):
         ws.merge_cells(f'A{row}:G{row}')
         filtros_texto = []
         if busqueda:
@@ -191,8 +191,10 @@ def exportar():
             filtros_texto.append('Con medidores')
         elif con_medidores == 'no':
             filtros_texto.append('Sin medidores')
-        if sin_telefono:
+        if filtro_telefono == 'sin':
             filtros_texto.append('Sin telefono')
+        elif filtro_telefono == 'con':
+            filtros_texto.append('Con telefono')
 
         ws[f'A{row}'] = 'Filtros aplicados: ' + ' | '.join(filtros_texto)
         ws[f'A{row}'].font = Font(italic=True)
