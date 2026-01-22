@@ -140,15 +140,41 @@ def eliminar(cliente_id):
 @clientes_bp.route('/exportar')
 @admin_required
 def exportar():
-    """Exporta clientes filtrados a Excel."""
+    """Exporta clientes filtrados a Excel con columnas seleccionables."""
     from openpyxl import Workbook
     from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
     from datetime import datetime
 
     # Obtener parametros de filtro
     busqueda = request.args.get('busqueda', '').strip() or None
     con_medidores = request.args.get('con_medidores', '').strip() or None
     filtro_telefono = request.args.get('filtro_telefono', '').strip() or None
+
+    # Obtener columnas seleccionadas (por defecto todas)
+    columnas_param = request.args.get('columnas', '').strip()
+    if columnas_param:
+        columnas_seleccionadas = columnas_param.split(',')
+    else:
+        columnas_seleccionadas = ['id', 'nombre', 'nombre_completo', 'rut', 'telefono', 'email', 'medidores']
+
+    # Definicion de columnas disponibles
+    columnas_config = {
+        'id': {'header': 'ID', 'field': 'id', 'width': 8},
+        'nombre': {'header': 'Nombre', 'field': 'nombre', 'width': 25},
+        'nombre_completo': {'header': 'Nombre Completo', 'field': 'nombre_completo', 'width': 30},
+        'rut': {'header': 'RUT', 'field': 'rut', 'width': 15},
+        'telefono': {'header': 'Telefono', 'field': 'telefono', 'width': 18},
+        'email': {'header': 'Email', 'field': 'email', 'width': 30},
+        'medidores': {'header': 'Medidores', 'field': 'num_medidores', 'width': 12}
+    }
+
+    # Filtrar solo columnas validas
+    columnas = [c for c in columnas_seleccionadas if c in columnas_config]
+    if not columnas:
+        columnas = ['id', 'nombre']
+
+    num_cols = len(columnas)
 
     # Obtener clientes con filtros
     clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores,
@@ -171,19 +197,20 @@ def exportar():
     )
 
     # Título y fecha
-    ws.merge_cells('A1:G1')
+    last_col_letter = get_column_letter(num_cols)
+    ws.merge_cells(f'A1:{last_col_letter}1')
     ws['A1'] = 'LISTADO DE CLIENTES'
     ws['A1'].font = Font(bold=True, size=14)
     ws['A1'].alignment = Alignment(horizontal="center")
 
-    ws.merge_cells('A2:G2')
+    ws.merge_cells(f'A2:{last_col_letter}2')
     ws['A2'] = f'Generado: {datetime.now().strftime("%d/%m/%Y %H:%M")}'
     ws['A2'].alignment = Alignment(horizontal="center")
 
     # Filtros aplicados
     row = 3
     if any([busqueda, con_medidores, filtro_telefono]):
-        ws.merge_cells(f'A{row}:G{row}')
+        ws.merge_cells(f'A{row}:{last_col_letter}{row}')
         filtros_texto = []
         if busqueda:
             filtros_texto.append(f'Busqueda: {busqueda}')
@@ -203,7 +230,7 @@ def exportar():
 
     # Resumen
     row += 1
-    ws.merge_cells(f'A{row}:G{row}')
+    ws.merge_cells(f'A{row}:{last_col_letter}{row}')
     ws[f'A{row}'] = f'Total: {len(clientes)} cliente(s)'
     ws[f'A{row}'].font = Font(bold=True)
     ws[f'A{row}'].alignment = Alignment(horizontal="center")
@@ -212,35 +239,30 @@ def exportar():
     # Espacio
     row += 2
 
-    # Encabezados de tabla
-    headers = ['ID', 'Nombre', 'Nombre Completo', 'RUT', 'Telefono', 'Email', 'Medidores']
-    for col, header in enumerate(headers, 1):
-        cell = ws.cell(row=row, column=col, value=header)
+    # Encabezados de tabla (solo columnas seleccionadas)
+    for col_idx, col_key in enumerate(columnas, 1):
+        cell = ws.cell(row=row, column=col_idx, value=columnas_config[col_key]['header'])
         cell.font = header_font
         cell.fill = header_fill
         cell.alignment = header_alignment
         cell.border = border
 
-    # Datos
+    # Datos (solo columnas seleccionadas)
     row += 1
     for cliente in clientes:
-        ws.cell(row=row, column=1, value=cliente.get('id', '')).border = border
-        ws.cell(row=row, column=2, value=cliente.get('nombre', '')).border = border
-        ws.cell(row=row, column=3, value=cliente.get('nombre_completo', '') or '-').border = border
-        ws.cell(row=row, column=4, value=cliente.get('rut', '') or '-').border = border
-        ws.cell(row=row, column=5, value=cliente.get('telefono', '') or '-').border = border
-        ws.cell(row=row, column=6, value=cliente.get('email', '') or '-').border = border
-        ws.cell(row=row, column=7, value=cliente.get('num_medidores', 0)).border = border
+        for col_idx, col_key in enumerate(columnas, 1):
+            field = columnas_config[col_key]['field']
+            valor = cliente.get(field, '')
+            if valor is None or valor == '':
+                valor = '-' if col_key != 'medidores' else 0
+            cell = ws.cell(row=row, column=col_idx, value=valor)
+            cell.border = border
         row += 1
 
     # Ajustar anchos de columna
-    ws.column_dimensions['A'].width = 8
-    ws.column_dimensions['B'].width = 25
-    ws.column_dimensions['C'].width = 30
-    ws.column_dimensions['D'].width = 15
-    ws.column_dimensions['E'].width = 18
-    ws.column_dimensions['F'].width = 30
-    ws.column_dimensions['G'].width = 12
+    for col_idx, col_key in enumerate(columnas, 1):
+        col_letter = get_column_letter(col_idx)
+        ws.column_dimensions[col_letter].width = columnas_config[col_key]['width']
 
     # Preparar respuesta
     output = BytesIO()

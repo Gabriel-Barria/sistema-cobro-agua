@@ -26,10 +26,9 @@
         {% if busqueda or con_medidores or filtro_telefono %}
         <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Limpiar</a>
         {% endif %}
-        <a href="{{ url_for('clientes.exportar', busqueda=busqueda, con_medidores=con_medidores, filtro_telefono=filtro_telefono) }}"
-           class="btn btn-success" style="background: #28a745;">
+        <button type="button" onclick="abrirModalExportar()" class="btn btn-success" style="background: #28a745;">
             Exportar Excel
-        </a>
+        </button>
     </form>
 </div>
 
@@ -121,6 +120,62 @@
     </div>
 </div>
 
+<!-- Modal para exportar con selección de columnas -->
+<div id="modalExportar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Exportar a Excel</h3>
+            <button onclick="cerrarModalExportar()" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="margin-bottom: 15px; color: #666;">Selecciona las columnas que deseas exportar:</p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="col_id" checked>
+                    <span>ID</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="col_nombre" checked>
+                    <span>Nombre</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="col_nombre_completo" checked>
+                    <span>Nombre Completo</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="col_rut" checked>
+                    <span>RUT</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="col_telefono" checked>
+                    <span>Teléfono</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="col_email" checked>
+                    <span>Email</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="col_medidores" checked>
+                    <span>Medidores</span>
+                </label>
+            </div>
+
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #666;">
+                    <input type="checkbox" id="seleccionar_todas" checked onchange="toggleTodasColumnas()">
+                    <span>Seleccionar/Deseleccionar todas</span>
+                </label>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" onclick="cerrarModalExportar()" class="btn btn-secondary">Cancelar</button>
+                <button type="button" onclick="exportarExcel()" class="btn btn-success" style="background: #28a745;">Exportar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, email) {
     // Configurar la URL del formulario
@@ -155,6 +210,64 @@ window.onclick = function(event) {
 document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
         cerrarModalEditar();
+        cerrarModalExportar();
+    }
+});
+
+// Funciones para modal de exportación
+function abrirModalExportar() {
+    document.getElementById('modalExportar').style.display = 'flex';
+}
+
+function cerrarModalExportar() {
+    document.getElementById('modalExportar').style.display = 'none';
+}
+
+function toggleTodasColumnas() {
+    const checked = document.getElementById('seleccionar_todas').checked;
+    const columnas = ['col_id', 'col_nombre', 'col_nombre_completo', 'col_rut', 'col_telefono', 'col_email', 'col_medidores'];
+    columnas.forEach(id => {
+        document.getElementById(id).checked = checked;
+    });
+}
+
+function exportarExcel() {
+    // Recoger columnas seleccionadas
+    const columnas = [];
+    if (document.getElementById('col_id').checked) columnas.push('id');
+    if (document.getElementById('col_nombre').checked) columnas.push('nombre');
+    if (document.getElementById('col_nombre_completo').checked) columnas.push('nombre_completo');
+    if (document.getElementById('col_rut').checked) columnas.push('rut');
+    if (document.getElementById('col_telefono').checked) columnas.push('telefono');
+    if (document.getElementById('col_email').checked) columnas.push('email');
+    if (document.getElementById('col_medidores').checked) columnas.push('medidores');
+
+    if (columnas.length === 0) {
+        alert('Debes seleccionar al menos una columna');
+        return;
+    }
+
+    // Construir URL con filtros actuales y columnas seleccionadas
+    const params = new URLSearchParams();
+    const busqueda = '{{ busqueda or "" }}';
+    const con_medidores = '{{ con_medidores or "" }}';
+    const filtro_telefono = '{{ filtro_telefono or "" }}';
+
+    if (busqueda) params.append('busqueda', busqueda);
+    if (con_medidores) params.append('con_medidores', con_medidores);
+    if (filtro_telefono) params.append('filtro_telefono', filtro_telefono);
+    params.append('columnas', columnas.join(','));
+
+    // Redirigir a la URL de exportación
+    window.location.href = '/clientes/exportar?' + params.toString();
+    cerrarModalExportar();
+}
+
+// Cerrar modal de exportación al hacer clic fuera
+window.addEventListener('click', function(event) {
+    const modalExportar = document.getElementById('modalExportar');
+    if (event.target === modalExportar) {
+        cerrarModalExportar();
     }
 });
 </script>
