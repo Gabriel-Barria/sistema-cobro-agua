@@ -25,6 +25,10 @@
         {% if busqueda or con_medidores or sin_telefono %}
         <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Limpiar</a>
         {% endif %}
+        <a href="{{ url_for('clientes.exportar', busqueda=busqueda, con_medidores=con_medidores, sin_telefono='1' if sin_telefono else '') }}"
+           class="btn btn-success" style="background: #28a745;">
+            Exportar Excel
+        </a>
     </form>
 </div>
 
