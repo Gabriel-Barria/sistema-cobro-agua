@@ -11,7 +11,7 @@
 <!-- Filtros -->
 <div class="filters">
     <form method="GET" class="filter-form">
-        <input type="text" name="busqueda" placeholder="Buscar por nombre, RUT..." value="{{ busqueda }}" class="filter-input">
+        <input type="text" name="busqueda" placeholder="Buscar por nombre, RUT, telefono, email..." value="{{ busqueda }}" class="filter-input">
         <select name="con_medidores">
             <option value="">Todos los clientes</option>
             <option value="si" {% if con_medidores == 'si' %}selected{% endif %}>Con medidores</option>
@@ -33,6 +33,8 @@
             <th class="sortable">Nombre</th>
             <th class="sortable">Nombre Completo</th>
             <th class="sortable">RUT</th>
+            <th class="sortable">Telefono</th>
+            <th class="sortable">Email</th>
             <th class="sortable">Medidores</th>
             <th>Acciones</th>
         </tr>
@@ -44,6 +46,8 @@
             <td>{{ c.nombre }}</td>
             <td>{{ c.nombre_completo or '-' }}</td>
             <td>{{ c.rut or '-' }}</td>
+            <td>{{ c.telefono or '-' }}</td>
+            <td>{{ c.email or '-' }}</td>
             <td>{{ c.num_medidores }}</td>
             <td class="actions">
                 <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-small">Ver</a>
@@ -52,7 +56,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="6" class="empty">No hay clientes</td>
+            <td colspan="8" class="empty">No hay clientes</td>
         </tr>
         {% endfor %}
     </tbody>
