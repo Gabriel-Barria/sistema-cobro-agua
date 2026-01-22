@@ -73,13 +73,15 @@ def obtener_o_crear_cliente(nombre: str) -> int:
     return crear_cliente(nombre)
 
 
-def listar_clientes(busqueda: str = None, con_medidores: str = None) -> List[Dict]:
+def listar_clientes(busqueda: str = None, con_medidores: str = None,
+                    sin_telefono: bool = False) -> List[Dict]:
     """
     Lista clientes con filtros opcionales.
 
     Args:
         busqueda: Texto para buscar en nombre, nombre_completo, RUT, telefono o email
         con_medidores: 'si' para clientes con medidores, 'no' para sin medidores, None para todos
+        sin_telefono: True para mostrar solo clientes sin teléfono registrado
 
     Returns:
         Lista de clientes con conteo de medidores
@@ -106,6 +108,10 @@ def listar_clientes(busqueda: str = None, con_medidores: str = None) -> List[Dic
         )'''
         busqueda_param = f'%{busqueda}%'
         params.extend([busqueda_param, busqueda_param, busqueda_param, busqueda_param, busqueda_param])
+
+    if sin_telefono:
+        query += ' AND (c.telefono IS NULL OR c.telefono = %s)'
+        params.append('')
 
     query += ' GROUP BY c.id'
 

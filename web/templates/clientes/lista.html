@@ -17,8 +17,12 @@
             <option value="si" {% if con_medidores == 'si' %}selected{% endif %}>Con medidores</option>
             <option value="no" {% if con_medidores == 'no' %}selected{% endif %}>Sin medidores</option>
         </select>
+        <label style="display: flex; align-items: center; gap: 5px; margin: 0;">
+            <input type="checkbox" name="sin_telefono" value="1" {% if sin_telefono %}checked{% endif %}>
+            Sin telefono
+        </label>
         <button type="submit" class="btn">Filtrar</button>
-        {% if busqueda or con_medidores %}
+        {% if busqueda or con_medidores or sin_telefono %}
         <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Limpiar</a>
         {% endif %}
     </form>
