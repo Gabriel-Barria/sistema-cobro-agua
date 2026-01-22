@@ -59,7 +59,7 @@
             <td>{{ c.num_medidores }}</td>
             <td class="actions">
                 <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-small">Ver</a>
-                <a href="{{ url_for('clientes.editar', cliente_id=c.id) }}" class="btn btn-small">Editar</a>
+                <button onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}')" class="btn btn-small">Editar</button>
             </td>
         </tr>
         {% else %}
@@ -69,4 +69,162 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Modal para editar cliente -->
+<div id="modalEditar" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Editar Cliente</h3>
+            <button onclick="cerrarModalEditar()" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="formEditar" method="POST">
+                <input type="hidden" name="volver_a_lista" value="1">
+                <!-- Campos hidden para preservar filtros -->
+                <input type="hidden" name="busqueda" value="{{ busqueda }}">
+                <input type="hidden" name="con_medidores" value="{{ con_medidores }}">
+                <input type="hidden" name="sin_telefono" value="{{ '1' if sin_telefono else '' }}">
+
+                <div class="form-group">
+                    <label for="edit_nombre">Nombre *</label>
+                    <input type="text" name="nombre" id="edit_nombre" required style="width: 100%; padding: 8px;">
+                    <small style="color: #666;">Nombre corto/identificador (se guarda en minusculas)</small>
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="edit_nombre_completo">Nombre Completo</label>
+                    <input type="text" name="nombre_completo" id="edit_nombre_completo" style="width: 100%; padding: 8px;" placeholder="Nombre legal completo">
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="edit_rut">RUT</label>
+                    <input type="text" name="rut" id="edit_rut" style="width: 100%; padding: 8px;" placeholder="12.345.678-9">
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="edit_telefono">Telefono</label>
+                    <input type="tel" name="telefono" id="edit_telefono" style="width: 100%; padding: 8px;" placeholder="+56 9 1234 5678">
+                </div>
+
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="edit_email">Correo Electronico</label>
+                    <input type="email" name="email" id="edit_email" style="width: 100%; padding: 8px;" placeholder="cliente@ejemplo.com">
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="cerrarModalEditar()" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, email) {
+    // Configurar la URL del formulario
+    const form = document.getElementById('formEditar');
+    form.action = `/clientes/${clienteId}/editar`;
+
+    // Llenar los campos con los datos actuales
+    document.getElementById('edit_nombre').value = nombre;
+    document.getElementById('edit_nombre_completo').value = nombreCompleto;
+    document.getElementById('edit_rut').value = rut;
+    document.getElementById('edit_telefono').value = telefono;
+    document.getElementById('edit_email').value = email;
+
+    // Mostrar el modal
+    document.getElementById('modalEditar').style.display = 'flex';
+}
+
+function cerrarModalEditar() {
+    document.getElementById('modalEditar').style.display = 'none';
+    document.getElementById('formEditar').reset();
+}
+
+// Cerrar modal al hacer clic fuera de él
+window.onclick = function(event) {
+    const modal = document.getElementById('modalEditar');
+    if (event.target === modal) {
+        cerrarModalEditar();
+    }
+}
+
+// Cerrar modal con tecla Escape
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        cerrarModalEditar();
+    }
+});
+</script>
+
+<style>
+/* Estilos del modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.3em;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    font-weight: bold;
+    color: #aaa;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #000;
+}
+
+.modal-body {
+    padding: 20px;
+}
+</style>
 {% endblock %}

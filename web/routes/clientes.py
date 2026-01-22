@@ -85,17 +85,32 @@ def editar(cliente_id):
         rut = request.form.get('rut', '').strip() or None
         telefono = request.form.get('telefono', '').strip() or None
         email = request.form.get('email', '').strip() or None
+        volver_a_lista = request.form.get('volver_a_lista') == '1'
 
         # Verificar si el nuevo nombre ya existe (y no es el mismo cliente)
         if nombre and nombre != cliente['nombre']:
             existente = buscar_cliente_por_nombre(nombre)
             if existente and existente['id'] != cliente_id:
                 flash('Ya existe otro cliente con ese nombre', 'error')
+                if volver_a_lista:
+                    return redirect(url_for('clientes.listar'))
                 return redirect(url_for('clientes.editar', cliente_id=cliente_id))
 
         actualizar_cliente(cliente_id, nombre=nombre, nombre_completo=nombre_completo,
                           rut=rut, telefono=telefono, email=email)
         flash('Cliente actualizado', 'success')
+
+        # Si viene del modal en la lista, volver a la lista con filtros
+        if volver_a_lista:
+            filtros = {
+                'busqueda': request.form.get('busqueda', '').strip() or None,
+                'con_medidores': request.form.get('con_medidores', '').strip() or None,
+                'sin_telefono': request.form.get('sin_telefono') or None
+            }
+            # Limpiar valores None
+            filtros = {k: v for k, v in filtros.items() if v}
+            return redirect(url_for('clientes.listar', **filtros))
+
         return redirect(url_for('clientes.detalle', cliente_id=cliente_id))
 
     return render_template('clientes/editar.html', cliente=cliente)
