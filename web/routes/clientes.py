@@ -18,13 +18,16 @@ def listar():
     """Lista todos los clientes con filtros."""
     busqueda = request.args.get('busqueda', '').strip() or None
     con_medidores = request.args.get('con_medidores', '').strip() or None
+    sin_telefono = request.args.get('sin_telefono') == '1'
 
-    clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores)
+    clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores,
+                               sin_telefono=sin_telefono)
 
     return render_template('clientes/lista.html',
                            clientes=clientes,
                            busqueda=busqueda or '',
-                           con_medidores=con_medidores or '')
+                           con_medidores=con_medidores or '',
+                           sin_telefono=sin_telefono)
 
 
 @clientes_bp.route('/nuevo', methods=['GET', 'POST'])
