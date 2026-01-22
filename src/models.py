@@ -8,7 +8,8 @@ from .database import get_connection
 
 # ============== CLIENTES ==============
 
-def crear_cliente(nombre: str, nombre_completo: str = None, rut: str = None) -> int:
+def crear_cliente(nombre: str, nombre_completo: str = None, rut: str = None,
+                  telefono: str = None, email: str = None) -> int:
     """
     Crea un nuevo cliente.
 
@@ -16,6 +17,8 @@ def crear_cliente(nombre: str, nombre_completo: str = None, rut: str = None) -> 
         nombre: Nombre normalizado del cliente
         nombre_completo: Nombre legal completo (opcional)
         rut: RUT del cliente (opcional)
+        telefono: Teléfono del cliente (opcional)
+        email: Correo electrónico del cliente (opcional)
 
     Returns:
         ID del cliente creado
@@ -23,10 +26,10 @@ def crear_cliente(nombre: str, nombre_completo: str = None, rut: str = None) -> 
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO clientes (nombre, nombre_completo, rut)
-        VALUES (%s, %s, %s)
+        INSERT INTO clientes (nombre, nombre_completo, rut, telefono, email)
+        VALUES (%s, %s, %s, %s, %s)
         RETURNING id
-    ''', (nombre, nombre_completo, rut))
+    ''', (nombre, nombre_completo, rut, telefono, email))
     cliente_id = cursor.fetchone()[0]
     conn.commit()
     conn.close()
@@ -75,7 +78,7 @@ def listar_clientes(busqueda: str = None, con_medidores: str = None) -> List[Dic
     Lista clientes con filtros opcionales.
 
     Args:
-        busqueda: Texto para buscar en nombre, nombre_completo o RUT
+        busqueda: Texto para buscar en nombre, nombre_completo, RUT, telefono o email
         con_medidores: 'si' para clientes con medidores, 'no' para sin medidores, None para todos
 
     Returns:
@@ -97,10 +100,12 @@ def listar_clientes(busqueda: str = None, con_medidores: str = None) -> List[Dic
         query += ''' AND (
             LOWER(c.nombre) LIKE LOWER(%s) OR
             LOWER(c.nombre_completo) LIKE LOWER(%s) OR
-            LOWER(c.rut) LIKE LOWER(%s)
+            LOWER(c.rut) LIKE LOWER(%s) OR
+            LOWER(c.telefono) LIKE LOWER(%s) OR
+            LOWER(c.email) LIKE LOWER(%s)
         )'''
         busqueda_param = f'%{busqueda}%'
-        params.extend([busqueda_param, busqueda_param, busqueda_param])
+        params.extend([busqueda_param, busqueda_param, busqueda_param, busqueda_param, busqueda_param])
 
     query += ' GROUP BY c.id'
 
@@ -127,7 +132,8 @@ def obtener_cliente(cliente_id: int) -> Optional[Dict]:
     return dict(row) if row else None
 
 
-def actualizar_cliente(cliente_id: int, nombre: str = None, nombre_completo: str = None, rut: str = None) -> bool:
+def actualizar_cliente(cliente_id: int, nombre: str = None, nombre_completo: str = None,
+                       rut: str = None, telefono: str = None, email: str = None) -> bool:
     """Actualiza datos de un cliente."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -144,6 +150,12 @@ def actualizar_cliente(cliente_id: int, nombre: str = None, nombre_completo: str
     if rut is not None:
         updates.append('rut = %s')
         params.append(rut if rut else None)
+    if telefono is not None:
+        updates.append('telefono = %s')
+        params.append(telefono if telefono else None)
+    if email is not None:
+        updates.append('email = %s')
+        params.append(email if email else None)
 
     if not updates:
         conn.close()

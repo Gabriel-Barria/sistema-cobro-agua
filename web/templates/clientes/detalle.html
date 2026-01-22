@@ -23,6 +23,12 @@
         <dt>RUT</dt>
         <dd>{{ cliente.rut or 'No registrado' }}</dd>
 
+        <dt>Telefono</dt>
+        <dd>{{ cliente.telefono or 'No registrado' }}</dd>
+
+        <dt>Correo Electronico</dt>
+        <dd>{{ cliente.email or 'No registrado' }}</dd>
+
         <dt>Estado</dt>
         <dd>{% if cliente.activo %}Activo{% else %}Inactivo{% endif %}</dd>
 
