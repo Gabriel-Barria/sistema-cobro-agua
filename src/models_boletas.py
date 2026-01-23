@@ -346,8 +346,8 @@ def obtener_estadisticas_boletas(cliente_id: int = None, medidor_id: int = None,
             SUM(CASE WHEN b.pagada = 2 AND (b.comprobante_path IS NULL OR b.comprobante_path = '') THEN 1 ELSE 0 END) as sin_comprobante,
             SUM(b.total) as monto_total,
             SUM(CASE WHEN b.pagada = 2 THEN b.total ELSE 0 END) as monto_pagado,
-            SUM(CASE WHEN b.pagada = 1 THEN b.total ELSE 0 END) as monto_en_revision,
-            SUM(CASE WHEN b.pagada = 0 THEN b.total ELSE 0 END) as monto_pendiente
+            SUM(CASE WHEN b.pagada = 1 THEN COALESCE(b.saldo_pendiente, b.total) ELSE 0 END) as monto_en_revision,
+            SUM(CASE WHEN b.pagada != 2 THEN COALESCE(b.saldo_pendiente, b.total) ELSE 0 END) as monto_pendiente
         FROM boletas b
         JOIN medidores m ON b.medidor_id = m.id
         JOIN clientes c ON m.cliente_id = c.id
