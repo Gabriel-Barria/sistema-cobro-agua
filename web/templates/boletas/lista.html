@@ -127,6 +127,7 @@
             <th class="sortable">Periodo</th>
             <th class="sortable">Consumo</th>
             <th class="sortable">Total</th>
+            <th class="sortable">Pendiente</th>
             <th class="sortable">Estado</th>
             <th>Acciones</th>
         </tr>
@@ -145,6 +146,15 @@
             </td>
             <td data-sort="{{ boleta.consumo_m3 }}">{{ boleta.consumo_m3 }} m3</td>
             <td data-sort="{{ boleta.total }}">${{ boleta.total|formato_pesos }}</td>
+            <td data-sort="{{ boleta.saldo_pendiente or 0 }}">
+                {% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}
+                    <span style="color: {% if boleta.saldo_pendiente == 0 %}#28a745{% else %}#e67e22{% endif %};">
+                        ${{ boleta.saldo_pendiente|formato_pesos }}
+                    </span>
+                {% else %}
+                    ${{ (boleta.saldo_pendiente or boleta.total)|formato_pesos }}
+                {% endif %}
+            </td>
             <td>
                 {% if boleta.pagada == 2 %}
                     <span class="badge badge-success badge-clickable"
