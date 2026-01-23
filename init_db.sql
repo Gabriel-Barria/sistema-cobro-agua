@@ -83,18 +83,69 @@ CREATE TABLE IF NOT EXISTS usuarios (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de historial de intentos de pago
-CREATE TABLE IF NOT EXISTS historial_pagos (
+-- Tabla de pagos
+CREATE TABLE IF NOT EXISTS pagos (
     id SERIAL PRIMARY KEY,
-    boleta_id INTEGER NOT NULL,
-    comprobante_path TEXT NOT NULL,
+    numero_pago VARCHAR(20) UNIQUE NOT NULL,
+    cliente_id INTEGER NOT NULL,
+    monto_total NUMERIC(10,2) NOT NULL,
+    monto_aplicado NUMERIC(10,2) DEFAULT 0,
+    monto_a_favor NUMERIC(10,2) DEFAULT 0,
+    estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+    comprobante_path TEXT,
+    metodo_pago VARCHAR(50),
+    fecha_pago DATE,
     fecha_envio DATE NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'en_revision',
     fecha_procesamiento DATE,
+    procesado_por INTEGER,
     motivo_rechazo TEXT,
-    metodo_pago TEXT,
+    notas TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (boleta_id) REFERENCES boletas(id) ON DELETE CASCADE
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (procesado_por) REFERENCES usuarios(id)
+);
+
+-- Relacion pagos-boletas (muchos a muchos)
+CREATE TABLE IF NOT EXISTS pago_boletas (
+    id SERIAL PRIMARY KEY,
+    pago_id INTEGER NOT NULL,
+    boleta_id INTEGER NOT NULL,
+    monto_aplicado NUMERIC(10,2) NOT NULL,
+    es_pago_completo BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (pago_id) REFERENCES pagos(id) ON DELETE CASCADE,
+    FOREIGN KEY (boleta_id) REFERENCES boletas(id),
+    UNIQUE(pago_id, boleta_id)
+);
+
+-- Saldos a favor de clientes
+CREATE TABLE IF NOT EXISTS saldos_cliente (
+    id SERIAL PRIMARY KEY,
+    cliente_id INTEGER UNIQUE NOT NULL,
+    saldo_disponible NUMERIC(10,2) NOT NULL DEFAULT 0,
+    ultima_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id)
+);
+
+-- Historial de movimientos de saldo
+CREATE TABLE IF NOT EXISTS movimientos_saldo (
+    id SERIAL PRIMARY KEY,
+    cliente_id INTEGER NOT NULL,
+    tipo VARCHAR(20) NOT NULL,
+    origen VARCHAR(50) NOT NULL,
+    pago_id INTEGER,
+    boleta_id INTEGER,
+    monto NUMERIC(10,2) NOT NULL,
+    saldo_anterior NUMERIC(10,2) NOT NULL,
+    saldo_nuevo NUMERIC(10,2) NOT NULL,
+    descripcion TEXT,
+    usuario_id INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+    FOREIGN KEY (pago_id) REFERENCES pagos(id) ON DELETE SET NULL,
+    FOREIGN KEY (boleta_id) REFERENCES boletas(id) ON DELETE SET NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
 -- Índices
@@ -108,4 +159,12 @@ CREATE INDEX IF NOT EXISTS idx_boletas_medidor ON boletas(medidor_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_pagada ON boletas(pagada);
 CREATE INDEX IF NOT EXISTS idx_boletas_periodo ON boletas(periodo_año, periodo_mes);
 CREATE INDEX IF NOT EXISTS idx_usuarios_username ON usuarios(username);
-CREATE INDEX IF NOT EXISTS idx_historial_boleta ON historial_pagos(boleta_id);
+CREATE INDEX IF NOT EXISTS idx_pagos_cliente ON pagos(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_pagos_estado ON pagos(estado);
+CREATE INDEX IF NOT EXISTS idx_pagos_fecha_envio ON pagos(fecha_envio);
+CREATE INDEX IF NOT EXISTS idx_pago_boletas_pago ON pago_boletas(pago_id);
+CREATE INDEX IF NOT EXISTS idx_pago_boletas_boleta ON pago_boletas(boleta_id);
+CREATE INDEX IF NOT EXISTS idx_saldos_cliente ON saldos_cliente(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_cliente ON movimientos_saldo(cliente_id);
+CREATE INDEX IF NOT EXISTS idx_movimientos_tipo ON movimientos_saldo(tipo);
+CREATE INDEX IF NOT EXISTS idx_movimientos_fecha ON movimientos_saldo(created_at);

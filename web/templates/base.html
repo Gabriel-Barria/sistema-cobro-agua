@@ -55,11 +55,23 @@
                 </li>
 
                 {% if session.get('rol') == 'administrador' %}
-                <!-- Historial de Pagos (solo admin) -->
+                <!-- Pagos (solo admin) -->
                 <li class="menu-item menu-item-indent">
-                    <a href="{{ url_for('boletas.historial_pagos') }}" class="menu-link {% if request.endpoint == 'boletas.historial_pagos' %}active{% endif %}">
-                        <i class="fas fa-history"></i>
-                        <span class="menu-text">Historial Pagos</span>
+                    <a href="{{ url_for('boletas.pagos_lista') }}" class="menu-link {% if request.endpoint in ['boletas.pagos_lista', 'boletas.pago_detalle'] %}active{% endif %}">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span class="menu-text">Pagos</span>
+                    </a>
+                </li>
+                <li class="menu-item menu-item-indent">
+                    <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="menu-link {% if request.endpoint == 'boletas.registrar_pago_admin' %}active{% endif %}">
+                        <i class="fas fa-plus-circle"></i>
+                        <span class="menu-text">Registrar Pago</span>
+                    </a>
+                </li>
+                <li class="menu-item menu-item-indent">
+                    <a href="{{ url_for('boletas.saldos_lista') }}" class="menu-link {% if request.endpoint in ['boletas.saldos_lista', 'boletas.saldo_detalle'] %}active{% endif %}">
+                        <i class="fas fa-wallet"></i>
+                        <span class="menu-text">Saldos</span>
                     </a>
                 </li>
                 {% endif %}

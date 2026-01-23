@@ -5,6 +5,24 @@ from functools import wraps
 from flask import session, redirect, url_for, flash
 
 
+def get_current_user():
+    """
+    Obtiene el usuario actual de la sesión.
+
+    Returns:
+        dict con id, username, rol, nombre_completo o None si no hay sesión
+    """
+    if 'usuario_id' not in session:
+        return None
+
+    return {
+        'id': session.get('usuario_id'),
+        'username': session.get('username'),
+        'rol': session.get('rol'),
+        'nombre_completo': session.get('nombre_completo')
+    }
+
+
 def login_required(f):
     """
     Decorador para rutas que requieren login (cualquier rol).

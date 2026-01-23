@@ -1,0 +1,295 @@
+{% extends "base.html" %}
+
+{% block title %}Pago {{ pago.numero_pago }} - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Pago {{ pago.numero_pago }}</h1>
+    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn-secondary">Volver a Pagos</a>
+</div>
+
+<div class="detail-grid">
+    <div class="detail-section">
+        <h3>Informacion del Pago</h3>
+        <table class="detail-table">
+            <tr>
+                <th>Numero:</th>
+                <td>{{ pago.numero_pago }}</td>
+            </tr>
+            <tr>
+                <th>Cliente:</th>
+                <td>{{ pago.cliente_nombre }}</td>
+            </tr>
+            <tr>
+                <th>Metodo:</th>
+                <td>{{ pago.metodo_pago|capitalize if pago.metodo_pago else '-' }}</td>
+            </tr>
+            <tr>
+                <th>Fecha Pago:</th>
+                <td>{{ pago.fecha_pago or '-' }}</td>
+            </tr>
+            <tr>
+                <th>Fecha Envio:</th>
+                <td>{{ pago.fecha_envio }}</td>
+            </tr>
+            {% if pago.notas %}
+            <tr>
+                <th>Notas:</th>
+                <td>{{ pago.notas }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <div class="detail-section estado-section {% if pago.estado == 'aprobado' %}estado-aprobado{% elif pago.estado == 'rechazado' %}estado-rechazado{% elif pago.estado == 'en_revision' %}estado-revision{% endif %}">
+        <h3>Estado y Montos</h3>
+        <table class="detail-table">
+            <tr>
+                <th>Estado:</th>
+                <td>
+                    {% if pago.estado == 'aprobado' %}
+                        <span class="badge badge-success">APROBADO</span>
+                    {% elif pago.estado == 'rechazado' %}
+                        <span class="badge badge-danger">RECHAZADO</span>
+                    {% elif pago.estado == 'en_revision' %}
+                        <span class="badge badge-warning">EN REVISION</span>
+                    {% else %}
+                        <span class="badge badge-secondary">{{ pago.estado|upper }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Monto Total:</th>
+                <td class="monto">${{ pago.monto_total|formato_pesos }}</td>
+            </tr>
+            <tr>
+                <th>Monto Aplicado:</th>
+                <td>${{ pago.monto_aplicado|formato_pesos }}</td>
+            </tr>
+            {% if pago.monto_a_favor > 0 %}
+            <tr>
+                <th>Saldo a Favor:</th>
+                <td style="color: #28a745; font-weight: bold;">${{ pago.monto_a_favor|formato_pesos }}</td>
+            </tr>
+            {% endif %}
+            {% if pago.fecha_procesamiento %}
+            <tr>
+                <th>Fecha Proceso:</th>
+                <td>{{ pago.fecha_procesamiento }}</td>
+            </tr>
+            {% endif %}
+            {% if pago.procesado_por_nombre %}
+            <tr>
+                <th>Procesado por:</th>
+                <td>{{ pago.procesado_por_nombre }}</td>
+            </tr>
+            {% endif %}
+            {% if pago.motivo_rechazo %}
+            <tr>
+                <th>Motivo Rechazo:</th>
+                <td style="color: #dc3545;">{{ pago.motivo_rechazo }}</td>
+            </tr>
+            {% endif %}
+        </table>
+
+        {% if pago.comprobante_path %}
+        <div style="margin-top: 15px;">
+            <a href="/{{ pago.comprobante_path }}" target="_blank" class="btn btn-primary">Ver Comprobante</a>
+        </div>
+        {% endif %}
+
+        {% if pago.estado == 'en_revision' %}
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <form action="{{ url_for('boletas.aprobar_pago_route', pago_id=pago.id) }}" method="POST">
+                <button type="submit" class="btn btn-success" onclick="return confirm('Aprobar este pago?')">Aprobar Pago</button>
+            </form>
+            <button type="button" class="btn btn-danger" onclick="abrirModalRechazo()">Rechazar Pago</button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<h3 style="margin-top: 30px;">Boletas Asociadas ({{ pago.boletas|length }})</h3>
+{% if pago.boletas %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>Boleta</th>
+            <th>Total Boleta</th>
+            <th>Monto Aplicado</th>
+            <th>Pago Completo</th>
+            <th>Saldo Pendiente</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in pago.boletas %}
+        <tr>
+            <td>{{ b.numero_boleta }}</td>
+            <td>${{ b.boleta_total|formato_pesos }}</td>
+            <td>${{ b.monto_aplicado|formato_pesos }}</td>
+            <td>
+                {% if b.es_pago_completo %}
+                <span style="color: #28a745;">Si</span>
+                {% else %}
+                <span style="color: #ffc107;">Parcial</span>
+                {% endif %}
+            </td>
+            <td>${{ b.saldo_pendiente|formato_pesos }}</td>
+            <td>
+                {% if b.pagada == 2 %}
+                <span class="badge badge-success">Pagada</span>
+                {% elif b.pagada == 1 %}
+                <span class="badge badge-warning">En Revision</span>
+                {% else %}
+                <span class="badge badge-danger">Pendiente</span>
+                {% endif %}
+            </td>
+            <td>
+                <a href="{{ url_for('boletas.detalle', boleta_id=b.boleta_id) }}" class="btn btn-small">Ver Boleta</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Este pago no tiene boletas asociadas.</p>
+{% endif %}
+
+<!-- Modal para rechazar pago -->
+<div id="modalRechazo" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Rechazar Pago</h3>
+            <button onclick="cerrarModalRechazo()" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form action="{{ url_for('boletas.rechazar_pago_route', pago_id=pago.id) }}" method="POST">
+                <div class="form-group">
+                    <label for="motivo">Motivo del rechazo *</label>
+                    <textarea name="motivo" id="motivo" required rows="3" style="width: 100%; padding: 8px;"></textarea>
+                </div>
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" onclick="cerrarModalRechazo()" class="btn btn-secondary">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Rechazar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function abrirModalRechazo() {
+    document.getElementById('modalRechazo').style.display = 'flex';
+}
+
+function cerrarModalRechazo() {
+    document.getElementById('modalRechazo').style.display = 'none';
+}
+
+window.onclick = function(event) {
+    const modal = document.getElementById('modalRechazo');
+    if (event.target === modal) {
+        cerrarModalRechazo();
+    }
+}
+</script>
+
+<style>
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+.detail-section {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+}
+.detail-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+.detail-table {
+    width: 100%;
+}
+.detail-table th {
+    text-align: left;
+    padding: 8px 10px 8px 0;
+    color: #666;
+    width: 40%;
+}
+.detail-table td {
+    padding: 8px 0;
+}
+.monto {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #333;
+}
+.estado-aprobado { background: #d4edda; }
+.estado-rechazado { background: #f8d7da; }
+.estado-revision { background: #fff3cd; }
+
+.badge {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: bold;
+}
+.badge-success { background: #28a745; color: white; }
+.badge-warning { background: #ffc107; color: black; }
+.badge-danger { background: #dc3545; color: white; }
+.badge-secondary { background: #6c757d; color: white; }
+
+.btn-success { background: #28a745; color: white; border: none; }
+.btn-danger { background: #dc3545; color: white; border: none; }
+.btn-small { padding: 3px 8px; font-size: 12px; }
+
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    align-items: center;
+    justify-content: center;
+}
+.modal-content {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 500px;
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #ddd;
+}
+.modal-header h3 { margin: 0; }
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    color: #aaa;
+}
+.modal-body { padding: 20px; }
+
+@media (max-width: 768px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
