@@ -11,13 +11,11 @@ from web.auth import admin_required, get_current_user
 from src.models_boletas import (
     obtener_configuracion, guardar_configuracion,
     crear_boleta, obtener_boleta, obtener_boleta_por_lectura,
-    listar_boletas, marcar_boleta_pagada, desmarcar_boleta_pagada,
+    listar_boletas, desmarcar_boleta_pagada,
     guardar_comprobante, eliminar_boleta,
     obtener_lectura_anterior, calcular_consumo,
     obtener_lecturas_sin_boleta, obtener_años_disponibles,
-    obtener_estadisticas_boletas,
-    aprobar_boletas, rechazar_boletas,
-    obtener_historial_pagos, listar_historial_pagos
+    obtener_estadisticas_boletas
 )
 from src.models import listar_clientes, listar_medidores, obtener_lectura
 from src.models_pagos import (
@@ -64,18 +62,14 @@ def configuracion():
 
 
 # =============================================================================
-# HISTORIAL DE PAGOS
+# HISTORIAL DE PAGOS (LEGACY - REDIRIGE A NUEVO SISTEMA)
 # =============================================================================
 
 @boletas_bp.route('/historial-pagos')
 @admin_required
 def historial_pagos():
-    """Lista todos los intentos de pago."""
-    estado = request.args.get('estado')
-    historial = listar_historial_pagos(estado)
-    return render_template('boletas/historial_pagos.html',
-                          historial=historial,
-                          estado_filtro=estado)
+    """Redirige al nuevo sistema de pagos."""
+    return redirect(url_for('boletas.pagos_lista'))
 
 
 # =============================================================================
@@ -151,15 +145,31 @@ def listar():
 @admin_required
 def detalle(boleta_id):
     """Muestra detalle de una boleta."""
+    from src.database import get_connection
+
     boleta = obtener_boleta(boleta_id)
     if not boleta:
         flash('Boleta no encontrada', 'error')
         return redirect(url_for('boletas.listar'))
 
-    # Obtener historial de intentos de pago
-    historial = obtener_historial_pagos(boleta_id)
+    # Obtener pagos asociados a esta boleta
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT p.id, p.numero_pago, p.monto_total, p.estado, p.comprobante_path,
+               p.fecha_envio, p.fecha_procesamiento, p.motivo_rechazo,
+               p.metodo_pago, p.created_at, pb.monto_aplicado
+        FROM pagos p
+        JOIN pago_boletas pb ON p.id = pb.pago_id
+        WHERE pb.boleta_id = %s
+        ORDER BY p.created_at DESC
+    ''', (boleta_id,))
+    pagos = [dict(p) for p in cursor.fetchall()]
+    conn.close()
 
-    return render_template('boletas/detalle.html', boleta=boleta, historial=historial)
+    return render_template('boletas/detalle.html',
+                          boleta=boleta,
+                          pagos=pagos)
 
 
 # =============================================================================
@@ -334,7 +344,10 @@ def crear_masivo():
 @boletas_bp.route('/<int:boleta_id>/marcar-pagada', methods=['POST'])
 @admin_required
 def marcar_pagada(boleta_id):
-    """Marca una boleta como pagada."""
+    """Marca una boleta como pagada registrando un pago directo."""
+    from decimal import Decimal
+    from src.database import get_connection
+
     boleta = obtener_boleta(boleta_id)
     if not boleta:
         flash('Boleta no encontrada', 'error')
@@ -342,26 +355,34 @@ def marcar_pagada(boleta_id):
 
     metodo_pago = request.form.get('metodo_pago', 'efectivo')
 
-    # Marcar como pagada
-    if marcar_boleta_pagada(boleta_id, metodo_pago):
-        flash('Boleta marcada como pagada', 'success')
+    # Obtener cliente_id desde el medidor
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT cliente_id FROM medidores WHERE id = %s', (boleta['medidor_id'],))
+    medidor = cursor.fetchone()
+    conn.close()
 
-        # Si hay comprobante adjunto, guardarlo
-        if 'comprobante' in request.files:
-            file = request.files['comprobante']
-            if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                boleta_dir = os.path.join(COMPROBANTES_DIR, f'boleta_{boleta_id}')
-                os.makedirs(boleta_dir, exist_ok=True)
+    if not medidor:
+        flash('Error: medidor no encontrado', 'error')
+        return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
 
-                filepath = os.path.join(boleta_dir, filename)
-                file.save(filepath)
+    usuario = get_current_user()
+    usuario_id = usuario['id'] if usuario else None
 
-                comprobante_path = f'comprobantes/boleta_{boleta_id}/{filename}'
-                guardar_comprobante(boleta_id, comprobante_path)
-                flash('Comprobante adjuntado exitosamente', 'success')
-    else:
-        flash('Error al marcar boleta como pagada', 'error')
+    # Calcular monto (saldo pendiente o total)
+    monto = Decimal(str(boleta.get('saldo_pendiente', boleta['total'])))
+
+    try:
+        resultado = registrar_pago_directo(
+            cliente_id=medidor['cliente_id'],
+            monto_total=monto,
+            boletas_ids=[boleta_id],
+            metodo_pago=metodo_pago,
+            usuario_id=usuario_id
+        )
+        flash(f'Pago {resultado["numero_pago"]} registrado. Boleta marcada como pagada.', 'success')
+    except Exception as e:
+        flash(f'Error al registrar pago: {str(e)}', 'error')
 
     # Verificar si se solicitó volver al listado
     volver_a_lista = request.form.get('volver_a_lista', False)
@@ -408,48 +429,29 @@ def desmarcar_pagada(boleta_id):
 @boletas_bp.route('/<int:boleta_id>/aprobar', methods=['POST'])
 @admin_required
 def aprobar(boleta_id):
-    """Aprueba una boleta y TODAS las boletas que compartieron el mismo comprobante: En Revisión (1) → Pagada (2)"""
+    """Aprueba el pago asociado a la boleta: En Revisión (1) → Pagada (2)"""
+    from src.database import get_connection
+
     boleta = obtener_boleta(boleta_id)
     if not boleta:
         flash('Boleta no encontrada', 'error')
         return redirect(url_for('boletas.listar'))
 
-    # Verificar que la boleta esté en estado "En Revisión"
     if boleta['pagada'] != 1:
         flash('Solo se pueden aprobar boletas en estado "En Revisión"', 'error')
         return redirect(url_for('boletas.listar'))
 
-    # Obtener comprobante de la boleta
-    comprobante_path = boleta.get('comprobante_path')
+    # Buscar el pago asociado
+    pago_id = _obtener_o_crear_pago_para_boleta(boleta)
 
-    if not comprobante_path:
-        # Si no tiene comprobante, solo aprobar esta boleta
-        if aprobar_boletas([boleta_id], metodo_pago='transferencia'):
-            flash('Boleta aprobada exitosamente', 'success')
-        else:
-            flash('Error al aprobar la boleta', 'error')
+    usuario = get_current_user()
+    usuario_id = usuario['id'] if usuario else None
+
+    exito, mensaje = aprobar_pago(pago_id, usuario_id)
+    if exito:
+        flash(mensaje, 'success')
     else:
-        # Buscar TODAS las boletas con el mismo comprobante en estado "En Revisión"
-        from src.database import get_connection
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT id FROM boletas
-            WHERE comprobante_path = %s AND pagada = 1
-        ''', (comprobante_path,))
-        boletas_relacionadas = cursor.fetchall()
-        conn.close()
-
-        boletas_ids = [b['id'] for b in boletas_relacionadas]
-
-        # Aprobar TODAS las boletas que compartieron el mismo comprobante
-        if aprobar_boletas(boletas_ids, metodo_pago='transferencia'):
-            if len(boletas_ids) > 1:
-                flash(f'{len(boletas_ids)} boletas aprobadas (mismo comprobante)', 'success')
-            else:
-                flash('Boleta aprobada exitosamente', 'success')
-        else:
-            flash('Error al aprobar las boletas', 'error')
+        flash(mensaje, 'error')
 
     return redirect(construir_url_con_filtros('boletas.listar'))
 
@@ -457,56 +459,116 @@ def aprobar(boleta_id):
 @boletas_bp.route('/<int:boleta_id>/rechazar', methods=['POST'])
 @admin_required
 def rechazar(boleta_id):
-    """Rechaza una boleta y TODAS las boletas que compartieron el mismo comprobante: En Revisión (1) → Pendiente (0)"""
+    """Rechaza el pago asociado a la boleta: En Revisión (1) → Pendiente (0)"""
+    from src.database import get_connection
+
     boleta = obtener_boleta(boleta_id)
     if not boleta:
         flash('Boleta no encontrada', 'error')
         return redirect(url_for('boletas.listar'))
 
-    # Verificar que la boleta esté en estado "En Revisión"
     if boleta['pagada'] != 1:
         flash('Solo se pueden rechazar boletas en estado "En Revisión"', 'error')
         return redirect(url_for('boletas.listar'))
 
-    # Obtener motivo del rechazo
     motivo = request.form.get('motivo', '').strip()
     if not motivo:
         flash('Debe proporcionar un motivo de rechazo', 'error')
         return redirect(url_for('boletas.listar'))
 
-    # Obtener comprobante de la boleta
-    comprobante_path = boleta.get('comprobante_path')
+    # Buscar el pago asociado
+    pago_id = _obtener_o_crear_pago_para_boleta(boleta)
 
-    if not comprobante_path:
-        # Si no tiene comprobante, solo rechazar esta boleta
-        if rechazar_boletas([boleta_id], motivo):
-            flash(f'Boleta rechazada. Motivo: {motivo}', 'success')
-        else:
-            flash('Error al rechazar la boleta', 'error')
+    usuario = get_current_user()
+    usuario_id = usuario['id'] if usuario else None
+
+    exito, mensaje = rechazar_pago(pago_id, motivo, usuario_id)
+    if exito:
+        flash(f'{mensaje}. Motivo: {motivo}', 'success')
     else:
-        # Buscar TODAS las boletas con el mismo comprobante en estado "En Revisión"
-        from src.database import get_connection
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT id FROM boletas
-            WHERE comprobante_path = %s AND pagada = 1
-        ''', (comprobante_path,))
-        boletas_relacionadas = cursor.fetchall()
-        conn.close()
-
-        boletas_ids = [b['id'] for b in boletas_relacionadas]
-
-        # Rechazar TODAS las boletas que compartieron el mismo comprobante
-        if rechazar_boletas(boletas_ids, motivo):
-            if len(boletas_ids) > 1:
-                flash(f'{len(boletas_ids)} boletas rechazadas (mismo comprobante). Motivo: {motivo}', 'success')
-            else:
-                flash(f'Boleta rechazada. Motivo: {motivo}', 'success')
-        else:
-            flash('Error al rechazar las boletas', 'error')
+        flash(mensaje, 'error')
 
     return redirect(construir_url_con_filtros('boletas.listar'))
+
+
+def _obtener_o_crear_pago_para_boleta(boleta):
+    """
+    Busca el pago en_revision asociado a la boleta.
+    Si no existe (dato huerfano de migracion), crea uno.
+    Tambien busca otras boletas con el mismo comprobante.
+    """
+    from src.database import get_connection
+    from src.models_pagos import generar_numero_pago
+    from decimal import Decimal
+
+    boleta_id = boleta['id']
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Buscar pago existente
+    cursor.execute('''
+        SELECT p.id as pago_id
+        FROM pagos p
+        JOIN pago_boletas pb ON p.id = pb.pago_id
+        WHERE pb.boleta_id = %s AND p.estado = 'en_revision'
+        LIMIT 1
+    ''', (boleta_id,))
+    pago_result = cursor.fetchone()
+
+    if pago_result:
+        conn.close()
+        return pago_result['pago_id']
+
+    # No existe pago - crear uno para esta boleta y otras con mismo comprobante
+    comprobante_path = boleta.get('comprobante_path')
+
+    # Buscar todas las boletas en revision con el mismo comprobante
+    if comprobante_path:
+        cursor.execute('''
+            SELECT b.id, b.total, b.saldo_pendiente
+            FROM boletas b
+            WHERE b.comprobante_path = %s AND b.pagada = 1
+        ''', (comprobante_path,))
+    else:
+        cursor.execute('''
+            SELECT b.id, b.total, b.saldo_pendiente
+            FROM boletas b
+            WHERE b.id = %s AND b.pagada = 1
+        ''', (boleta_id,))
+
+    boletas_relacionadas = cursor.fetchall()
+
+    # Obtener cliente_id
+    cursor.execute('SELECT cliente_id FROM medidores WHERE id = %s', (boleta['medidor_id'],))
+    medidor = cursor.fetchone()
+    cliente_id = medidor['cliente_id']
+
+    # Calcular monto total
+    monto_total = sum(Decimal(str(b['saldo_pendiente'] or b['total'])) for b in boletas_relacionadas)
+
+    # Crear pago
+    numero_pago = generar_numero_pago()
+    cursor.execute('''
+        INSERT INTO pagos (numero_pago, cliente_id, monto_total, monto_aplicado,
+                          comprobante_path, metodo_pago, estado, fecha_envio)
+        VALUES (%s, %s, %s, %s, %s, 'transferencia', 'en_revision', CURRENT_DATE)
+        RETURNING id
+    ''', (numero_pago, cliente_id, monto_total, monto_total, comprobante_path))
+    pago_id = cursor.fetchone()['id']
+
+    # Crear relaciones pago_boletas
+    for b in boletas_relacionadas:
+        monto_boleta = Decimal(str(b['saldo_pendiente'] or b['total']))
+        cursor.execute('''
+            INSERT INTO pago_boletas (pago_id, boleta_id, monto_aplicado, es_pago_completo)
+            VALUES (%s, %s, %s, TRUE)
+        ''', (pago_id, b['id'], monto_boleta))
+
+    conn.commit()
+    conn.close()
+
+    return pago_id
 
 
 # =============================================================================
@@ -1016,6 +1078,7 @@ def registrar_pago_admin():
     # GET: Mostrar formulario
     cliente_id = request.args.get('cliente_id', type=int)
     clientes = listar_clientes()
+    today = datetime.now().strftime('%Y-%m-%d')
 
     # Obtener boletas pendientes del cliente seleccionado
     boletas_pendientes = []
@@ -1025,7 +1088,8 @@ def registrar_pago_admin():
     return render_template('boletas/registrar_pago.html',
                           clientes=clientes,
                           boletas_pendientes=boletas_pendientes,
-                          cliente_id=cliente_id)
+                          cliente_id=cliente_id,
+                          today=today)
 
 
 # =============================================================================

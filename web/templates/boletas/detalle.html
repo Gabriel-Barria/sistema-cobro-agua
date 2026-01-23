@@ -36,17 +36,23 @@
 
     <div class="detail-section">
         <h3>Estado de Pago</h3>
-        <div style="padding: 15px; background: {{ '#d4edda' if boleta.pagada else '#fff3cd' }}; border-radius: 5px;">
-            {% if boleta.pagada %}
+        <div style="padding: 15px; background: {{ '#d4edda' if boleta.pagada == 2 else '#fff3cd' if boleta.pagada == 1 else '#f8d7da' }}; border-radius: 5px;">
+            {% if boleta.pagada == 2 %}
                 <span class="badge badge-success" style="font-size: 16px;">PAGADA</span>
                 <p style="margin-top: 10px;">
                     <strong>Fecha de pago:</strong> {{ boleta.fecha_pago }}<br>
-                    <strong>Metodo:</strong> {{ boleta.metodo_pago|capitalize }}
+                    <strong>Metodo:</strong> {{ boleta.metodo_pago|capitalize if boleta.metodo_pago else '-' }}
                 </p>
                 {% if boleta.comprobante_path %}
                     <p><strong>Comprobante:</strong> <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver comprobante</a></p>
                 {% else %}
                     <p class="alert alert-warning" style="margin-top: 10px;">Sin comprobante adjunto</p>
+                {% endif %}
+            {% elif boleta.pagada == 1 %}
+                <span class="badge badge-warning" style="font-size: 16px;">EN REVISION</span>
+                <p style="margin-top: 10px;">Comprobante enviado, pendiente de aprobacion.</p>
+                {% if boleta.comprobante_path %}
+                    <p><strong>Comprobante:</strong> <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver comprobante</a></p>
                 {% endif %}
             {% else %}
                 <span class="badge badge-danger" style="font-size: 16px;">PENDIENTE</span>
@@ -97,46 +103,53 @@
     </table>
 </div>
 
-{% if historial %}
+{% if pagos %}
 <div class="detail-section" style="margin-top: 20px;">
-    <h3>Historial de Intentos de Pago</h3>
+    <h3>Pagos Asociados</h3>
     <table class="data-table">
         <thead>
             <tr>
-                <th>#</th>
+                <th>N Pago</th>
                 <th>Fecha Envio</th>
+                <th>Monto Aplicado</th>
                 <th>Estado</th>
-                <th>Fecha Procesamiento</th>
+                <th>Fecha Proceso</th>
                 <th>Detalle</th>
-                <th>Comprobante</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
-            {% for intento in historial %}
+            {% for pago in pagos %}
             <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ intento.fecha_envio }}</td>
+                <td>{{ pago.numero_pago }}</td>
+                <td>{{ pago.fecha_envio }}</td>
+                <td>${{ pago.monto_aplicado|formato_pesos }}</td>
                 <td>
-                    {% if intento.estado == 'aprobado' %}
+                    {% if pago.estado == 'aprobado' %}
                         <span class="badge badge-success">Aprobado</span>
-                    {% elif intento.estado == 'rechazado' %}
+                    {% elif pago.estado == 'rechazado' %}
                         <span class="badge badge-danger">Rechazado</span>
-                    {% else %}
+                    {% elif pago.estado == 'en_revision' %}
                         <span class="badge badge-warning">En Revision</span>
+                    {% else %}
+                        <span class="badge">{{ pago.estado }}</span>
                     {% endif %}
                 </td>
-                <td>{{ intento.fecha_procesamiento or '-' }}</td>
+                <td>{{ pago.fecha_procesamiento or '-' }}</td>
                 <td>
-                    {% if intento.estado == 'rechazado' %}
-                        {{ intento.motivo_rechazo }}
-                    {% elif intento.estado == 'aprobado' %}
-                        {{ intento.metodo_pago|capitalize if intento.metodo_pago else '-' }}
+                    {% if pago.estado == 'rechazado' %}
+                        {{ pago.motivo_rechazo }}
+                    {% elif pago.estado == 'aprobado' %}
+                        {{ pago.metodo_pago|capitalize if pago.metodo_pago else '-' }}
                     {% else %}
                         -
                     {% endif %}
                 </td>
                 <td>
-                    <a href="/{{ intento.comprobante_path }}" target="_blank">Ver</a>
+                    <a href="{{ url_for('boletas.pago_detalle', pago_id=pago.id) }}" class="btn btn-small">Ver Pago</a>
+                    {% if pago.comprobante_path %}
+                    <a href="/{{ pago.comprobante_path }}" target="_blank" class="btn btn-small">Comprobante</a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
@@ -144,6 +157,7 @@
     </table>
 </div>
 {% endif %}
+
 
 <div class="actions-section" style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 5px;">
     <h3>Acciones</h3>

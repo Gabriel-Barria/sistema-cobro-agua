@@ -83,21 +83,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabla de historial de intentos de pago
-CREATE TABLE IF NOT EXISTS historial_pagos (
-    id SERIAL PRIMARY KEY,
-    boleta_id INTEGER NOT NULL,
-    comprobante_path TEXT NOT NULL,
-    fecha_envio DATE NOT NULL,
-    estado VARCHAR(20) NOT NULL DEFAULT 'en_revision',
-    fecha_procesamiento DATE,
-    motivo_rechazo TEXT,
-    metodo_pago TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (boleta_id) REFERENCES boletas(id) ON DELETE CASCADE
-);
-
--- Tabla de pagos (nuevo sistema - reemplaza historial_pagos)
+-- Tabla de pagos
 CREATE TABLE IF NOT EXISTS pagos (
     id SERIAL PRIMARY KEY,
     numero_pago VARCHAR(20) UNIQUE NOT NULL,
@@ -173,7 +159,6 @@ CREATE INDEX IF NOT EXISTS idx_boletas_medidor ON boletas(medidor_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_pagada ON boletas(pagada);
 CREATE INDEX IF NOT EXISTS idx_boletas_periodo ON boletas(periodo_año, periodo_mes);
 CREATE INDEX IF NOT EXISTS idx_usuarios_username ON usuarios(username);
-CREATE INDEX IF NOT EXISTS idx_historial_boleta ON historial_pagos(boleta_id);
 CREATE INDEX IF NOT EXISTS idx_pagos_cliente ON pagos(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_pagos_estado ON pagos(estado);
 CREATE INDEX IF NOT EXISTS idx_pagos_fecha_envio ON pagos(fecha_envio);
