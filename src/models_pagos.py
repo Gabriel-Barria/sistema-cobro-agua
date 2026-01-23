@@ -52,10 +52,15 @@ def obtener_saldo_cliente(cliente_id: int) -> Decimal:
     return Decimal(str(resultado['saldo_disponible'])) if resultado else Decimal('0')
 
 
-def actualizar_saldo_cliente(cliente_id: int, nuevo_saldo: Decimal) -> bool:
+def actualizar_saldo_cliente(cliente_id: int, nuevo_saldo: Decimal,
+                             cursor_ext=None) -> bool:
     """Actualiza el saldo disponible del cliente."""
-    conn = get_connection()
-    cursor = conn.cursor()
+    conn = None
+    if cursor_ext:
+        cursor = cursor_ext
+    else:
+        conn = get_connection()
+        cursor = conn.cursor()
 
     try:
         cursor.execute('''
@@ -65,19 +70,23 @@ def actualizar_saldo_cliente(cliente_id: int, nuevo_saldo: Decimal) -> bool:
             DO UPDATE SET saldo_disponible = %s, ultima_actualizacion = CURRENT_TIMESTAMP
         ''', (cliente_id, nuevo_saldo, nuevo_saldo))
 
-        conn.commit()
+        if conn:
+            conn.commit()
         return True
     except Exception:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         return False
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 
 def registrar_movimiento_saldo(cliente_id: int, tipo: str, origen: str,
                                 monto: Decimal, descripcion: str = None,
                                 pago_id: int = None, boleta_id: int = None,
-                                usuario_id: int = None) -> int:
+                                usuario_id: int = None,
+                                cursor_ext=None) -> int:
     """
     Registra un movimiento en el historial de saldos.
 
@@ -90,12 +99,17 @@ def registrar_movimiento_saldo(cliente_id: int, tipo: str, origen: str,
         pago_id: ID del pago relacionado (opcional)
         boleta_id: ID de la boleta relacionada (opcional)
         usuario_id: ID del usuario que hace el ajuste (opcional)
+        cursor_ext: Cursor externo para participar en transacción existente
 
     Returns:
         ID del movimiento creado
     """
-    conn = get_connection()
-    cursor = conn.cursor()
+    conn = None
+    if cursor_ext:
+        cursor = cursor_ext
+    else:
+        conn = get_connection()
+        cursor = conn.cursor()
 
     try:
         saldo_anterior = obtener_saldo_cliente(cliente_id)
@@ -113,15 +127,18 @@ def registrar_movimiento_saldo(cliente_id: int, tipo: str, origen: str,
         movimiento_id = cursor.fetchone()['id']
 
         # Actualizar saldo del cliente
-        actualizar_saldo_cliente(cliente_id, saldo_nuevo)
+        actualizar_saldo_cliente(cliente_id, saldo_nuevo, cursor_ext=cursor)
 
-        conn.commit()
+        if conn:
+            conn.commit()
         return movimiento_id
     except Exception as e:
-        conn.rollback()
+        if conn:
+            conn.rollback()
         raise e
     finally:
-        conn.close()
+        if conn:
+            conn.close()
 
 
 def registrar_pago(cliente_id: int, monto_total: Decimal,
@@ -331,7 +348,8 @@ def aprobar_pago(pago_id: int, usuario_id: int = None) -> Tuple[bool, str]:
                 monto=monto_a_favor,
                 descripcion=f'Excedente del pago {pago["numero_pago"]}',
                 pago_id=pago_id,
-                usuario_id=usuario_id
+                usuario_id=usuario_id,
+                cursor_ext=cursor
             )
 
         # Actualizar estado del pago
@@ -528,7 +546,8 @@ def registrar_pago_directo(cliente_id: int, monto_total: Decimal,
                 monto=saldo_generado,
                 descripcion=f'Excedente del pago {numero_pago}',
                 pago_id=pago_id,
-                usuario_id=usuario_id
+                usuario_id=usuario_id,
+                cursor_ext=cursor
             )
 
         conn.commit()
@@ -863,7 +882,8 @@ def usar_saldo_en_boletas(cliente_id: int, boletas_ids: List[int],
                 descripcion=f'Aplicado a boleta {boleta_id}',
                 pago_id=pago_id,
                 boleta_id=boleta_id,
-                usuario_id=usuario_id
+                usuario_id=usuario_id,
+                cursor_ext=cursor
             )
 
             saldo_restante -= monto_aplicar
