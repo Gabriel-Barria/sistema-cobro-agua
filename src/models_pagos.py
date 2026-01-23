@@ -225,25 +225,22 @@ def _aplicar_pago_a_boletas(cursor, pago_id: int, cliente_id: int,
     boletas_afectadas = []
     detalles = []
 
-    for boleta_id in boletas_ids:
+    # Ordenar boletas por periodo (más antigua primero)
+    cursor.execute('''
+        SELECT id, total, monto_pagado, saldo_pendiente
+        FROM boletas
+        WHERE id = ANY(%s) AND saldo_pendiente > 0
+        ORDER BY periodo_año ASC, periodo_mes ASC
+    ''', (boletas_ids,))
+    boletas_ordenadas = cursor.fetchall()
+
+    for boleta in boletas_ordenadas:
         if monto_restante <= 0:
             break
 
-        # Obtener boleta
-        cursor.execute('''
-            SELECT id, total, monto_pagado, saldo_pendiente
-            FROM boletas WHERE id = %s
-        ''', (boleta_id,))
-        boleta = cursor.fetchone()
-
-        if not boleta or Decimal(str(boleta['saldo_pendiente'])) <= 0:
-            continue
-
-        # Calcular monto a aplicar a esta boleta
+        boleta_id = boleta['id']
         saldo_boleta = Decimal(str(boleta['saldo_pendiente']))
         monto_aplicar = min(monto_restante, saldo_boleta)
-
-        # Determinar si es pago completo
         es_completo = (monto_aplicar >= saldo_boleta)
 
         # Registrar en pago_boletas
@@ -464,23 +461,24 @@ def registrar_pago_directo(cliente_id: int, monto_total: Decimal,
 
         pago_id = cursor.fetchone()['id']
 
-        # Aplicar pago a boletas
+        # Aplicar pago a boletas (ordenadas por periodo, más antigua primero)
         monto_restante = monto_total
         monto_aplicado_total = Decimal('0')
         boletas_afectadas = []
 
-        for boleta_id in boletas_ids:
+        cursor.execute('''
+            SELECT id, total, saldo_pendiente
+            FROM boletas
+            WHERE id = ANY(%s) AND saldo_pendiente > 0
+            ORDER BY periodo_año ASC, periodo_mes ASC
+        ''', (boletas_ids,))
+        boletas_ordenadas = cursor.fetchall()
+
+        for boleta in boletas_ordenadas:
             if monto_restante <= 0:
                 break
 
-            cursor.execute('''
-                SELECT id, total, saldo_pendiente FROM boletas WHERE id = %s
-            ''', (boleta_id,))
-            boleta = cursor.fetchone()
-
-            if not boleta or Decimal(str(boleta['saldo_pendiente'])) <= 0:
-                continue
-
+            boleta_id = boleta['id']
             saldo_boleta = Decimal(str(boleta['saldo_pendiente']))
             monto_aplicar = min(monto_restante, saldo_boleta)
             es_completo = (monto_aplicar >= saldo_boleta)
@@ -813,21 +811,22 @@ def usar_saldo_en_boletas(cliente_id: int, boletas_ids: List[int],
 
         pago_id = cursor.fetchone()['id']
 
-        # Aplicar saldo a boletas
+        # Aplicar saldo a boletas (ordenadas por periodo, más antigua primero)
         saldo_restante = saldo_disponible
 
-        for boleta_id in boletas_ids:
+        cursor.execute('''
+            SELECT id, saldo_pendiente
+            FROM boletas
+            WHERE id = ANY(%s) AND saldo_pendiente > 0
+            ORDER BY periodo_año ASC, periodo_mes ASC
+        ''', (boletas_ids,))
+        boletas_ordenadas = cursor.fetchall()
+
+        for boleta in boletas_ordenadas:
             if saldo_restante <= 0:
                 break
 
-            cursor.execute('''
-                SELECT id, saldo_pendiente FROM boletas WHERE id = %s
-            ''', (boleta_id,))
-            boleta = cursor.fetchone()
-
-            if not boleta or Decimal(str(boleta['saldo_pendiente'])) <= 0:
-                continue
-
+            boleta_id = boleta['id']
             saldo_boleta = Decimal(str(boleta['saldo_pendiente']))
             monto_aplicar = min(saldo_restante, saldo_boleta)
             es_completo = (monto_aplicar >= saldo_boleta)
