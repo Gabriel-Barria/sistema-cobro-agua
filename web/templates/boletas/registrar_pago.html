@@ -9,7 +9,7 @@
 </div>
 
 <div class="form-container">
-    <form method="POST" id="formPago">
+    <form method="POST" id="formPago" enctype="multipart/form-data">
         <div class="form-row">
             <div class="form-group">
                 <label for="cliente_id">Cliente *</label>
@@ -30,7 +30,7 @@
         <div class="form-row">
             <div class="form-group">
                 <label for="metodo_pago">Metodo de Pago</label>
-                <select name="metodo_pago" id="metodo_pago">
+                <select name="metodo_pago" id="metodo_pago" onchange="toggleComprobante()">
                     <option value="efectivo">Efectivo</option>
                     <option value="transferencia">Transferencia</option>
                     <option value="deposito">Deposito</option>
@@ -44,9 +44,17 @@
             </div>
         </div>
 
-        <div class="form-group">
-            <label for="notas">Notas (opcional)</label>
-            <textarea name="notas" id="notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="notas">Notas (opcional)</label>
+                <textarea name="notas" id="notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="comprobante">Comprobante <span id="comprobanteReq">*</span></label>
+                <input type="file" name="comprobante" id="comprobante" accept=".jpg,.jpeg,.png,.gif,.pdf">
+                <small id="comprobanteHelp" style="color: #666;">Requerido para transferencia</small>
+            </div>
         </div>
 
         <div class="boletas-section" id="boletasSection" style="display: {% if boletas_pendientes %}block{% else %}none{% endif %};">
@@ -192,6 +200,26 @@ function deseleccionarTodas() {
 
 // Actualizar total cuando cambia el monto
 document.getElementById('monto').addEventListener('input', actualizarTotal);
+
+function toggleComprobante() {
+    const metodo = document.getElementById('metodo_pago').value;
+    const input = document.getElementById('comprobante');
+    const reqLabel = document.getElementById('comprobanteReq');
+    const help = document.getElementById('comprobanteHelp');
+
+    if (metodo === 'transferencia') {
+        input.required = true;
+        reqLabel.style.display = 'inline';
+        help.textContent = 'Requerido para transferencia';
+    } else {
+        input.required = false;
+        reqLabel.style.display = 'none';
+        help.textContent = 'Opcional';
+    }
+}
+
+// Inicializar estado del comprobante
+toggleComprobante();
 
 // Inicializar
 {% if cliente_id %}

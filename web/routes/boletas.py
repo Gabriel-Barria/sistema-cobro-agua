@@ -1043,6 +1043,33 @@ def registrar_pago_admin():
             flash('Debe seleccionar cliente, monto y al menos una boleta', 'error')
             return redirect(url_for('boletas.registrar_pago_admin'))
 
+        # Validar comprobante para transferencia
+        comprobante_path = None
+        if metodo_pago == 'transferencia':
+            archivo = request.files.get('comprobante')
+            if not archivo or archivo.filename == '':
+                flash('Debe adjuntar comprobante para pagos por transferencia', 'error')
+                return redirect(url_for('boletas.registrar_pago_admin'))
+            if not allowed_file(archivo.filename):
+                flash('Tipo de archivo no permitido. Use: jpg, png, gif o pdf', 'error')
+                return redirect(url_for('boletas.registrar_pago_admin'))
+            from werkzeug.utils import secure_filename
+            filename = secure_filename(archivo.filename)
+            pago_dir = os.path.join(COMPROBANTES_DIR, f'pago_admin_{cliente_id}')
+            os.makedirs(pago_dir, exist_ok=True)
+            archivo.save(os.path.join(pago_dir, filename))
+            comprobante_path = f'comprobantes/pago_admin_{cliente_id}/{filename}'
+        else:
+            # Para otros métodos, comprobante es opcional
+            archivo = request.files.get('comprobante')
+            if archivo and archivo.filename != '' and allowed_file(archivo.filename):
+                from werkzeug.utils import secure_filename
+                filename = secure_filename(archivo.filename)
+                pago_dir = os.path.join(COMPROBANTES_DIR, f'pago_admin_{cliente_id}')
+                os.makedirs(pago_dir, exist_ok=True)
+                archivo.save(os.path.join(pago_dir, filename))
+                comprobante_path = f'comprobantes/pago_admin_{cliente_id}/{filename}'
+
         try:
             fecha_pago = datetime.strptime(fecha_pago_str, '%Y-%m-%d').date() if fecha_pago_str else None
         except ValueError:
@@ -1060,7 +1087,8 @@ def registrar_pago_admin():
                 metodo_pago=metodo_pago,
                 usuario_id=usuario_id,
                 fecha_pago=fecha_pago,
-                notas=notas
+                notas=notas,
+                comprobante_path=comprobante_path
             )
 
             msg = f'Pago {resultado["numero_pago"]} registrado. '

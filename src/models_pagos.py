@@ -191,8 +191,9 @@ def registrar_pago(cliente_id: int, monto_total: Decimal,
         # Actualizar estado de boletas a "En Revisión"
         for boleta_id in resultado['boletas_afectadas']:
             cursor.execute('''
-                UPDATE boletas SET pagada = 1 WHERE id = %s AND pagada = 0
-            ''', (boleta_id,))
+                UPDATE boletas SET pagada = 1, comprobante_path = %s
+                WHERE id = %s AND pagada = 0
+            ''', (comprobante_path, boleta_id,))
 
         conn.commit()
 
@@ -424,7 +425,8 @@ def rechazar_pago(pago_id: int, motivo: str, usuario_id: int = None) -> Tuple[bo
 def registrar_pago_directo(cliente_id: int, monto_total: Decimal,
                            boletas_ids: List[int], metodo_pago: str,
                            usuario_id: int, fecha_pago: date = None,
-                           notas: str = None) -> Dict:
+                           notas: str = None,
+                           comprobante_path: str = None) -> Dict:
     """
     Registra un pago directo desde el admin (ej: pago en efectivo).
     El pago se aprueba automáticamente.
@@ -452,12 +454,13 @@ def registrar_pago_directo(cliente_id: int, monto_total: Decimal,
         cursor.execute('''
             INSERT INTO pagos (numero_pago, cliente_id, monto_total,
                               metodo_pago, estado, fecha_pago, fecha_envio,
-                              fecha_procesamiento, procesado_por, notas)
+                              fecha_procesamiento, procesado_por, notas,
+                              comprobante_path)
             VALUES (%s, %s, %s, %s, 'aprobado', %s, CURRENT_DATE,
-                    CURRENT_DATE, %s, %s)
+                    CURRENT_DATE, %s, %s, %s)
             RETURNING id
         ''', (numero_pago, cliente_id, monto_total, metodo_pago,
-              fecha_pago or date.today(), usuario_id, notas))
+              fecha_pago or date.today(), usuario_id, notas, comprobante_path))
 
         pago_id = cursor.fetchone()['id']
 
@@ -497,10 +500,12 @@ def registrar_pago_directo(cliente_id: int, monto_total: Decimal,
                     saldo_pendiente = saldo_pendiente - %s,
                     pagada = %s,
                     fecha_pago = CASE WHEN %s = 2 THEN %s ELSE fecha_pago END,
-                    metodo_pago = %s
+                    metodo_pago = %s,
+                    comprobante_path = COALESCE(%s, comprobante_path)
                 WHERE id = %s
             ''', (monto_aplicar, monto_aplicar, nuevo_estado,
-                  nuevo_estado, fecha_pago or date.today(), metodo_pago, boleta_id))
+                  nuevo_estado, fecha_pago or date.today(), metodo_pago,
+                  comprobante_path, boleta_id))
 
             monto_restante -= monto_aplicar
             monto_aplicado_total += monto_aplicar
