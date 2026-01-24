@@ -902,6 +902,103 @@ def obtener_estadisticas_clientes(busqueda: str = None, con_medidores: str = Non
     }
 
 
+def obtener_estadisticas_medidores(busqueda: str = None, cliente_id: int = None,
+                                   estado: str = None) -> Dict:
+    """Obtiene estadisticas de medidores con los mismos filtros del listado."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = '''
+        SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN m.activo = 1 THEN 1 END) as activos,
+            COUNT(CASE WHEN m.activo = 0 THEN 1 END) as inactivos,
+            COALESCE(SUM(sub.num_lecturas), 0) as total_lecturas
+        FROM medidores m
+        LEFT JOIN clientes c ON m.cliente_id = c.id
+        LEFT JOIN (
+            SELECT medidor_id, COUNT(*) as num_lecturas
+            FROM lecturas
+            GROUP BY medidor_id
+        ) sub ON m.id = sub.medidor_id
+        WHERE 1=1
+    '''
+    params = []
+
+    if busqueda:
+        query += ''' AND (
+            LOWER(m.numero_medidor) LIKE LOWER(%s) OR
+            LOWER(m.direccion) LIKE LOWER(%s) OR
+            LOWER(c.nombre) LIKE LOWER(%s)
+        )'''
+        busqueda_param = f'%{busqueda}%'
+        params.extend([busqueda_param] * 3)
+
+    if cliente_id:
+        query += ' AND m.cliente_id = %s'
+        params.append(cliente_id)
+
+    if estado == 'activo':
+        query += ' AND m.activo = 1'
+    elif estado == 'inactivo':
+        query += ' AND m.activo = 0'
+
+    cursor.execute(query, params)
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return {'total': 0, 'activos': 0, 'inactivos': 0, 'total_lecturas': 0}
+
+    return {
+        'total': row[0] if isinstance(row, tuple) else row['total'],
+        'activos': row[1] if isinstance(row, tuple) else row['activos'],
+        'inactivos': row[2] if isinstance(row, tuple) else row['inactivos'],
+        'total_lecturas': int(row[3] if isinstance(row, tuple) else row['total_lecturas'])
+    }
+
+
+def obtener_estadisticas_pagos(estado: str = None, cliente_id: int = None) -> Dict:
+    """Obtiene estadisticas de pagos con los mismos filtros del listado."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = '''
+        SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN estado = 'aprobado' THEN 1 END) as aprobados,
+            COUNT(CASE WHEN estado = 'en_revision' THEN 1 END) as en_revision,
+            COUNT(CASE WHEN estado = 'rechazado' THEN 1 END) as rechazados,
+            COALESCE(SUM(monto_total), 0) as monto_total
+        FROM pagos
+        WHERE 1=1
+    '''
+    params = []
+
+    if estado:
+        query += ' AND estado = %s'
+        params.append(estado)
+
+    if cliente_id:
+        query += ' AND cliente_id = %s'
+        params.append(cliente_id)
+
+    cursor.execute(query, params)
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return {'total': 0, 'aprobados': 0, 'en_revision': 0, 'rechazados': 0, 'monto_total': 0}
+
+    return {
+        'total': row[0] if isinstance(row, tuple) else row['total'],
+        'aprobados': row[1] if isinstance(row, tuple) else row['aprobados'],
+        'en_revision': row[2] if isinstance(row, tuple) else row['en_revision'],
+        'rechazados': row[3] if isinstance(row, tuple) else row['rechazados'],
+        'monto_total': float(row[4] if isinstance(row, tuple) else row['monto_total'])
+    }
+
+
 def obtener_fechas_comunes_por_periodo(periodos: List[tuple]) -> Dict[tuple, Optional[int]]:
     """
     Obtiene el día más común de lectura para cada periodo.

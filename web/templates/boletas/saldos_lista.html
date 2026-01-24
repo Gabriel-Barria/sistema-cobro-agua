@@ -5,13 +5,39 @@
 {% block content %}
 <div class="page-header">
     <h1>Saldos de Clientes</h1>
-    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary">Volver a Pagos</a>
+    <div>
+        <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary hide-mobile"><i class="fas fa-arrow-left"></i> Volver a Pagos</a>
+        <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary hide-desktop"><i class="fas fa-arrow-left"></i></a>
+    </div>
 </div>
 
-<p class="form-help" style="margin-bottom: var(--spacing-md);">Lista de clientes con su saldo a favor disponible.</p>
+<!-- Stats Section -->
+<div class="stats-toggle--enhanced hide-mobile" onclick="toggleStats()">
+    <span><i class="fas fa-chart-bar"></i> Estadisticas</span>
+    <i class="fas fa-chevron-down" id="statsChevron"></i>
+</div>
+<div class="stats-collapsible hide-mobile" id="statsSection">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card__value">{{ stats.total }}</div>
+            <div class="stat-card__label">Total Clientes</div>
+        </div>
+        <div class="stat-card stat-card--success">
+            <div class="stat-card__value">{{ stats.con_saldo }}</div>
+            <div class="stat-card__label">Con Saldo</div>
+        </div>
+        <div class="stat-card stat-card--info">
+            <div class="stat-card__value">${{ stats.total_saldo|formato_pesos }}</div>
+            <div class="stat-card__label">Total Saldo</div>
+        </div>
+    </div>
+</div>
+
+<p class="form-help mb-md hide-mobile">Lista de clientes con su saldo a favor disponible.</p>
 
 {% if saldos %}
-<table class="data-table data-table--striped data-table--hover">
+<!-- Desktop Table -->
+<table class="data-table data-table--striped data-table--hover hide-mobile">
     <thead>
         <tr>
             <th>ID</th>
@@ -29,7 +55,7 @@
             <td>{{ s.nombre }}</td>
             <td>{{ s.nombre_completo or '-' }}</td>
             <td>
-                <span class="{% if s.saldo_disponible > 0 %}text-success{% endif %}" style="font-weight: {% if s.saldo_disponible > 0 %}bold{% else %}normal{% endif %};">
+                <span class="{% if s.saldo_disponible > 0 %}text-success text-bold{% endif %}">
                     ${{ s.saldo_disponible|formato_pesos }}
                 </span>
             </td>
@@ -43,11 +69,56 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Mobile Card View -->
+<div class="hide-desktop">
+    {% for s in saldos %}
+    <div class="saldo-card {% if s.saldo_disponible > 0 %}saldo-card--positive{% endif %}">
+        <div class="saldo-card__left">
+            <div class="saldo-card__name">{{ s.nombre }}</div>
+            <div class="saldo-card__fullname">{{ s.nombre_completo or '-' }}</div>
+        </div>
+        <div class="saldo-card__right">
+            <div class="saldo-card__amount">${{ s.saldo_disponible|formato_pesos }}</div>
+            <a href="{{ url_for('boletas.saldo_detalle', cliente_id=s.id) }}" class="action-btn saldo-card__action" title="Ver detalle">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 {% else %}
-<div class="empty-state">
+<!-- Empty States -->
+<div class="empty-state hide-mobile">
     <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
     <h3 class="empty-state__title">No hay saldos</h3>
     <p class="empty-state__description">No hay clientes con saldo registrado.</p>
 </div>
+<div class="empty-state hide-desktop">
+    <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
+    <h3 class="empty-state__title">Sin saldos</h3>
+    <p class="empty-state__description">No hay clientes con saldo.</p>
+</div>
 {% endif %}
+
+<script>
+function toggleStats() {
+    var section = document.getElementById('statsSection');
+    var chevron = document.getElementById('statsChevron');
+    var isOpen = section.style.display !== 'none';
+    section.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    localStorage.setItem('saldos-stats-open', !isOpen);
+}
+
+(function() {
+    var saved = localStorage.getItem('saldos-stats-open');
+    if (saved === 'false') {
+        var section = document.getElementById('statsSection');
+        var chevron = document.getElementById('statsChevron');
+        if (section) { section.style.display = 'none'; }
+        if (chevron) { chevron.style.transform = ''; }
+    }
+})();
+</script>
 {% endblock %}
