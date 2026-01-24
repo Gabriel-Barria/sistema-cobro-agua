@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h1>Nueva Lectura Multiple</h1>
-    <a href="{{ url_for('lecturas.listar') }}" class="btn btn-secondary">Cancelar</a>
+    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Cancelar</a>
 </div>
 
 <form method="POST" class="form" id="form-multiple">
@@ -66,7 +66,7 @@
             </div>
         </div>
 
-        <button type="button" id="btn-calcular" class="btn btn-secondary">Calcular Periodos</button>
+        <button type="button" id="btn-calcular" class="btn btn--secondary">Calcular Periodos</button>
     </fieldset>
 
     <fieldset class="form-fieldset" id="fieldset-fechas" style="display: none;">
@@ -95,7 +95,7 @@
     <input type="hidden" name="periodos_data" id="periodos_data">
 
     <div class="form-actions">
-        <button type="submit" class="btn btn-primary" id="btn-submit" disabled>Crear Lecturas</button>
+        <button type="submit" class="btn btn--primary" id="btn-submit" disabled>Crear Lecturas</button>
     </div>
 </form>
 
@@ -158,7 +158,7 @@ function calcularPeriodos() {
 
     // Validar rango
     if (anioDesde > anioHasta || (anioDesde === anioHasta && mesDesde > mesHasta)) {
-        alert('El periodo "Desde" debe ser anterior o igual al periodo "Hasta"');
+        Toast.warning('El periodo "Desde" debe ser anterior o igual al periodo "Hasta"');
         return;
     }
 
@@ -177,7 +177,7 @@ function calcularPeriodos() {
     }
 
     if (periodosCalculados.length === 0) {
-        alert('No hay periodos en el rango seleccionado');
+        Toast.warning('No hay periodos en el rango seleccionado');
         return;
     }
 
@@ -323,18 +323,29 @@ document.getElementById('form-multiple').addEventListener('submit', function(e) 
 
     if (!medidor || !lectura || !periodos) {
         e.preventDefault();
-        alert('Complete todos los campos requeridos');
+        Toast.warning('Complete todos los campos requeridos');
         return false;
     }
 
     const periodosData = JSON.parse(periodos);
     if (periodosData.length === 0) {
         e.preventDefault();
-        alert('Debe calcular los periodos primero');
+        Toast.warning('Debe calcular los periodos primero');
         return false;
     }
 
-    return confirm(`Se crearan ${periodosData.length} lecturas. ¿Continuar?`);
+    e.preventDefault();
+    var form = this;
+    ConfirmModal.show({
+        title: 'Crear Lecturas',
+        message: `Se crearan ${periodosData.length} lecturas. ¿Continuar?`,
+        icon: 'warning',
+        confirmText: 'Crear Lecturas',
+        confirmClass: 'btn--primary'
+    }).then(function(ok) {
+        if (ok) form.submit();
+    });
+    return false;
 });
 </script>
 {% endblock %}

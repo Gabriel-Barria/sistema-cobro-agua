@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h1>Crear Boletas - Modo Masivo</h1>
-    <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary">Cancelar</a>
+    <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Cancelar</a>
 </div>
 
 <div class="config-info" style="padding: 15px; background: #e8f4f8; border-radius: 5px; margin-bottom: 20px;">
@@ -49,15 +49,15 @@
             </select>
         </div>
 
-        <button type="submit" class="btn btn-secondary">Filtrar</button>
+        <button type="submit" class="btn btn--secondary">Filtrar</button>
     </div>
 </form>
 
 {% if lecturas %}
 <form method="POST" id="form-masivo">
     <div style="margin-bottom: 15px; display: flex; gap: 10px;">
-        <button type="button" id="btn-seleccionar-todo" class="btn btn-secondary">Seleccionar Todo</button>
-        <button type="button" id="btn-deseleccionar-todo" class="btn btn-secondary">Deseleccionar Todo</button>
+        <button type="button" id="btn-seleccionar-todo" class="btn btn--secondary">Seleccionar Todo</button>
+        <button type="button" id="btn-deseleccionar-todo" class="btn btn--secondary">Deseleccionar Todo</button>
         <span id="contador-seleccionados" style="padding: 8px;">0 lecturas seleccionadas</span>
     </div>
 
@@ -87,7 +87,7 @@
     </table>
 
     <div class="form-actions" style="margin-top: 20px;">
-        <button type="submit" class="btn btn-primary btn-lg">Crear Boletas Seleccionadas</button>
+        <button type="submit" class="btn btn--primary btn--lg">Crear Boletas Seleccionadas</button>
     </div>
 </form>
 
@@ -129,10 +129,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const seleccionados = document.querySelectorAll('.check-lectura:checked').length;
         if (seleccionados === 0) {
             e.preventDefault();
-            alert('Debe seleccionar al menos una lectura');
+            Toast.warning('Debe seleccionar al menos una lectura');
             return false;
         }
-        return confirm('Se crearan ' + seleccionados + ' boletas. Continuar?');
+        e.preventDefault();
+        var form = this;
+        ConfirmModal.show({
+            title: 'Crear Boletas',
+            message: 'Se crearan ' + seleccionados + ' boletas. Continuar?',
+            icon: 'warning',
+            confirmText: 'Crear Boletas',
+            confirmClass: 'btn--primary'
+        }).then(function(ok) {
+            if (ok) form.submit();
+        });
     });
 });
 </script>
@@ -148,11 +158,4 @@ document.addEventListener('DOMContentLoaded', function() {
     </ul>
 </div>
 {% endif %}
-
-<style>
-.btn-lg {
-    padding: 12px 24px;
-    font-size: 16px;
-}
-</style>
 {% endblock %}

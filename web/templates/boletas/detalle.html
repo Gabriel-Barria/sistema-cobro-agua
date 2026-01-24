@@ -6,12 +6,12 @@
 <div class="page-header">
     <h1>Boleta {{ boleta.numero_boleta }}</h1>
     <div>
-        <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn-primary">Descargar</a>
-        <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary">Volver</a>
+        <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn--primary"><i class="fas fa-download"></i> Descargar</a>
+        <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Volver</a>
     </div>
 </div>
 
-<div class="detail-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+<div class="detail-grid">
     <div class="detail-section">
         <h3>Datos del Cliente</h3>
         <table class="detail-table">
@@ -25,7 +25,7 @@
             </tr>
             <tr>
                 <th>Periodo:</th>
-                <td>{{ boleta.periodo_mes }}/{{ boleta.periodo_año }}</td>
+                <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
             </tr>
             <tr>
                 <th>Fecha Emision:</th>
@@ -34,36 +34,34 @@
         </table>
     </div>
 
-    <div class="detail-section">
+    <div class="detail-section detail-section--{{ 'success' if boleta.pagada == 2 else 'warning' if boleta.pagada == 1 else 'danger' }}">
         <h3>Estado de Pago</h3>
-        <div style="padding: 15px; background: {{ '#d4edda' if boleta.pagada == 2 else '#fff3cd' if boleta.pagada == 1 else '#f8d7da' }}; border-radius: 5px;">
-            {% if boleta.pagada == 2 %}
-                <span class="badge badge-success" style="font-size: 16px;">PAGADA</span>
-                <p style="margin-top: 10px;">
-                    <strong>Fecha de pago:</strong> {{ boleta.fecha_pago }}<br>
-                    <strong>Metodo:</strong> {{ boleta.metodo_pago|capitalize if boleta.metodo_pago else '-' }}
-                </p>
-                {% if boleta.comprobante_path %}
-                    <p><strong>Comprobante:</strong> <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver comprobante</a></p>
-                {% else %}
-                    <p class="alert alert-warning" style="margin-top: 10px;">Sin comprobante adjunto</p>
-                {% endif %}
-            {% elif boleta.pagada == 1 %}
-                <span class="badge badge-warning" style="font-size: 16px;">EN REVISION</span>
-                <p style="margin-top: 10px;">Comprobante enviado, pendiente de aprobacion.</p>
-                {% if boleta.comprobante_path %}
-                    <p><strong>Comprobante:</strong> <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver comprobante</a></p>
-                {% endif %}
+        {% if boleta.pagada == 2 %}
+            <span class="badge badge--success" style="font-size: 14px;">PAGADA</span>
+            <p style="margin-top: var(--spacing-sm);">
+                <strong>Fecha de pago:</strong> {{ boleta.fecha_pago }}<br>
+                <strong>Metodo:</strong> {{ boleta.metodo_pago|capitalize if boleta.metodo_pago else '-' }}
+            </p>
+            {% if boleta.comprobante_path %}
+                <p><a href="/{{ boleta.comprobante_path }}" target="_blank" class="btn btn--primary btn--sm"><i class="fas fa-paperclip"></i> Ver comprobante</a></p>
             {% else %}
-                <span class="badge badge-danger" style="font-size: 16px;">PENDIENTE</span>
+                <p class="form-help" style="margin-top: var(--spacing-sm);"><i class="fas fa-exclamation-triangle"></i> Sin comprobante adjunto</p>
             {% endif %}
-        </div>
+        {% elif boleta.pagada == 1 %}
+            <span class="badge badge--warning" style="font-size: 14px;">EN REVISION</span>
+            <p style="margin-top: var(--spacing-sm);">Comprobante enviado, pendiente de aprobacion.</p>
+            {% if boleta.comprobante_path %}
+                <p><a href="/{{ boleta.comprobante_path }}" target="_blank" class="btn btn--primary btn--sm"><i class="fas fa-paperclip"></i> Ver comprobante</a></p>
+            {% endif %}
+        {% else %}
+            <span class="badge badge--danger" style="font-size: 14px;">PENDIENTE</span>
+        {% endif %}
     </div>
 </div>
 
-<div class="detail-section" style="margin-top: 20px;">
+<div class="detail-section" style="margin-top: var(--spacing-lg);">
     <h3>Detalle de Consumo</h3>
-    <table class="data-table">
+    <table class="data-table data-table--striped">
         <thead>
             <tr>
                 <th>Concepto</th>
@@ -82,7 +80,7 @@
             <tr>
                 <td>
                     Consumo de agua
-                    <small style="display: block; color: #666;">
+                    <small class="form-help">
                         Lectura actual: {{ boleta.lectura_actual }} m3
                         {% if boleta.lectura_anterior %}
                         | Anterior: {{ boleta.lectura_anterior }} m3
@@ -104,9 +102,9 @@
 </div>
 
 {% if pagos %}
-<div class="detail-section" style="margin-top: 20px;">
+<div class="detail-section" style="margin-top: var(--spacing-lg);">
     <h3>Pagos Asociados</h3>
-    <table class="data-table">
+    <table class="data-table data-table--striped data-table--hover">
         <thead>
             <tr>
                 <th>N Pago</th>
@@ -126,13 +124,13 @@
                 <td>${{ pago.monto_aplicado|formato_pesos }}</td>
                 <td>
                     {% if pago.estado == 'aprobado' %}
-                        <span class="badge badge-success">Aprobado</span>
+                        <span class="badge badge--success">Aprobado</span>
                     {% elif pago.estado == 'rechazado' %}
-                        <span class="badge badge-danger">Rechazado</span>
+                        <span class="badge badge--danger">Rechazado</span>
                     {% elif pago.estado == 'en_revision' %}
-                        <span class="badge badge-warning">En Revision</span>
+                        <span class="badge badge--warning">En Revision</span>
                     {% else %}
-                        <span class="badge">{{ pago.estado }}</span>
+                        <span class="badge badge--secondary">{{ pago.estado }}</span>
                     {% endif %}
                 </td>
                 <td>{{ pago.fecha_procesamiento or '-' }}</td>
@@ -146,10 +144,16 @@
                     {% endif %}
                 </td>
                 <td>
-                    <a href="{{ url_for('boletas.pago_detalle', pago_id=pago.id) }}" class="btn btn-small">Ver Pago</a>
-                    {% if pago.comprobante_path %}
-                    <a href="/{{ pago.comprobante_path }}" target="_blank" class="btn btn-small">Comprobante</a>
-                    {% endif %}
+                    <div class="action-btn-group">
+                        <a href="{{ url_for('boletas.pago_detalle', pago_id=pago.id) }}" class="action-btn" title="Ver pago">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if pago.comprobante_path %}
+                        <a href="/{{ pago.comprobante_path }}" target="_blank" class="action-btn" title="Ver comprobante">
+                            <i class="fas fa-paperclip"></i>
+                        </a>
+                        {% endif %}
+                    </div>
                 </td>
             </tr>
             {% endfor %}
@@ -158,14 +162,13 @@
 </div>
 {% endif %}
 
-
-<div class="actions-section" style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 5px;">
+<div class="actions-section">
     <h3>Acciones</h3>
 
     {% if not boleta.pagada %}
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: var(--spacing-lg);">
         <h4>Marcar como pagada</h4>
-        <form method="POST" action="{{ url_for('boletas.marcar_pagada', boleta_id=boleta.id) }}" style="display: flex; gap: 10px; align-items: end;">
+        <form method="POST" action="{{ url_for('boletas.marcar_pagada', boleta_id=boleta.id) }}" style="display: flex; gap: var(--spacing-sm); align-items: end;">
             <div class="form-group" style="margin: 0;">
                 <label for="metodo_pago">Metodo de pago:</label>
                 <select name="metodo_pago" id="metodo_pago" required>
@@ -173,70 +176,69 @@
                     <option value="transferencia">Transferencia</option>
                 </select>
             </div>
-            <button type="submit" class="btn btn-success">Marcar Pagada</button>
+            <button type="submit" class="btn btn--success">Marcar Pagada</button>
         </form>
     </div>
     {% else %}
-    <div style="margin-bottom: 20px;">
-        <form method="POST" action="{{ url_for('boletas.desmarcar_pagada', boleta_id=boleta.id) }}"
-              onsubmit="return confirm('Estas seguro de desmarcar esta boleta como pagada?');">
-            <button type="submit" class="btn btn-warning">Desmarcar Pagada</button>
-        </form>
+    <div style="margin-bottom: var(--spacing-lg);">
+        <button type="button" class="btn btn--warning" onclick="desmarcarPagada()">Desmarcar Pagada</button>
     </div>
     {% endif %}
 
     {% if boleta.pagada %}
-    <div style="margin-bottom: 20px;">
+    <div style="margin-bottom: var(--spacing-lg);">
         <h4>Subir Comprobante</h4>
         <form method="POST" action="{{ url_for('boletas.subir_comprobante', boleta_id=boleta.id) }}"
-              enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: end;">
+              enctype="multipart/form-data" style="display: flex; gap: var(--spacing-sm); align-items: end;">
             <div class="form-group" style="margin: 0;">
                 <label for="comprobante">Archivo (imagen o PDF):</label>
                 <input type="file" name="comprobante" id="comprobante" accept=".jpg,.jpeg,.png,.gif,.pdf" required>
             </div>
-            <button type="submit" class="btn btn-primary">Subir</button>
+            <button type="submit" class="btn btn--primary"><i class="fas fa-upload"></i> Subir</button>
         </form>
     </div>
     {% endif %}
 
-    <div style="border-top: 1px solid #ddd; padding-top: 20px; margin-top: 20px;">
-        <form method="POST" action="{{ url_for('boletas.eliminar', boleta_id=boleta.id) }}"
-              onsubmit="return confirm('Estas seguro de eliminar esta boleta? Esta accion no se puede deshacer.');">
-            <button type="submit" class="btn btn-danger">Eliminar Boleta</button>
-        </form>
+    <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-lg); margin-top: var(--spacing-lg);">
+        <button type="button" class="btn btn--danger" onclick="eliminarBoleta()"><i class="fas fa-trash"></i> Eliminar Boleta</button>
     </div>
 </div>
 
-<style>
-.detail-section {
-    background: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+<script>
+function desmarcarPagada() {
+    ConfirmModal.show({
+        title: 'Desmarcar Pagada',
+        message: 'Se desmarcara esta boleta como pagada y volvera a estado pendiente.',
+        icon: 'warning',
+        confirmText: 'Desmarcar',
+        confirmClass: 'btn--warning'
+    }).then(function(ok) {
+        if (ok) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("boletas.desmarcar_pagada", boleta_id=boleta.id) }}';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
-.detail-table {
-    width: 100%;
+
+function eliminarBoleta() {
+    ConfirmModal.show({
+        title: 'Eliminar Boleta',
+        message: 'Esta accion no se puede deshacer. Se eliminara permanentemente la boleta.',
+        icon: 'danger',
+        confirmText: 'Eliminar',
+        confirmClass: 'btn--danger'
+    }).then(function(ok) {
+        if (ok) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("boletas.eliminar", boleta_id=boleta.id) }}';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
-.detail-table th {
-    text-align: left;
-    padding: 8px;
-    width: 40%;
-    background: #f9f9f9;
-}
-.detail-table td {
-    padding: 8px;
-}
-.badge {
-    display: inline-block;
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-weight: bold;
-}
-.badge-success { background: #28a745; color: white; }
-.badge-warning { background: #ffc107; color: black; }
-.badge-danger { background: #dc3545; color: white; }
-.btn-success { background: #28a745; color: white; }
-.btn-warning { background: #ffc107; color: black; }
-.btn-danger { background: #dc3545; color: white; }
-</style>
+</script>
 {% endblock %}

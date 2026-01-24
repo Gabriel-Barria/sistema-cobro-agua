@@ -3,50 +3,40 @@
 {% block title %}Editar Usuario{% endblock %}
 
 {% block content %}
-<div class="container" style="padding: 2rem; max-width: 600px;">
-    <h1 style="margin-bottom: 2rem;">Editar Usuario</h1>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}" style="padding: 1rem; margin-bottom: 1rem; border-radius: 4px; {% if category == 'success' %}background: #d4edda; color: #155724;{% elif category == 'error' %}background: #f8d7da; color: #721c24;{% else %}background: #fff3cd; color: #856404;{% endif %}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <form method="POST" style="background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="margin-bottom: 1.5rem;">
-            <label for="username" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Usuario</label>
-            <input type="text" id="username" name="username" value="{{ usuario.username }}" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-        </div>
-
-        <div style="margin-bottom: 1.5rem;">
-            <label for="nombre_completo" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Nombre Completo</label>
-            <input type="text" id="nombre_completo" name="nombre_completo" value="{{ usuario.nombre_completo }}" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-        </div>
-
-        <div style="margin-bottom: 1.5rem;">
-            <label for="rol" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Rol</label>
-            <select id="rol" name="rol" required style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                <option value="administrador" {% if usuario.rol == 'administrador' %}selected{% endif %}>Administrador</option>
-                <option value="registrador" {% if usuario.rol == 'registrador' %}selected{% endif %}>Registrador</option>
-            </select>
-        </div>
-
-        <div style="margin-bottom: 1.5rem;">
-            <label for="activo" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Estado</label>
-            <select id="activo" name="activo" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">
-                <option value="1" {% if usuario.activo %}selected{% endif %}>Activo</option>
-                <option value="0" {% if not usuario.activo %}selected{% endif %}>Inactivo</option>
-            </select>
-        </div>
-
-        <div style="display: flex; gap: 1rem;">
-            <button type="submit" style="padding: 0.75rem 1.5rem; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;">Guardar Cambios</button>
-            <a href="{{ url_for('usuarios.lista') }}" style="padding: 0.75rem 1.5rem; background: #6c757d; color: white; text-decoration: none; border-radius: 4px; display: inline-block;">Cancelar</a>
-        </div>
-    </form>
+<div class="page-header">
+    <h1>Editar Usuario</h1>
+    <a href="{{ url_for('usuarios.lista') }}" class="btn btn--secondary">Cancelar</a>
 </div>
+
+<form method="POST" class="form">
+    <div class="form-group">
+        <label for="username">Usuario *</label>
+        <input type="text" id="username" name="username" value="{{ usuario.username }}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="nombre_completo">Nombre Completo *</label>
+        <input type="text" id="nombre_completo" name="nombre_completo" value="{{ usuario.nombre_completo }}" required>
+    </div>
+
+    <div class="form-group">
+        <label for="rol">Rol *</label>
+        <select id="rol" name="rol" required>
+            <option value="administrador" {% if usuario.rol == 'administrador' %}selected{% endif %}>Administrador</option>
+            <option value="registrador" {% if usuario.rol == 'registrador' %}selected{% endif %}>Registrador</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="activo">Estado</label>
+        <select id="activo" name="activo">
+            <option value="1" {% if usuario.activo %}selected{% endif %}>Activo</option>
+            <option value="0" {% if not usuario.activo %}selected{% endif %}>Inactivo</option>
+        </select>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn--primary">Guardar Cambios</button>
+    </div>
+</form>
 {% endblock %}

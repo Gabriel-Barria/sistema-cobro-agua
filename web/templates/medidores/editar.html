@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h1>Editar Medidor</h1>
-    <a href="{{ url_for('medidores.detalle', medidor_id=medidor.id) }}" class="btn btn-secondary">Cancelar</a>
+    <a href="{{ url_for('medidores.detalle', medidor_id=medidor.id) }}" class="btn btn--secondary">Cancelar</a>
 </div>
 
 <div class="edit-context">
@@ -33,7 +33,7 @@
     </div>
 
     <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <button type="submit" class="btn btn--primary">Guardar Cambios</button>
     </div>
 </form>
 {% endblock %}

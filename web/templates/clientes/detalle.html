@@ -5,63 +5,80 @@
 {% block content %}
 <div class="page-header">
     <h1>{{ cliente.nombre }}</h1>
-    <div class="header-actions">
-        <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn">Editar</a>
-        <button type="button" class="btn btn-danger" onclick="mostrarModalEliminar()">Eliminar</button>
-        <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Volver</a>
+    <div>
+        <a href="{{ url_for('clientes.editar', cliente_id=cliente.id) }}" class="btn btn--primary"><i class="fas fa-edit"></i> Editar</a>
+        <button type="button" class="btn btn--danger" onclick="eliminarCliente()"><i class="fas fa-trash"></i> Eliminar</button>
+        <a href="{{ url_for('clientes.listar') }}" class="btn btn--secondary">Volver</a>
     </div>
 </div>
 
-<div class="detalle-info">
-    <dl>
-        <dt>Nombre</dt>
-        <dd>{{ cliente.nombre }}</dd>
+<div class="detail-grid">
+    <div class="detail-section">
+        <h3>Datos del Cliente</h3>
+        <table class="detail-table">
+            <tr>
+                <th>Nombre:</th>
+                <td>{{ cliente.nombre }}</td>
+            </tr>
+            <tr>
+                <th>Nombre Completo:</th>
+                <td>{{ cliente.nombre_completo or 'No registrado' }}</td>
+            </tr>
+            <tr>
+                <th>RUT:</th>
+                <td>{{ cliente.rut or 'No registrado' }}</td>
+            </tr>
+            <tr>
+                <th>Telefono:</th>
+                <td>{{ cliente.telefono or 'No registrado' }}</td>
+            </tr>
+            <tr>
+                <th>Correo Electronico:</th>
+                <td>{{ cliente.email or 'No registrado' }}</td>
+            </tr>
+            <tr>
+                <th>Estado:</th>
+                <td>
+                    {% if cliente.activo %}
+                    <span class="badge badge--success">Activo</span>
+                    {% else %}
+                    <span class="badge badge--secondary">Inactivo</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>Registrado:</th>
+                <td>{{ cliente.created_at }}</td>
+            </tr>
+        </table>
+    </div>
 
-        <dt>Nombre Completo</dt>
-        <dd>{{ cliente.nombre_completo or 'No registrado' }}</dd>
-
-        <dt>RUT</dt>
-        <dd>{{ cliente.rut or 'No registrado' }}</dd>
-
-        <dt>Telefono</dt>
-        <dd>{{ cliente.telefono or 'No registrado' }}</dd>
-
-        <dt>Correo Electronico</dt>
-        <dd>{{ cliente.email or 'No registrado' }}</dd>
-
-        <dt>Estado</dt>
-        <dd>{% if cliente.activo %}Activo{% else %}Inactivo{% endif %}</dd>
-
-        <dt>Registrado</dt>
-        <dd>{{ cliente.created_at }}</dd>
-    </dl>
-</div>
-
-<h2>Lecturas</h2>
-<a href="{{ url_for('lecturas.listar', cliente_id=cliente.id) }}" class="btn">Ver todas las lecturas</a>
-
-<!-- Modal Eliminar Cliente -->
-<div id="modalEliminar" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Eliminar Cliente</h3>
-        <p>Esta a punto de eliminar al cliente <strong>{{ cliente.nombre }}</strong>.</p>
-        <p class="alert alert-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el cliente no tiene medidores asociados.</p>
-        <form method="POST" action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}">
-            <div class="form-actions">
-                <button type="submit" class="btn btn-danger">Confirmar Eliminacion</button>
-                <button type="button" class="btn btn-secondary" onclick="cerrarModalEliminar()">Cancelar</button>
-            </div>
-        </form>
+    <div class="detail-section">
+        <h3>Accesos Rapidos</h3>
+        <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+            <a href="{{ url_for('lecturas.listar', cliente_id=cliente.id) }}" class="btn btn--secondary"><i class="fas fa-tachometer-alt"></i> Ver Lecturas</a>
+            <a href="{{ url_for('boletas.listar', cliente_id=cliente.id) }}" class="btn btn--secondary"><i class="fas fa-file-invoice"></i> Ver Boletas</a>
+        </div>
     </div>
 </div>
 
 <script>
-function mostrarModalEliminar() {
-    document.getElementById('modalEliminar').style.display = 'flex';
-}
-
-function cerrarModalEliminar() {
-    document.getElementById('modalEliminar').style.display = 'none';
+function eliminarCliente() {
+    ConfirmModal.show({
+        title: 'Eliminar Cliente',
+        message: 'Esta a punto de eliminar al cliente <strong>{{ cliente.nombre }}</strong>. Esta accion no se puede deshacer. Solo se puede eliminar si el cliente no tiene medidores asociados.',
+        icon: 'danger',
+        confirmText: 'Eliminar',
+        confirmClass: 'btn--danger'
+    }).then(function(ok) {
+        if (ok) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("clientes.eliminar", cliente_id=cliente.id) }}';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 </script>
 {% endblock %}

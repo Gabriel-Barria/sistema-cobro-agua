@@ -5,34 +5,42 @@
 {% block content %}
 <div class="page-header">
     <h1>Medidores</h1>
-    <a href="{{ url_for('medidores.crear') }}" class="btn btn-primary">Nuevo Medidor</a>
+    <a href="{{ url_for('medidores.crear') }}" class="btn btn--primary">Nuevo Medidor</a>
 </div>
 
-<!-- Filtros -->
-<div class="filters">
-    <form method="GET" class="filter-form">
-        <input type="text" name="busqueda" placeholder="Buscar medidor, direccion, cliente..." value="{{ busqueda }}" class="filter-input">
-        <select name="cliente_id">
-            <option value="">Todos los clientes</option>
-            {% for c in clientes %}
-            <option value="{{ c.id }}" {% if cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
-            {% endfor %}
-        </select>
-        <select name="estado">
-            <option value="">Todos los estados</option>
-            <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activos</option>
-            <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
-        </select>
-        <button type="submit" class="btn">Filtrar</button>
+<form method="GET" class="filter-bar">
+    <div class="filter-bar__fields">
+        <div class="filter-bar__group">
+            <input type="text" name="busqueda" placeholder="Buscar medidor, direccion, cliente..." value="{{ busqueda }}" class="filter-input">
+        </div>
+        <div class="filter-bar__group">
+            <select name="cliente_id">
+                <option value="">Todos los clientes</option>
+                {% for c in clientes %}
+                <option value="{{ c.id }}" {% if cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-bar__group">
+            <select name="estado">
+                <option value="">Todos los estados</option>
+                <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activos</option>
+                <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+            </select>
+        </div>
+    </div>
+    <div class="filter-bar__actions">
+        <button type="submit" class="btn btn--primary">Filtrar</button>
         {% if busqueda or estado or cliente_id %}
-        <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Limpiar</a>
+        <a href="{{ url_for('medidores.listar') }}" class="btn btn--secondary">Limpiar</a>
         {% endif %}
-    </form>
-</div>
+    </div>
+</form>
 
 <p class="total-results">Mostrando {{ medidores|length }} medidor(es)</p>
 
-<table class="data-table">
+{% if medidores %}
+<table class="data-table data-table--striped data-table--hover">
     <thead>
         <tr>
             <th class="sortable">ID</th>
@@ -53,22 +61,36 @@
             <td>{{ m.direccion or '-' }}</td>
             <td>
                 {% if m.activo == 1 %}
-                <span class="badge badge-success">Activo</span>
+                <span class="badge badge--success">Activo</span>
                 {% else %}
-                <span class="badge badge-secondary">Inactivo</span>
+                <span class="badge badge--secondary">Inactivo</span>
                 {% endif %}
             </td>
             <td>{{ m.num_lecturas }}</td>
-            <td class="actions">
-                <a href="{{ url_for('medidores.detalle', medidor_id=m.id) }}" class="btn btn-small">Ver</a>
-                <a href="{{ url_for('medidores.editar', medidor_id=m.id) }}" class="btn btn-small">Editar</a>
+            <td>
+                <div class="action-btn-group">
+                    <a href="{{ url_for('medidores.detalle', medidor_id=m.id) }}" class="action-btn" title="Ver detalle">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('medidores.editar', medidor_id=m.id) }}" class="action-btn" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </div>
             </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="7" class="empty">No hay medidores</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state__icon"><i class="fas fa-tachometer-alt"></i></div>
+    <h3 class="empty-state__title">No hay medidores</h3>
+    <p class="empty-state__description">No se encontraron medidores con los filtros seleccionados.</p>
+    {% if busqueda or estado or cliente_id %}
+    <a href="{{ url_for('medidores.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
+    {% else %}
+    <a href="{{ url_for('medidores.crear') }}" class="btn btn--primary">Nuevo Medidor</a>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}

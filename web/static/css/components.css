@@ -384,6 +384,11 @@
     color: var(--color-white);
 }
 
+.badge--secondary {
+    background: var(--color-gray);
+    color: var(--color-white);
+}
+
 .badge--clickable {
     cursor: pointer;
     transition: opacity var(--transition-fast), transform var(--transition-fast);
@@ -452,10 +457,20 @@
     color: var(--color-white);
 }
 
+.btn--warning {
+    background: var(--color-warning);
+    color: var(--color-dark);
+}
+
 .btn--sm {
     min-height: 32px;
     padding: var(--spacing-xs) var(--spacing-sm);
     font-size: var(--font-size-sm);
+}
+
+.btn--lg {
+    padding: 12px 24px;
+    font-size: 16px;
 }
 
 @media (min-width: 768px) {
@@ -1199,6 +1214,144 @@
 .btn.btn-success { background: var(--color-success); color: var(--color-white); }
 .btn.btn-danger { background: var(--color-danger); color: var(--color-white); }
 .btn.btn-secondary { background: var(--color-gray); color: var(--color-white); }
+.btn.btn-warning { background: var(--color-warning); color: var(--color-dark); }
+.btn-small, .btn.btn-small { padding: var(--spacing-xs) var(--spacing-sm); font-size: var(--font-size-xs); min-height: 28px; }
+
+/* Badge Legacy Bridge */
+.badge-success, .badge.badge-success { background: var(--color-success); color: var(--color-white); }
+.badge-warning, .badge.badge-warning { background: var(--color-warning); color: var(--color-dark); }
+.badge-danger, .badge.badge-danger { background: var(--color-danger); color: var(--color-white); }
+.badge-info, .badge.badge-info { background: var(--color-info); color: var(--color-white); }
+.badge-secondary, .badge.badge-secondary { background: var(--color-gray); color: var(--color-white); }
+
+/* Detail page shared styles */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.detail-section {
+    background: var(--color-light);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.detail-section h3 {
+    margin-top: 0;
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.detail-table {
+    width: 100%;
+}
+
+.detail-table th {
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 0;
+    color: var(--color-text-muted);
+    width: 40%;
+    font-weight: 500;
+}
+
+.detail-table td {
+    padding: var(--spacing-sm) 0;
+}
+
+.detail-section--success {
+    background: var(--color-success-bg);
+    border-left: 3px solid var(--color-success);
+}
+
+.detail-section--warning {
+    background: var(--color-warning-bg);
+    border-left: 3px solid var(--color-warning);
+}
+
+.detail-section--danger {
+    background: var(--color-danger-bg);
+    border-left: 3px solid var(--color-danger);
+}
+
+.actions-section {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-lg);
+    background: var(--color-light);
+    border-radius: var(--radius-md);
+}
+
+.actions-section h3 {
+    margin-top: 0;
+}
+
+/* Resumen Cards (stats summary) */
+.resumen-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.resumen-card {
+    background: var(--color-light);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.resumen-card h3 {
+    margin: 0 0 var(--spacing-sm) 0;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.resumen-card__valor {
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.resumen-card--success {
+    background: var(--color-success-bg);
+}
+
+.resumen-card--success .resumen-card__valor {
+    color: var(--color-success);
+}
+
+.resumen-card--danger {
+    background: var(--color-danger-bg);
+}
+
+.resumen-card--danger .resumen-card__valor {
+    color: var(--color-danger);
+}
+
+/* Ajuste Form */
+.ajuste-form__row {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    gap: var(--spacing-md);
+    align-items: start;
+}
+
+@media (max-width: 767px) {
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .resumen-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ajuste-form__row {
+        grid-template-columns: 1fr;
+    }
+}
 
 /* -----------------------------------------------------------------------------
    25. UTILITIES (MUST be last to win cascade)

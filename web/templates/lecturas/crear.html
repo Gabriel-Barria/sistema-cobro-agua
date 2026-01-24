@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h1>Nueva Lectura</h1>
-    <a href="{{ url_for('lecturas.listar') }}" class="btn btn-secondary">Cancelar</a>
+    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Cancelar</a>
 </div>
 
 <form method="POST" enctype="multipart/form-data" class="form">
@@ -56,7 +56,7 @@
     </div>
 
     <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Crear Lectura</button>
+        <button type="submit" class="btn btn--primary">Crear Lectura</button>
     </div>
 </form>
 {% endblock %}

@@ -5,164 +5,196 @@
 {% block content %}
 <div class="page-header">
     <h1>Medidor #{{ medidor.id }}</h1>
-    <div class="header-actions">
-        <a href="{{ url_for('medidores.editar', medidor_id=medidor.id) }}" class="btn">Editar</a>
-        <button type="button" class="btn btn-danger" onclick="mostrarModalEliminar()">Eliminar</button>
-        <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Volver</a>
+    <div>
+        <a href="{{ url_for('medidores.editar', medidor_id=medidor.id) }}" class="btn btn--primary"><i class="fas fa-edit"></i> Editar</a>
+        <button type="button" class="btn btn--danger" onclick="eliminarMedidor()"><i class="fas fa-trash"></i> Eliminar</button>
+        <a href="{{ url_for('medidores.listar') }}" class="btn btn--secondary">Volver</a>
     </div>
 </div>
 
-<div class="detalle-info">
-    <dl>
-        <dt>Cliente</dt>
-        <dd><a href="{{ url_for('clientes.detalle', cliente_id=medidor.cliente_id) }}">{{ medidor.cliente_nombre }}</a></dd>
-
-        <dt>Numero de Medidor</dt>
-        <dd>{{ medidor.numero_medidor or 'No registrado' }}</dd>
-
-        <dt>Direccion</dt>
-        <dd>{{ medidor.direccion or 'No registrada' }}</dd>
-
-        <dt>Estado</dt>
-        <dd>
-            {% if medidor.activo %}
-            <span class="badge badge-success">Activo</span>
-            {% else %}
-            <span class="badge badge-secondary">Inactivo</span>
+<div class="detail-grid">
+    <div class="detail-section">
+        <h3>Informacion del Medidor</h3>
+        <table class="detail-table">
+            <tr>
+                <th>Cliente:</th>
+                <td><a href="{{ url_for('clientes.detalle', cliente_id=medidor.cliente_id) }}">{{ medidor.cliente_nombre }}</a></td>
+            </tr>
+            <tr>
+                <th>Numero de Medidor:</th>
+                <td>{{ medidor.numero_medidor or 'No registrado' }}</td>
+            </tr>
+            <tr>
+                <th>Direccion:</th>
+                <td>{{ medidor.direccion or 'No registrada' }}</td>
+            </tr>
+            <tr>
+                <th>Estado:</th>
+                <td>
+                    {% if medidor.activo %}
+                    <span class="badge badge--success">Activo</span>
+                    {% else %}
+                    <span class="badge badge--secondary">Inactivo</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% if medidor.fecha_inicio %}
+            <tr>
+                <th>Fecha de Inicio:</th>
+                <td>{{ medidor.fecha_inicio|fecha_formato }}</td>
+            </tr>
             {% endif %}
-        </dd>
+            {% if medidor.fecha_baja %}
+            <tr>
+                <th>Fecha de Baja:</th>
+                <td>{{ medidor.fecha_baja|fecha_formato }}</td>
+            </tr>
+            {% endif %}
+            {% if medidor.motivo_baja %}
+            <tr>
+                <th>Motivo de Baja:</th>
+                <td>{{ medidor.motivo_baja }}</td>
+            </tr>
+            {% endif %}
+        </table>
 
-        {% if medidor.fecha_inicio %}
-        <dt>Fecha de Inicio</dt>
-        <dd>{{ medidor.fecha_inicio|fecha_formato }}</dd>
-        {% endif %}
+        <div style="margin-top: var(--spacing-lg);">
+            {% if medidor.activo %}
+            <button type="button" class="btn btn--warning" onclick="mostrarModalDesactivar()"><i class="fas fa-power-off"></i> Desactivar Medidor</button>
+            {% else %}
+            <button type="button" class="btn btn--success" onclick="mostrarModalReactivar()"><i class="fas fa-redo"></i> Reactivar Medidor</button>
+            {% endif %}
+        </div>
+    </div>
 
-        {% if medidor.fecha_baja %}
-        <dt>Fecha de Baja</dt>
-        <dd>{{ medidor.fecha_baja|fecha_formato }}</dd>
-        {% endif %}
-
-        {% if medidor.motivo_baja %}
-        <dt>Motivo de Baja</dt>
-        <dd>{{ medidor.motivo_baja }}</dd>
-        {% endif %}
-    </dl>
-
-    <div class="form-actions" style="margin-top: 20px;">
-        {% if medidor.activo %}
-        <button type="button" class="btn btn-warning" onclick="mostrarModalDesactivar()">Desactivar Medidor</button>
+    <div class="detail-section">
+        <h3>Historial de Lecturas</h3>
+        {% if lecturas %}
+        <table class="data-table data-table--striped data-table--hover">
+            <thead>
+                <tr>
+                    <th>Periodo</th>
+                    <th>Lectura (m3)</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lecturas %}
+                <tr>
+                    <td>{{ l.mes|mes_nombre }} {{ l.año }}</td>
+                    <td>{{ l.lectura_m3 }}</td>
+                    <td>{{ l.fecha_lectura|fecha_formato }}</td>
+                    <td>
+                        <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="action-btn" title="Ver detalle">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
         {% else %}
-        <button type="button" class="btn btn-success" onclick="mostrarModalReactivar()">Reactivar Medidor</button>
+        <div class="empty-state">
+            <div class="empty-state__icon"><i class="fas fa-tachometer-alt"></i></div>
+            <h3 class="empty-state__title">Sin lecturas</h3>
+            <p class="empty-state__description">No hay lecturas registradas para este medidor.</p>
+        </div>
         {% endif %}
     </div>
 </div>
-
-<h2>Historial de Lecturas</h2>
-
-<table class="data-table">
-    <thead>
-        <tr>
-            <th class="sortable">Periodo</th>
-            <th class="sortable">Lectura (m3)</th>
-            <th class="sortable">Fecha</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for l in lecturas %}
-        <tr>
-            <td data-sort="{{ l.año * 100 + l.mes }}">{{ l.mes|mes_nombre }} {{ l.año }}</td>
-            <td>{{ l.lectura_m3 }}</td>
-            <td>{{ l.fecha_lectura|fecha_formato }}</td>
-            <td class="actions">
-                <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-small">Ver</a>
-            </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="4" class="empty">No hay lecturas registradas</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
 
 <!-- Modal Desactivar -->
-<div id="modalDesactivar" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Desactivar Medidor</h3>
-        <form method="POST" action="{{ url_for('medidores.desactivar', medidor_id=medidor.id) }}">
-            <div class="form-group">
-                <label for="fecha_baja">Fecha de Baja *</label>
-                <input type="date" id="fecha_baja" name="fecha_baja" required>
-            </div>
-            <div class="form-group">
-                <label for="motivo_baja">Motivo de Baja</label>
-                <textarea id="motivo_baja" name="motivo_baja" rows="3" placeholder="Ingrese el motivo de la desactivacion"></textarea>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-warning">Confirmar Desactivacion</button>
-                <button type="button" class="btn btn-secondary" onclick="cerrarModalDesactivar()">Cancelar</button>
-            </div>
-        </form>
+<div id="modalDesactivar" class="modal">
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3>Desactivar Medidor</h3>
+            <button class="modal__close" onclick="cerrarModalDesactivar()">&times;</button>
+        </div>
+        <div class="modal__body">
+            <form method="POST" action="{{ url_for('medidores.desactivar', medidor_id=medidor.id) }}">
+                <div class="form-group">
+                    <label for="fecha_baja">Fecha de Baja *</label>
+                    <input type="date" id="fecha_baja" name="fecha_baja" required>
+                </div>
+                <div class="form-group">
+                    <label for="motivo_baja">Motivo de Baja</label>
+                    <textarea id="motivo_baja" name="motivo_baja" rows="3" placeholder="Ingrese el motivo de la desactivacion"></textarea>
+                </div>
+                <div class="modal__actions">
+                    <button type="button" class="btn btn--secondary" onclick="cerrarModalDesactivar()">Cancelar</button>
+                    <button type="submit" class="btn btn--warning">Confirmar Desactivacion</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 <!-- Modal Reactivar -->
-<div id="modalReactivar" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Reactivar Medidor</h3>
-        <form method="POST" action="{{ url_for('medidores.reactivar', medidor_id=medidor.id) }}">
-            <div class="form-group">
-                <label for="fecha_inicio_reactivar">Fecha de Inicio (opcional)</label>
-                <input type="date" id="fecha_inicio_reactivar" name="fecha_inicio">
-                <small>Si no especifica una fecha, se mantendra la fecha de inicio original</small>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn btn-success">Confirmar Reactivacion</button>
-                <button type="button" class="btn btn-secondary" onclick="cerrarModalReactivar()">Cancelar</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal Eliminar -->
-<div id="modalEliminar" class="modal" style="display: none;">
-    <div class="modal-content">
-        <h3>Eliminar Medidor</h3>
-        <p>Esta a punto de eliminar el medidor <strong>#{{ medidor.id }}</strong> del cliente <strong>{{ medidor.cliente_nombre }}</strong>.</p>
-        <p class="alert alert-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el medidor no tiene lecturas ni boletas asociadas.</p>
-        <form method="POST" action="{{ url_for('medidores.eliminar', medidor_id=medidor.id) }}">
-            <div class="form-actions">
-                <button type="submit" class="btn btn-danger">Confirmar Eliminacion</button>
-                <button type="button" class="btn btn-secondary" onclick="cerrarModalEliminar()">Cancelar</button>
-            </div>
-        </form>
+<div id="modalReactivar" class="modal">
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3>Reactivar Medidor</h3>
+            <button class="modal__close" onclick="cerrarModalReactivar()">&times;</button>
+        </div>
+        <div class="modal__body">
+            <form method="POST" action="{{ url_for('medidores.reactivar', medidor_id=medidor.id) }}">
+                <div class="form-group">
+                    <label for="fecha_inicio_reactivar">Fecha de Inicio (opcional)</label>
+                    <input type="date" id="fecha_inicio_reactivar" name="fecha_inicio">
+                    <small class="form-help">Si no especifica una fecha, se mantendra la fecha de inicio original</small>
+                </div>
+                <div class="modal__actions">
+                    <button type="button" class="btn btn--secondary" onclick="cerrarModalReactivar()">Cancelar</button>
+                    <button type="submit" class="btn btn--success">Confirmar Reactivacion</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
 <script>
 function mostrarModalDesactivar() {
-    document.getElementById('modalDesactivar').style.display = 'flex';
+    document.getElementById('modalDesactivar').classList.add('active');
 }
 
 function cerrarModalDesactivar() {
-    document.getElementById('modalDesactivar').style.display = 'none';
+    document.getElementById('modalDesactivar').classList.remove('active');
 }
 
 function mostrarModalReactivar() {
-    document.getElementById('modalReactivar').style.display = 'flex';
+    document.getElementById('modalReactivar').classList.add('active');
 }
 
 function cerrarModalReactivar() {
-    document.getElementById('modalReactivar').style.display = 'none';
+    document.getElementById('modalReactivar').classList.remove('active');
 }
 
-function mostrarModalEliminar() {
-    document.getElementById('modalEliminar').style.display = 'flex';
+function eliminarMedidor() {
+    ConfirmModal.show({
+        title: 'Eliminar Medidor',
+        message: 'Esta a punto de eliminar el medidor <strong>#{{ medidor.id }}</strong> del cliente <strong>{{ medidor.cliente_nombre }}</strong>. Esta accion no se puede deshacer.',
+        icon: 'danger',
+        confirmText: 'Eliminar',
+        confirmClass: 'btn--danger'
+    }).then(function(ok) {
+        if (ok) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("medidores.eliminar", medidor_id=medidor.id) }}';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
-function cerrarModalEliminar() {
-    document.getElementById('modalEliminar').style.display = 'none';
-}
+// Close modals when clicking outside
+document.querySelectorAll('.modal').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.classList.remove('active');
+        }
+    });
+});
 </script>
 {% endblock %}
