@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS lecturas (
     año INTEGER NOT NULL,
     mes INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (medidor_id) REFERENCES medidores(id)
+    FOREIGN KEY (medidor_id) REFERENCES medidores(id),
+    CONSTRAINT uq_lectura_medidor_periodo UNIQUE (medidor_id, año, mes)
 );
 
 CREATE TABLE IF NOT EXISTS configuracion_boletas (
