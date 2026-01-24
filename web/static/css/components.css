@@ -27,6 +27,15 @@
     --color-text: #333333;
     --color-text-muted: #666666;
 
+    /* Tintes (fondos suaves para cards) */
+    --color-success-tint: #f0faf3;
+    --color-danger-tint: #fef5f5;
+    --color-info-tint: #f0f9fc;
+    --color-warning-tint: #fffcf0;
+
+    /* Z-index */
+    --z-toast: 1100;
+
     /* Espaciado */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
@@ -289,6 +298,12 @@
     text-overflow: ellipsis;
 }
 
+.boleta-card__period {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    margin-top: 2px;
+}
+
 .boleta-card__right {
     display: flex;
     flex-direction: column;
@@ -304,16 +319,7 @@
     color: var(--color-dark);
 }
 
-.boleta-card__details {
-    display: none;
-    padding: 0 var(--spacing-md) var(--spacing-md);
-    border-top: 1px solid var(--color-border);
-}
-
-.boleta-card[data-expanded="true"] .boleta-card__details {
-    display: block;
-    padding-top: var(--spacing-md);
-}
+/* Details animation handled by section 15 (Card Interactions) */
 
 .boleta-card__info {
     display: grid;
@@ -678,47 +684,448 @@
 }
 
 /* -----------------------------------------------------------------------------
-   13. UTILITIES (MUST be last to win cascade)
+   13. DATA TABLE ENHANCEMENTS
    ----------------------------------------------------------------------------- */
-.text-truncate {
+.data-table--striped tbody tr:nth-child(even) {
+    background-color: var(--color-light);
+}
+
+.data-table--hover tbody tr {
+    transition: background-color var(--transition-fast);
+}
+
+.data-table--hover tbody tr:hover {
+    background-color: #eef6fd;
+}
+
+/* Sort arrows - override style.css unicode characters with CSS triangles */
+.data-table th.sortable {
+    position: relative;
+    padding-right: 1.5rem !important;
+}
+
+.data-table th.sortable::after {
+    content: '' !important;
+    display: inline-block;
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 4px solid rgba(255,255,255,0.4);
+    border-top: none;
+    opacity: 1 !important;
+}
+
+.data-table th.sortable.asc::after {
+    border-bottom: 5px solid var(--color-white);
+    border-top: none;
+}
+
+.data-table th.sortable.desc::after {
+    border-bottom: none;
+    border-top: 5px solid var(--color-white);
+}
+
+/* Estado cell layout */
+.estado-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+}
+
+/* -----------------------------------------------------------------------------
+   14. CARD STATUS TINTING
+   ----------------------------------------------------------------------------- */
+.boleta-card--success {
+    border-left: 3px solid var(--color-success);
+    background: var(--color-success-tint);
+}
+
+.boleta-card--warning {
+    border-left: 3px solid var(--color-info);
+    background: var(--color-info-tint);
+}
+
+.boleta-card--danger {
+    border-left: 3px solid var(--color-danger);
+    background: var(--color-danger-tint);
+}
+
+/* -----------------------------------------------------------------------------
+   15. CARD INTERACTIONS (chevron, tap feedback, animation)
+   ----------------------------------------------------------------------------- */
+.boleta-card__chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--color-gray-light);
+    transition: transform var(--transition-normal), color var(--transition-fast);
+    flex-shrink: 0;
+    margin-left: var(--spacing-sm);
+}
+
+.boleta-card[data-expanded="true"] .boleta-card__chevron {
+    transform: rotate(180deg);
+    color: var(--color-primary);
+}
+
+.boleta-card__summary:active {
+    background-color: var(--color-light);
+}
+
+/* Animated expand using grid */
+.boleta-card__details {
+    display: grid !important;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--transition-normal);
+    padding: 0;
+    border-top: none;
+}
+
+.boleta-card__details-inner {
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    padding: 0 var(--spacing-md);
+    transition: padding var(--transition-normal);
 }
 
-.text-muted { color: var(--color-text-muted); }
-.text-success { color: var(--color-success); }
-.text-warning { color: #e67e22; }
-.text-danger { color: var(--color-danger); }
-
-.hide-mobile {
-    display: none !important;
+.boleta-card[data-expanded="true"] .boleta-card__details {
+    grid-template-rows: 1fr;
+    border-top: 1px solid var(--color-border);
 }
 
-.hide-desktop {
-    display: block !important;
+.boleta-card[data-expanded="true"] .boleta-card__details-inner {
+    padding: var(--spacing-md);
 }
 
-@media (min-width: 768px) {
-    .hide-mobile {
-        display: block !important;
+/* Card action groups */
+.boleta-card__actions-primary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.boleta-card__actions-secondary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+/* -----------------------------------------------------------------------------
+   16. CHIP ENHANCEMENTS
+   ----------------------------------------------------------------------------- */
+.chip__count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 var(--spacing-xs);
+    border-radius: var(--radius-full);
+    background: rgba(0,0,0,0.1);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    margin-left: var(--spacing-xs);
+}
+
+.chip--active .chip__count {
+    background: rgba(255,255,255,0.3);
+}
+
+.chip--active {
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+    font-weight: 600;
+}
+
+/* Badge large variant for mobile */
+.badge--lg {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    min-height: 28px;
+}
+
+/* Badge clickable affordance */
+.badge--clickable:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* -----------------------------------------------------------------------------
+   17. TOAST NOTIFICATIONS
+   ----------------------------------------------------------------------------- */
+.toast-container {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    pointer-events: none;
+}
+
+@media (max-width: 767px) {
+    .toast-container {
+        top: auto;
+        bottom: var(--spacing-lg);
+        right: var(--spacing-md);
+        left: var(--spacing-md);
     }
-    .hide-desktop {
-        display: none !important;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    background: var(--color-dark);
+    color: var(--color-white);
+    font-size: var(--font-size-base);
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+    animation: toastIn var(--transition-normal) ease forwards;
+    max-width: 400px;
+}
+
+.toast--success { background: var(--color-success); }
+.toast--error { background: var(--color-danger); }
+.toast--warning { background: var(--color-warning); color: var(--color-dark); }
+.toast--info { background: var(--color-info); }
+
+.toast__icon { font-size: var(--font-size-lg); flex-shrink: 0; }
+.toast__message { flex: 1; }
+
+.toast__close {
+    background: none;
+    border: none;
+    color: inherit;
+    opacity: 0.7;
+    cursor: pointer;
+    padding: var(--spacing-xs);
+    font-size: var(--font-size-lg);
+}
+
+.toast__close:hover { opacity: 1; }
+
+.toast--exiting {
+    animation: toastOut var(--transition-fast) ease forwards;
+}
+
+@keyframes toastIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+@media (max-width: 767px) {
+    .toast {
+        max-width: 100%;
     }
-    table.hide-mobile {
-        display: table !important;
+    @keyframes toastIn {
+        from { transform: translateY(100%); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
     }
-    form.hide-mobile {
-        display: block !important;
-    }
-    .stats-grid.hide-mobile {
-        display: grid !important;
+    @keyframes toastOut {
+        from { transform: translateY(0); opacity: 1; }
+        to { transform: translateY(100%); opacity: 0; }
     }
 }
 
 /* -----------------------------------------------------------------------------
-   14. COLLAPSIBLE STATS
+   18. LOADING / SKELETON STATES
+   ----------------------------------------------------------------------------- */
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: inherit;
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* -----------------------------------------------------------------------------
+   19. ACTION BUTTONS (icon-only for table cells)
+   ----------------------------------------------------------------------------- */
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--color-light);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+    text-decoration: none;
+    font-size: var(--font-size-base);
+}
+
+.action-btn:hover {
+    background: var(--color-primary);
+    color: var(--color-white);
+    transform: scale(1.1);
+}
+
+.action-btn--danger:hover {
+    background: var(--color-danger);
+    color: var(--color-white);
+}
+
+.action-btn--success:hover {
+    background: var(--color-success);
+    color: var(--color-white);
+}
+
+.action-btn-group {
+    display: inline-flex;
+    gap: var(--spacing-xs);
+}
+
+/* -----------------------------------------------------------------------------
+   20. PAGINATION
+   ----------------------------------------------------------------------------- */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md) 0;
+    flex-wrap: wrap;
+}
+
+.pagination__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-base);
+    text-decoration: none;
+    color: var(--color-text);
+    background: var(--color-white);
+    border: 1px solid var(--color-border);
+    transition: background var(--transition-fast), color var(--transition-fast);
+    cursor: pointer;
+}
+
+.pagination__item:hover:not(.pagination__item--active):not(.pagination__item--disabled) {
+    background: var(--color-light);
+    border-color: var(--color-primary);
+}
+
+.pagination__item--active {
+    background: var(--color-primary);
+    color: var(--color-white);
+    border-color: var(--color-primary);
+    font-weight: 600;
+}
+
+.pagination__item--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.pagination__info {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin-left: var(--spacing-md);
+}
+
+@media (max-width: 767px) {
+    .pagination__item {
+        min-width: var(--touch-min);
+        height: var(--touch-min);
+    }
+}
+
+/* -----------------------------------------------------------------------------
+   21. EMPTY STATE
+   ----------------------------------------------------------------------------- */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl) var(--spacing-lg);
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.empty-state__icon {
+    font-size: 3rem;
+    color: var(--color-gray-light);
+    margin-bottom: var(--spacing-md);
+}
+
+.empty-state__title {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--color-dark);
+    margin-bottom: var(--spacing-sm);
+}
+
+.empty-state__description {
+    font-size: var(--font-size-base);
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* -----------------------------------------------------------------------------
+   22. CONFIRM MODAL EXTRAS
+   ----------------------------------------------------------------------------- */
+.modal__icon {
+    font-size: 2.5rem;
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+.modal__icon--warning { color: var(--color-warning); }
+.modal__icon--danger { color: var(--color-danger); }
+.modal__icon--success { color: var(--color-success); }
+.modal__icon--info { color: var(--color-info); }
+
+.modal__text {
+    font-size: var(--font-size-base);
+    color: var(--color-text-muted);
+    margin-bottom: var(--spacing-md);
+    text-align: center;
+}
+
+/* -----------------------------------------------------------------------------
+   23. STATS TOGGLE (base + enhanced)
    ----------------------------------------------------------------------------- */
 .stats-toggle {
     display: flex;
@@ -759,3 +1166,78 @@
     max-height: 200px;
     opacity: 1;
 }
+
+.stats-toggle--enhanced {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-light);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.stats-toggle--enhanced:hover {
+    background: #eef6fd;
+    border-color: var(--color-primary);
+}
+
+.stats-toggle__arrow {
+    margin-left: auto;
+    display: inline-flex;
+    transition: transform var(--transition-fast);
+}
+
+.stats-toggle--enhanced[aria-expanded="true"] .stats-toggle__arrow {
+    transform: rotate(90deg);
+}
+
+/* -----------------------------------------------------------------------------
+   24. BUTTON LEGACY BRIDGE (ensure .btn-X matches .btn--X tokens)
+   ----------------------------------------------------------------------------- */
+.btn.btn-primary { background: var(--color-primary); color: var(--color-white); }
+.btn.btn-primary:hover { background: var(--color-primary-hover); }
+.btn.btn-success { background: var(--color-success); color: var(--color-white); }
+.btn.btn-danger { background: var(--color-danger); color: var(--color-white); }
+.btn.btn-secondary { background: var(--color-gray); color: var(--color-white); }
+
+/* -----------------------------------------------------------------------------
+   25. UTILITIES (MUST be last to win cascade)
+   ----------------------------------------------------------------------------- */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.text-muted { color: var(--color-text-muted); }
+.text-success { color: var(--color-success); }
+.text-warning { color: #e67e22; }
+.text-danger { color: var(--color-danger); }
+
+.hide-mobile {
+    display: none !important;
+}
+
+.hide-desktop {
+    display: block !important;
+}
+
+@media (min-width: 768px) {
+    .hide-mobile {
+        display: block !important;
+    }
+    .hide-desktop {
+        display: none !important;
+    }
+    table.hide-mobile {
+        display: table !important;
+    }
+    form.hide-mobile {
+        display: block !important;
+    }
+    .stats-grid.hide-mobile {
+        display: grid !important;
+    }
+}
+
+

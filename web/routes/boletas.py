@@ -79,7 +79,7 @@ def historial_pagos():
 @boletas_bp.route('/')
 @admin_required
 def listar():
-    """Lista boletas con filtros."""
+    """Lista boletas con filtros y paginacion."""
     # Obtener parametros de filtro
     cliente_id = request.args.get('cliente_id', type=int)
     medidor_id = request.args.get('medidor_id', type=int)
@@ -92,7 +92,14 @@ def listar():
     sort_by = request.args.get('sort_by', type=str)
     sort_order = request.args.get('sort_order', type=str)
 
-    boletas = listar_boletas(
+    # Paginacion
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    per_page = min(per_page, 100)  # Maximo 100
+    if page < 1:
+        page = 1
+
+    todas_boletas = listar_boletas(
         cliente_id=cliente_id,
         medidor_id=medidor_id,
         pagada=pagada,
@@ -100,6 +107,16 @@ def listar():
         año=año,
         mes=mes
     )
+
+    # Calcular paginacion
+    total = len(todas_boletas)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    if page > total_pages:
+        page = total_pages
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    boletas = todas_boletas[start:end]
 
     # Datos para filtros
     clientes = listar_clientes()
@@ -119,12 +136,22 @@ def listar():
     if cliente_id:
         medidores = listar_medidores(cliente_id)
 
+    pagination = {
+        'page': page,
+        'per_page': per_page,
+        'total': total,
+        'total_pages': total_pages,
+        'start': start + 1,
+        'end': min(end, total)
+    }
+
     return render_template('boletas/lista.html',
                            boletas=boletas,
                            clientes=clientes,
                            medidores=medidores,
                            años=años,
                            stats=stats,
+                           pagination=pagination,
                            filtros={
                                'cliente_id': cliente_id,
                                'medidor_id': medidor_id,

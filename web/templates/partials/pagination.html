@@ -1,0 +1,54 @@
+{% if pagination and pagination.total_pages > 1 %}
+<nav class="pagination" aria-label="Paginacion">
+    <span class="pagination__info">
+        {{ pagination.start }}-{{ pagination.end }} de {{ pagination.total }}
+    </span>
+
+    <div class="pagination__items">
+        {% if pagination.page > 1 %}
+        <a href="{{ url_for_page(pagination.page - 1) }}" class="pagination__item" aria-label="Anterior">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% else %}
+        <span class="pagination__item pagination__item--disabled" aria-disabled="true">
+            <i class="fas fa-chevron-left"></i>
+        </span>
+        {% endif %}
+
+        {% set start_page = [1, pagination.page - 2]|max %}
+        {% set end_page = [pagination.total_pages, pagination.page + 2]|min %}
+
+        {% if start_page > 1 %}
+        <a href="{{ url_for_page(1) }}" class="pagination__item">1</a>
+        {% if start_page > 2 %}
+        <span class="pagination__item pagination__item--ellipsis">&hellip;</span>
+        {% endif %}
+        {% endif %}
+
+        {% for p in range(start_page, end_page + 1) %}
+        {% if p == pagination.page %}
+        <span class="pagination__item pagination__item--active" aria-current="page">{{ p }}</span>
+        {% else %}
+        <a href="{{ url_for_page(p) }}" class="pagination__item">{{ p }}</a>
+        {% endif %}
+        {% endfor %}
+
+        {% if end_page < pagination.total_pages %}
+        {% if end_page < pagination.total_pages - 1 %}
+        <span class="pagination__item pagination__item--ellipsis">&hellip;</span>
+        {% endif %}
+        <a href="{{ url_for_page(pagination.total_pages) }}" class="pagination__item">{{ pagination.total_pages }}</a>
+        {% endif %}
+
+        {% if pagination.page < pagination.total_pages %}
+        <a href="{{ url_for_page(pagination.page + 1) }}" class="pagination__item" aria-label="Siguiente">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% else %}
+        <span class="pagination__item pagination__item--disabled" aria-disabled="true">
+            <i class="fas fa-chevron-right"></i>
+        </span>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}

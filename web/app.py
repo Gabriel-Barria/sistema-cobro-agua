@@ -84,6 +84,18 @@ def mes_nombre(mes):
     return meses[mes] if 1 <= mes <= 12 else str(mes)
 
 
+@app.template_filter('nombre_mes')
+def nombre_mes(mes):
+    """Convierte número de mes a nombre corto (Ene, Feb, etc.)."""
+    meses = ['', 'Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+             'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+    try:
+        idx = int(mes)
+        return meses[idx] if 1 <= idx <= 12 else str(mes)
+    except (ValueError, TypeError):
+        return str(mes)
+
+
 @app.template_filter('fecha_formato')
 def fecha_formato(fecha):
     """Convierte fecha a formato dd/mm/yyyy."""
@@ -113,6 +125,20 @@ def formato_pesos(monto):
         return formateado.replace(',', '.')
     except (ValueError, TypeError):
         return str(monto)
+
+
+@app.context_processor
+def utility_processor():
+    """Inyecta utilidades al contexto de templates."""
+    def url_for_page(page):
+        """Genera URL preservando query params actuales, cambiando solo page."""
+        from flask import request
+        args = request.args.copy()
+        args['page'] = page
+        return request.path + '?' + '&'.join(
+            f'{k}={v}' for k, v in args.items() if v != ''
+        )
+    return {'url_for_page': url_for_page}
 
 
 def crear_app():
