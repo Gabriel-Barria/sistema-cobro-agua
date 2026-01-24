@@ -14,7 +14,8 @@ from src.models import (
     eliminar_lectura, contar_lecturas, obtener_años_disponibles,
     listar_clientes, listar_medidores, obtener_o_crear_medidor,
     obtener_clientes_incompletos, obtener_fechas_comunes_por_periodo,
-    crear_lecturas_multiple, obtener_estadisticas_lecturas
+    crear_lecturas_multiple, obtener_estadisticas_lecturas,
+    lectura_existe
 )
 from src.database import BASE_DIR
 
@@ -178,16 +179,25 @@ def crear():
             foto_path = ''
             foto_nombre = 'sin_foto'
 
+        # Validar duplicado
+        if lectura_existe(medidor_id, año, mes):
+            flash('Ya existe una lectura para este medidor en el periodo seleccionado', 'error')
+            return redirect(url_for('lecturas.crear'))
+
         # Crear lectura
-        lectura_id = crear_lectura(
-            medidor_id=medidor_id,
-            lectura_m3=lectura_m3,
-            fecha_lectura=fecha_lectura,
-            foto_path=foto_path,
-            foto_nombre=foto_nombre,
-            año=año,
-            mes=mes
-        )
+        try:
+            lectura_id = crear_lectura(
+                medidor_id=medidor_id,
+                lectura_m3=lectura_m3,
+                fecha_lectura=fecha_lectura,
+                foto_path=foto_path,
+                foto_nombre=foto_nombre,
+                año=año,
+                mes=mes
+            )
+        except ValueError as e:
+            flash(str(e), 'error')
+            return redirect(url_for('lecturas.crear'))
 
         flash('Lectura creada exitosamente', 'success')
         return redirect(url_for('lecturas.detalle', lectura_id=lectura_id))

@@ -485,7 +485,13 @@ def crear_lectura(medidor_id: int, lectura_m3: int, fecha_lectura: date,
 
     Returns:
         ID de la lectura creada
+
+    Raises:
+        ValueError: Si ya existe una lectura para ese medidor en ese periodo
     """
+    if lectura_existe(medidor_id, año, mes):
+        raise ValueError(f'Ya existe una lectura para el medidor {medidor_id} en {mes}/{año}')
+
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
