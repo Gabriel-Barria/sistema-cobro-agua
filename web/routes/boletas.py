@@ -17,7 +17,7 @@ from src.models_boletas import (
     obtener_lecturas_sin_boleta, obtener_años_disponibles,
     obtener_estadisticas_boletas
 )
-from src.models import listar_clientes, listar_medidores, obtener_lectura
+from src.models import listar_clientes, listar_medidores, obtener_lectura, obtener_estadisticas_pagos
 from src.models_pagos import (
     listar_pagos, obtener_pago, aprobar_pago, rechazar_pago,
     registrar_pago_directo, listar_saldos_clientes, ajustar_saldo_cliente,
@@ -990,10 +990,12 @@ def pagos_lista():
 
     pagos = listar_pagos(cliente_id=cliente_id, estado=estado)
     clientes = listar_clientes()
+    stats = obtener_estadisticas_pagos(estado=estado, cliente_id=cliente_id)
 
     return render_template('boletas/pagos_lista.html',
                           pagos=pagos,
                           clientes=clientes,
+                          stats=stats,
                           filtros={
                               'estado': estado,
                               'cliente_id': cliente_id
@@ -1156,7 +1158,12 @@ def registrar_pago_admin():
 def saldos_lista():
     """Lista todos los clientes con su saldo a favor."""
     saldos = listar_saldos_clientes()
-    return render_template('boletas/saldos_lista.html', saldos=saldos)
+    stats = {
+        'total': len(saldos),
+        'con_saldo': sum(1 for s in saldos if s.get('saldo_disponible', 0) > 0),
+        'total_saldo': sum(s.get('saldo_disponible', 0) for s in saldos)
+    }
+    return render_template('boletas/saldos_lista.html', saldos=saldos, stats=stats)
 
 
 @boletas_bp.route('/saldos/<int:cliente_id>')

@@ -16,7 +16,12 @@ usuarios_bp = Blueprint('usuarios', __name__, url_prefix='/usuarios')
 def lista():
     """Lista todos los usuarios del sistema."""
     usuarios = obtener_usuarios()
-    return render_template('usuarios/lista.html', usuarios=usuarios)
+    stats = {
+        'total': len(usuarios),
+        'activos': sum(1 for u in usuarios if u.get('activo', 1)),
+        'inactivos': sum(1 for u in usuarios if not u.get('activo', 1))
+    }
+    return render_template('usuarios/lista.html', usuarios=usuarios, stats=stats)
 
 
 @usuarios_bp.route('/crear', methods=['GET', 'POST'])

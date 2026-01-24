@@ -1740,4 +1740,507 @@
     gap: var(--spacing-sm);
 }
 
+.row--inactive {
+    opacity: 0.6;
+}
+
+.text-bold {
+    font-weight: bold;
+}
+
+.mb-md {
+    margin-bottom: var(--spacing-md);
+}
+
+/* -----------------------------------------------------------------------------
+   32. MEDIDOR CARD (Mobile - expandible)
+   ----------------------------------------------------------------------------- */
+.medidor-card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-sm);
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.medidor-card[data-expanded="true"] {
+    box-shadow: var(--shadow-md);
+}
+
+.medidor-card--active {
+    border-left: 3px solid var(--color-success);
+}
+
+.medidor-card--inactive {
+    border-left: 3px solid var(--color-gray-light);
+}
+
+.medidor-card__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    min-height: 64px;
+}
+
+.medidor-card__summary:active {
+    background-color: var(--color-light);
+}
+
+.medidor-card__left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.medidor-card__number {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-dark);
+}
+
+.medidor-card__client {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.medidor-card__address {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.medidor-card__right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: var(--spacing-md);
+}
+
+.medidor-card__chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--color-gray-light);
+    transition: transform var(--transition-normal), color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.medidor-card[data-expanded="true"] .medidor-card__chevron {
+    transform: rotate(180deg);
+    color: var(--color-primary);
+}
+
+.medidor-card__details {
+    display: grid !important;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--transition-normal);
+    padding: 0;
+    border-top: none;
+}
+
+.medidor-card__details-inner {
+    overflow: hidden;
+    padding: 0 var(--spacing-md);
+    transition: padding var(--transition-normal);
+}
+
+.medidor-card[data-expanded="true"] .medidor-card__details {
+    grid-template-rows: 1fr;
+    border-top: 1px solid var(--color-border);
+}
+
+.medidor-card[data-expanded="true"] .medidor-card__details-inner {
+    padding: var(--spacing-md);
+}
+
+.medidor-card__info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.medidor-card__info-item {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.medidor-card__info-item span {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.medidor-card__actions-primary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.medidor-card__actions-primary .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* -----------------------------------------------------------------------------
+   33. USUARIO CARD (Mobile - expandible)
+   ----------------------------------------------------------------------------- */
+.usuario-card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-sm);
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.usuario-card[data-expanded="true"] {
+    box-shadow: var(--shadow-md);
+}
+
+.usuario-card--active {
+    border-left: 3px solid var(--color-success);
+}
+
+.usuario-card--inactive {
+    border-left: 3px solid var(--color-gray-light);
+}
+
+.usuario-card__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    min-height: 64px;
+}
+
+.usuario-card__summary:active {
+    background-color: var(--color-light);
+}
+
+.usuario-card__left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.usuario-card__username {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-dark);
+}
+
+.usuario-card__name {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.usuario-card__right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    flex-shrink: 0;
+    margin-left: var(--spacing-md);
+}
+
+.usuario-card__chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--color-gray-light);
+    transition: transform var(--transition-normal), color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.usuario-card[data-expanded="true"] .usuario-card__chevron {
+    transform: rotate(180deg);
+    color: var(--color-primary);
+}
+
+.usuario-card__details {
+    display: grid !important;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--transition-normal);
+    padding: 0;
+    border-top: none;
+}
+
+.usuario-card__details-inner {
+    overflow: hidden;
+    padding: 0 var(--spacing-md);
+    transition: padding var(--transition-normal);
+}
+
+.usuario-card[data-expanded="true"] .usuario-card__details {
+    grid-template-rows: 1fr;
+    border-top: 1px solid var(--color-border);
+}
+
+.usuario-card[data-expanded="true"] .usuario-card__details-inner {
+    padding: var(--spacing-md);
+}
+
+.usuario-card__info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.usuario-card__info-item {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.usuario-card__info-item span {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.usuario-card__actions-primary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.usuario-card__actions-primary .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* -----------------------------------------------------------------------------
+   34. PAGO CARD (Mobile - expandible)
+   ----------------------------------------------------------------------------- */
+.pago-card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-sm);
+    overflow: hidden;
+    cursor: pointer;
+    transition: box-shadow var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.pago-card[data-expanded="true"] {
+    box-shadow: var(--shadow-md);
+}
+
+.pago-card--success {
+    border-left: 3px solid var(--color-success);
+}
+
+.pago-card--warning {
+    border-left: 3px solid var(--color-warning);
+}
+
+.pago-card--danger {
+    border-left: 3px solid var(--color-danger);
+}
+
+.pago-card__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md);
+    min-height: 64px;
+}
+
+.pago-card__summary:active {
+    background-color: var(--color-light);
+}
+
+.pago-card__left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.pago-card__number {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-dark);
+}
+
+.pago-card__client {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pago-card__right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: var(--spacing-md);
+}
+
+.pago-card__amount {
+    font-size: var(--font-size-base);
+    font-weight: bold;
+    color: var(--color-dark);
+}
+
+.pago-card__chevron {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--color-gray-light);
+    transition: transform var(--transition-normal), color var(--transition-fast);
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+
+.pago-card[data-expanded="true"] .pago-card__chevron {
+    transform: rotate(180deg);
+    color: var(--color-primary);
+}
+
+.pago-card__details {
+    display: grid !important;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows var(--transition-normal);
+    padding: 0;
+    border-top: none;
+}
+
+.pago-card__details-inner {
+    overflow: hidden;
+    padding: 0 var(--spacing-md);
+    transition: padding var(--transition-normal);
+}
+
+.pago-card[data-expanded="true"] .pago-card__details {
+    grid-template-rows: 1fr;
+    border-top: 1px solid var(--color-border);
+}
+
+.pago-card[data-expanded="true"] .pago-card__details-inner {
+    padding: var(--spacing-md);
+}
+
+.pago-card__info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+}
+
+.pago-card__info-item {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.pago-card__info-item span {
+    display: block;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.pago-card__actions-primary {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.pago-card__actions-primary .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+/* -----------------------------------------------------------------------------
+   35. SALDO CARD (Mobile - simple)
+   ----------------------------------------------------------------------------- */
+.saldo-card {
+    background: var(--color-white);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-sm);
+    overflow: hidden;
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.saldo-card--positive {
+    border-left: 3px solid var(--color-success);
+}
+
+.saldo-card__left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.saldo-card__name {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.saldo-card__fullname {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.saldo-card__right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
+    margin-left: var(--spacing-md);
+}
+
+.saldo-card__amount {
+    font-size: var(--font-size-base);
+    font-weight: bold;
+    color: var(--color-success);
+}
+
+.saldo-card__action {
+    flex-shrink: 0;
+}
+
 

@@ -7,7 +7,8 @@ from web.auth import admin_required
 from src.models import (
     listar_medidores, obtener_medidor, listar_lecturas,
     crear_medidor, actualizar_medidor, eliminar_medidor,
-    listar_clientes, desactivar_medidor, reactivar_medidor
+    listar_clientes, desactivar_medidor, reactivar_medidor,
+    obtener_estadisticas_medidores
 )
 
 medidores_bp = Blueprint('medidores', __name__)
@@ -23,13 +24,17 @@ def listar():
 
     medidores = listar_medidores(cliente_id=cliente_id, busqueda=busqueda, estado=estado)
     clientes = listar_clientes()
+    stats = obtener_estadisticas_medidores(busqueda=busqueda, cliente_id=cliente_id, estado=estado)
 
     return render_template('medidores/lista.html',
                            medidores=medidores,
                            clientes=clientes,
-                           busqueda=busqueda or '',
-                           estado=estado or '',
-                           cliente_id=cliente_id or '')
+                           stats=stats,
+                           filtros={
+                               'busqueda': busqueda or '',
+                               'estado': estado or '',
+                               'cliente_id': cliente_id or ''
+                           })
 
 
 @medidores_bp.route('/nuevo', methods=['GET', 'POST'])

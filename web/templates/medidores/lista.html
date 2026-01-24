@@ -5,56 +5,106 @@
 {% block content %}
 <div class="page-header">
     <h1>Medidores</h1>
-    <a href="{{ url_for('medidores.crear') }}" class="btn btn--primary">Nuevo Medidor</a>
+    <div>
+        <a href="{{ url_for('medidores.crear') }}" class="btn btn--primary hide-mobile"><i class="fas fa-plus"></i> Nuevo Medidor</a>
+        <a href="{{ url_for('medidores.crear') }}" class="btn btn--primary hide-desktop"><i class="fas fa-plus"></i> Nuevo</a>
+    </div>
 </div>
 
-<form method="GET" class="filter-bar">
+<!-- Stats Section -->
+<div class="stats-toggle--enhanced hide-mobile" onclick="toggleStats()">
+    <span><i class="fas fa-chart-bar"></i> Estadisticas</span>
+    <i class="fas fa-chevron-down" id="statsChevron"></i>
+</div>
+<div class="stats-collapsible hide-mobile" id="statsSection">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-card__value">{{ stats.total }}</div>
+            <div class="stat-card__label">Total</div>
+        </div>
+        <div class="stat-card stat-card--success">
+            <div class="stat-card__value">{{ stats.activos }}</div>
+            <div class="stat-card__label">Activos</div>
+        </div>
+        <div class="stat-card stat-card--secondary">
+            <div class="stat-card__value">{{ stats.inactivos }}</div>
+            <div class="stat-card__label">Inactivos</div>
+        </div>
+        <div class="stat-card stat-card--info">
+            <div class="stat-card__value">{{ stats.total_lecturas }}</div>
+            <div class="stat-card__label">Total Lecturas</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Chips (Mobile) -->
+<div class="filter-chips hide-desktop">
+    <a href="{{ url_for('medidores.listar') }}"
+       class="chip {% if not filtros.estado %}chip--active{% endif %}">
+        Todos <span class="chip__count">{{ stats.total }}</span>
+    </a>
+    <a href="{{ url_for('medidores.listar', estado='activo', busqueda=filtros.busqueda, cliente_id=filtros.cliente_id or '') }}"
+       class="chip {% if filtros.estado == 'activo' %}chip--active{% endif %}"
+       onclick="Loading.show()">
+        Activos <span class="chip__count">{{ stats.activos }}</span>
+    </a>
+    <a href="{{ url_for('medidores.listar', estado='inactivo', busqueda=filtros.busqueda, cliente_id=filtros.cliente_id or '') }}"
+       class="chip {% if filtros.estado == 'inactivo' %}chip--active{% endif %}"
+       onclick="Loading.show()">
+        Inactivos <span class="chip__count">{{ stats.inactivos }}</span>
+    </a>
+    <button class="chip chip--outline" onclick="abrirModal('modalFiltrosMedidores')">
+        <i class="fas fa-filter"></i> Filtros
+    </button>
+</div>
+
+<!-- Desktop Filter Bar -->
+<form method="GET" class="filter-bar hide-mobile" id="filterFormMedidores">
     <div class="filter-bar__fields">
         <div class="filter-bar__group">
-            <input type="text" name="busqueda" placeholder="Buscar medidor, direccion, cliente..." value="{{ busqueda }}" class="filter-input">
+            <input type="text" name="busqueda" placeholder="Buscar medidor, direccion, cliente..." value="{{ filtros.busqueda }}" class="filter-input">
         </div>
         <div class="filter-bar__group">
             <select name="cliente_id">
                 <option value="">Todos los clientes</option>
                 {% for c in clientes %}
-                <option value="{{ c.id }}" {% if cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+                <option value="{{ c.id }}" {% if filtros.cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
                 {% endfor %}
             </select>
         </div>
         <div class="filter-bar__group">
             <select name="estado">
                 <option value="">Todos los estados</option>
-                <option value="activo" {% if estado == 'activo' %}selected{% endif %}>Activos</option>
-                <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+                <option value="activo" {% if filtros.estado == 'activo' %}selected{% endif %}>Activos</option>
+                <option value="inactivo" {% if filtros.estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
             </select>
         </div>
     </div>
     <div class="filter-bar__actions">
         <button type="submit" class="btn btn--primary">Filtrar</button>
-        {% if busqueda or estado or cliente_id %}
+        {% if filtros.busqueda or filtros.estado or filtros.cliente_id %}
         <a href="{{ url_for('medidores.listar') }}" class="btn btn--secondary">Limpiar</a>
         {% endif %}
     </div>
 </form>
 
-<p class="total-results">Mostrando {{ medidores|length }} medidor(es)</p>
-
 {% if medidores %}
-<table class="data-table data-table--striped data-table--hover">
+<!-- Desktop Table -->
+<table class="data-table data-table--striped data-table--hover hide-mobile">
     <thead>
         <tr>
-            <th class="sortable">ID</th>
-            <th class="sortable">Cliente</th>
-            <th class="sortable">Numero Medidor</th>
-            <th class="sortable">Direccion</th>
-            <th class="sortable">Estado</th>
-            <th class="sortable">Lecturas</th>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Numero Medidor</th>
+            <th>Direccion</th>
+            <th>Estado</th>
+            <th>Lecturas</th>
             <th>Acciones</th>
         </tr>
     </thead>
     <tbody>
         {% for m in medidores %}
-        <tr{% if m.activo == 0 %} style="opacity: 0.6;"{% endif %}>
+        <tr{% if m.activo == 0 %} class="row--inactive"{% endif %}>
             <td>{{ m.id }}</td>
             <td><a href="{{ url_for('clientes.detalle', cliente_id=m.cliente_id) }}">{{ m.cliente_nombre }}</a></td>
             <td>{{ m.numero_medidor or '-' }}</td>
@@ -81,16 +131,150 @@
         {% endfor %}
     </tbody>
 </table>
+
+<!-- Mobile Card View -->
+<div class="hide-desktop">
+    {% for m in medidores %}
+    <div class="medidor-card {% if m.activo == 1 %}medidor-card--active{% else %}medidor-card--inactive{% endif %}" data-expanded="false" onclick="toggleCard(this)">
+        <div class="medidor-card__summary">
+            <div class="medidor-card__left">
+                <div class="medidor-card__number">{{ m.numero_medidor or 'Sin numero' }}</div>
+                <div class="medidor-card__client">{{ m.cliente_nombre }}</div>
+                {% if m.direccion %}
+                <div class="medidor-card__address">{{ m.direccion }}</div>
+                {% endif %}
+            </div>
+            <div class="medidor-card__right">
+                {% if m.activo == 1 %}
+                <span class="badge badge--success">Activo</span>
+                {% else %}
+                <span class="badge badge--secondary">Inactivo</span>
+                {% endif %}
+                <div class="medidor-card__chevron"><i class="fas fa-chevron-down"></i></div>
+            </div>
+        </div>
+        <div class="medidor-card__details">
+            <div class="medidor-card__details-inner">
+                <div class="medidor-card__info">
+                    <div class="medidor-card__info-item">
+                        Lecturas
+                        <span>{{ m.num_lecturas }}</span>
+                    </div>
+                    <div class="medidor-card__info-item">
+                        ID
+                        <span>#{{ m.id }}</span>
+                    </div>
+                </div>
+                <div class="medidor-card__actions-primary">
+                    <a href="{{ url_for('medidores.detalle', medidor_id=m.id) }}" class="btn btn--primary btn--sm" onclick="event.stopPropagation()">
+                        <i class="fas fa-eye"></i> Ver Detalle
+                    </a>
+                    <a href="{{ url_for('medidores.editar', medidor_id=m.id) }}" class="btn btn--secondary btn--sm" onclick="event.stopPropagation()">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 {% else %}
-<div class="empty-state">
+<!-- Empty States -->
+<div class="empty-state hide-mobile">
     <div class="empty-state__icon"><i class="fas fa-tachometer-alt"></i></div>
     <h3 class="empty-state__title">No hay medidores</h3>
     <p class="empty-state__description">No se encontraron medidores con los filtros seleccionados.</p>
-    {% if busqueda or estado or cliente_id %}
+    {% if filtros.busqueda or filtros.estado or filtros.cliente_id %}
     <a href="{{ url_for('medidores.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
     {% else %}
     <a href="{{ url_for('medidores.crear') }}" class="btn btn--primary">Nuevo Medidor</a>
     {% endif %}
 </div>
+<div class="empty-state hide-desktop">
+    <div class="empty-state__icon"><i class="fas fa-search"></i></div>
+    <h3 class="empty-state__title">Sin resultados</h3>
+    <p class="empty-state__description">No se encontraron medidores.</p>
+    <a href="{{ url_for('medidores.crear') }}" class="btn btn--primary">Nuevo Medidor</a>
+</div>
 {% endif %}
+
+<!-- Modal Filtros Mobile -->
+<div class="modal" id="modalFiltrosMedidores">
+    <div class="modal__backdrop" onclick="cerrarModal('modalFiltrosMedidores')"></div>
+    <div class="modal__content modal__content--bottom">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
+            <h3>Filtros Avanzados</h3>
+            <button class="modal__close" onclick="cerrarModal('modalFiltrosMedidores')">&times;</button>
+        </div>
+        <div class="modal__body">
+            <form method="GET" action="{{ url_for('medidores.listar') }}">
+                <div class="form-group">
+                    <label class="form-label">Busqueda</label>
+                    <input type="text" name="busqueda" value="{{ filtros.busqueda }}" placeholder="Medidor, direccion, cliente..." class="filter-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Cliente</label>
+                    <select name="cliente_id">
+                        <option value="">Todos los clientes</option>
+                        {% for c in clientes %}
+                        <option value="{{ c.id }}" {% if filtros.cliente_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select name="estado">
+                        <option value="">Todos</option>
+                        <option value="activo" {% if filtros.estado == 'activo' %}selected{% endif %}>Activos</option>
+                        <option value="inactivo" {% if filtros.estado == 'inactivo' %}selected{% endif %}>Inactivos</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary" style="width:100%">Aplicar Filtros</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleCard(card) {
+    var expanded = card.getAttribute('data-expanded') === 'true';
+    card.setAttribute('data-expanded', !expanded);
+}
+
+function toggleStats() {
+    var section = document.getElementById('statsSection');
+    var chevron = document.getElementById('statsChevron');
+    var isOpen = section.style.display !== 'none';
+    section.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    localStorage.setItem('medidores-stats-open', !isOpen);
+}
+
+(function() {
+    var saved = localStorage.getItem('medidores-stats-open');
+    if (saved === 'false') {
+        var section = document.getElementById('statsSection');
+        var chevron = document.getElementById('statsChevron');
+        if (section) { section.style.display = 'none'; }
+        if (chevron) { chevron.style.transform = ''; }
+    }
+})();
+
+if (typeof FilterBar !== 'undefined') {
+    FilterBar.init('#filterFormMedidores', { debounceMs: 400, containerSelector: '.data-table' });
+}
+
+function abrirModal(id) {
+    document.getElementById(id).classList.add('modal--active');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal(id) {
+    document.getElementById(id).classList.remove('modal--active');
+    document.body.style.overflow = '';
+}
+</script>
 {% endblock %}
