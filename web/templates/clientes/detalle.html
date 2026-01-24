@@ -55,7 +55,7 @@
 
     <div class="detail-section">
         <h3>Accesos Rapidos</h3>
-        <div style="display: flex; flex-direction: column; gap: var(--spacing-sm);">
+        <div class="quick-links">
             <a href="{{ url_for('lecturas.listar', cliente_id=cliente.id) }}" class="btn btn--secondary"><i class="fas fa-tachometer-alt"></i> Ver Lecturas</a>
             <a href="{{ url_for('boletas.listar', cliente_id=cliente.id) }}" class="btn btn--secondary"><i class="fas fa-file-invoice"></i> Ver Boletas</a>
         </div>

@@ -786,6 +786,122 @@ def obtener_años_disponibles() -> List[int]:
     return [row[0] for row in rows]
 
 
+def obtener_estadisticas_lecturas(año: int = None, mes: int = None,
+                                  cliente_id: int = None, medidor_id: int = None,
+                                  solo_incompletos: bool = False) -> Dict:
+    """Obtiene estadisticas de lecturas con los mismos filtros del listado."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = '''
+        SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN l.foto_path IS NOT NULL AND l.foto_path != '' AND l.foto_nombre != 'sin_foto' THEN 1 END) as con_foto,
+            COUNT(CASE WHEN l.foto_path IS NULL OR l.foto_path = '' OR l.foto_nombre = 'sin_foto' THEN 1 END) as sin_foto,
+            COALESCE(ROUND(AVG(l.lectura_m3)::numeric, 1), 0) as promedio_m3
+        FROM lecturas l
+        JOIN medidores m ON l.medidor_id = m.id
+        JOIN clientes c ON m.cliente_id = c.id
+        WHERE 1=1
+    '''
+    params = []
+
+    if medidor_id:
+        query += ' AND l.medidor_id = %s'
+        params.append(medidor_id)
+    if año:
+        query += ' AND l.año = %s'
+        params.append(año)
+    if mes:
+        query += ' AND l.mes = %s'
+        params.append(mes)
+    if cliente_id:
+        query += ' AND c.id = %s'
+        params.append(cliente_id)
+
+    if solo_incompletos:
+        medidores_inc = obtener_medidores_incompletos()
+        if medidores_inc:
+            placeholders = ','.join(['%s'] * len(medidores_inc))
+            query += f' AND l.medidor_id IN ({placeholders})'
+            params.extend(medidores_inc)
+        else:
+            query += ' AND 1=0'
+
+    cursor.execute(query, params)
+    row = cursor.fetchone()
+    conn.close()
+
+    return {
+        'total': row[0] if isinstance(row, tuple) else row['total'],
+        'con_foto': row[1] if isinstance(row, tuple) else row['con_foto'],
+        'sin_foto': row[2] if isinstance(row, tuple) else row['sin_foto'],
+        'promedio_m3': float(row[3] if isinstance(row, tuple) else row['promedio_m3'])
+    }
+
+
+def obtener_estadisticas_clientes(busqueda: str = None, con_medidores: str = None,
+                                  filtro_telefono: str = None) -> Dict:
+    """Obtiene estadisticas de clientes con los mismos filtros del listado."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = '''
+        SELECT
+            COUNT(*) as total,
+            COUNT(CASE WHEN num_medidores > 0 THEN 1 END) as con_medidor,
+            COUNT(CASE WHEN num_medidores = 0 THEN 1 END) as sin_medidor,
+            COUNT(CASE WHEN telefono IS NULL OR telefono = '' THEN 1 END) as sin_telefono
+        FROM (
+            SELECT c.*, COUNT(m.id) as num_medidores
+            FROM clientes c
+            LEFT JOIN medidores m ON c.id = m.cliente_id
+            WHERE 1=1
+    '''
+    params = []
+
+    if busqueda:
+        query += ''' AND (
+            LOWER(c.nombre) LIKE LOWER(%s) OR
+            LOWER(c.nombre_completo) LIKE LOWER(%s) OR
+            LOWER(c.rut) LIKE LOWER(%s) OR
+            LOWER(c.telefono) LIKE LOWER(%s) OR
+            LOWER(c.email) LIKE LOWER(%s)
+        )'''
+        busqueda_param = f'%{busqueda}%'
+        params.extend([busqueda_param] * 5)
+
+    if filtro_telefono == 'sin':
+        query += ' AND (c.telefono IS NULL OR c.telefono = %s)'
+        params.append('')
+    elif filtro_telefono == 'con':
+        query += ' AND c.telefono IS NOT NULL AND c.telefono != %s'
+        params.append('')
+
+    query += ' GROUP BY c.id'
+
+    if con_medidores == 'si':
+        query += ' HAVING COUNT(m.id) > 0'
+    elif con_medidores == 'no':
+        query += ' HAVING COUNT(m.id) = 0'
+
+    query += ') sub'
+
+    cursor.execute(query, params)
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return {'total': 0, 'con_medidor': 0, 'sin_medidor': 0, 'sin_telefono': 0}
+
+    return {
+        'total': row[0] if isinstance(row, tuple) else row['total'],
+        'con_medidor': row[1] if isinstance(row, tuple) else row['con_medidor'],
+        'sin_medidor': row[2] if isinstance(row, tuple) else row['sin_medidor'],
+        'sin_telefono': row[3] if isinstance(row, tuple) else row['sin_telefono']
+    }
+
+
 def obtener_fechas_comunes_por_periodo(periodos: List[tuple]) -> Dict[tuple, Optional[int]]:
     """
     Obtiene el día más común de lectura para cada periodo.

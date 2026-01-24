@@ -7,7 +7,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from web.auth import admin_required
 from src.models import (
     listar_clientes, obtener_cliente, actualizar_cliente,
-    crear_cliente, eliminar_cliente, buscar_cliente_por_nombre
+    crear_cliente, eliminar_cliente, buscar_cliente_por_nombre,
+    obtener_estadisticas_clientes
 )
 
 clientes_bp = Blueprint('clientes', __name__)
@@ -24,8 +25,21 @@ def listar():
     clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores,
                                filtro_telefono=filtro_telefono)
 
+    # Estadísticas
+    stats = obtener_estadisticas_clientes(busqueda=busqueda, con_medidores=con_medidores,
+                                          filtro_telefono=filtro_telefono)
+
+    # Dict de filtros para chips
+    filtros = {
+        'busqueda': busqueda,
+        'con_medidores': con_medidores,
+        'filtro_telefono': filtro_telefono
+    }
+
     return render_template('clientes/lista.html',
                            clientes=clientes,
+                           stats=stats,
+                           filtros=filtros,
                            busqueda=busqueda or '',
                            con_medidores=con_medidores or '',
                            filtro_telefono=filtro_telefono or '')

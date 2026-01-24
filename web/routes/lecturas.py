@@ -14,7 +14,7 @@ from src.models import (
     eliminar_lectura, contar_lecturas, obtener_años_disponibles,
     listar_clientes, listar_medidores, obtener_o_crear_medidor,
     obtener_clientes_incompletos, obtener_fechas_comunes_por_periodo,
-    crear_lecturas_multiple
+    crear_lecturas_multiple, obtener_estadisticas_lecturas
 )
 from src.database import BASE_DIR
 
@@ -37,6 +37,7 @@ def listar():
     mes = request.args.get('mes', type=int)
     cliente_id = request.args.get('cliente_id', type=int)
     medidor_id = request.args.get('medidor_id', type=int)
+    con_foto = request.args.get('con_foto', type=int)
     page = request.args.get('page', 1, type=int)
     per_page = 20
 
@@ -57,6 +58,41 @@ def listar():
     )
     total = contar_lecturas(año=año, mes=mes, cliente_id=cliente_id, medidor_id=medidor_id, solo_incompletos=incompletos)
 
+    # Filtrar por foto si aplica
+    if con_foto == 1:
+        lecturas = [l for l in lecturas if l.get('foto_path') and l['foto_path'] != '' and l.get('foto_nombre') != 'sin_foto']
+        total = len(lecturas)
+    elif con_foto == 0:
+        lecturas = [l for l in lecturas if not l.get('foto_path') or l['foto_path'] == '' or l.get('foto_nombre') == 'sin_foto']
+        total = len(lecturas)
+
+    # Estadísticas
+    stats = obtener_estadisticas_lecturas(
+        año=año, mes=mes, cliente_id=cliente_id,
+        medidor_id=medidor_id, solo_incompletos=incompletos
+    )
+
+    # Dict de filtros para chips
+    filtros = {
+        'año': año,
+        'mes': mes,
+        'cliente_id': cliente_id,
+        'medidor_id': medidor_id,
+        'incompletos': incompletos,
+        'con_foto': con_foto
+    }
+
+    # Paginación compatible con partials/pagination.html
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    pagination = {
+        'page': page,
+        'per_page': per_page,
+        'total': total,
+        'total_pages': total_pages,
+        'start': offset + 1 if total > 0 else 0,
+        'end': min(offset + per_page, total)
+    }
+
     # Datos para filtros
     años = obtener_años_disponibles()
     clientes = listar_clientes()
@@ -69,6 +105,9 @@ def listar():
                            clientes=clientes,
                            medidores=medidores,
                            clientes_incompletos=clientes_incompletos,
+                           filtros=filtros,
+                           stats=stats,
+                           pagination=pagination,
                            año_sel=año,
                            mes_sel=mes,
                            cliente_sel=cliente_id,

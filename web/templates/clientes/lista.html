@@ -3,13 +3,77 @@
 {% block title %}Clientes - Sistema de Lecturas{% endblock %}
 
 {% block content %}
+<!-- HEADER -->
 <div class="page-header">
     <h1>Clientes</h1>
-    <a href="{{ url_for('clientes.crear') }}" class="btn btn--primary">Nuevo Cliente</a>
+    <div class="hide-mobile">
+        <a href="{{ url_for('clientes.crear') }}" class="btn btn--primary">Nuevo Cliente</a>
+        <button type="button" onclick="abrirModalExportar()" class="btn btn--success">Exportar Excel</button>
+    </div>
+    <a href="{{ url_for('clientes.crear') }}" class="btn btn--primary hide-desktop">+ Nuevo</a>
 </div>
 
-<!-- Filtros -->
-<form method="GET" class="filter-bar" id="filterFormClientes">
+<!-- STATS - solo desktop, colapsable -->
+{% if stats %}
+<div class="hide-mobile">
+    <button class="stats-toggle stats-toggle--enhanced" id="statsToggle" aria-expanded="false" onclick="toggleStats()">
+        <span class="stats-toggle__icon"><i class="fas fa-chart-bar"></i></span>
+        Resumen
+        <span class="stats-toggle__arrow"><i class="fas fa-chevron-right"></i></span>
+    </button>
+    <div class="stats-collapsible" id="statsContent">
+        <div class="stats-grid">
+            <div class="stat-card stat-card--default">
+                <div class="stat-card__value">{{ stats.total or 0 }}</div>
+                <div class="stat-card__label">Total Clientes</div>
+            </div>
+            <div class="stat-card stat-card--success">
+                <div class="stat-card__value">{{ stats.con_medidor or 0 }}</div>
+                <div class="stat-card__label">Con Medidor</div>
+            </div>
+            <div class="stat-card stat-card--warning">
+                <div class="stat-card__value">{{ stats.sin_medidor or 0 }}</div>
+                <div class="stat-card__label">Sin Medidor</div>
+            </div>
+            <div class="stat-card stat-card--danger">
+                <div class="stat-card__value">{{ stats.sin_telefono or 0 }}</div>
+                <div class="stat-card__label">Sin Telefono</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- FILTER CHIPS - solo mobile -->
+<div class="filter-chips hide-desktop">
+    <a href="{{ url_for('clientes.listar', busqueda=filtros.busqueda or '') }}"
+       class="chip {% if not filtros.con_medidores and not filtros.filtro_telefono %}chip--active{% endif %}">
+        Todos
+        {% if stats %}<span class="chip__count">{{ stats.total or 0 }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('clientes.listar', busqueda=filtros.busqueda or '', con_medidores='si') }}"
+       class="chip {% if filtros.con_medidores == 'si' %}chip--active{% endif %}">
+        Con medidor
+        {% if stats %}<span class="chip__count">{{ stats.con_medidor or 0 }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('clientes.listar', busqueda=filtros.busqueda or '', con_medidores='no') }}"
+       class="chip {% if filtros.con_medidores == 'no' %}chip--active{% endif %}">
+        Sin medidor
+        {% if stats %}<span class="chip__count">{{ stats.sin_medidor or 0 }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('clientes.listar', busqueda=filtros.busqueda or '', filtro_telefono='sin') }}"
+       class="chip {% if filtros.filtro_telefono == 'sin' %}chip--active{% endif %}">
+        Sin telefono
+        {% if stats %}<span class="chip__count">{{ stats.sin_telefono or 0 }}</span>{% endif %}
+    </a>
+    <button class="filter-chips__btn {% if filtros.busqueda %}filter-chips__btn--active{% endif %}"
+            onclick="abrirModal('modalFiltrosClientes')" title="Buscar">
+        <i class="fas fa-search"></i>
+    </button>
+</div>
+
+<!-- FILTER FORM - solo desktop -->
+<form method="GET" class="filter-bar hide-mobile" id="filterFormClientes">
     <div class="filter-bar__fields">
         <div class="filter-bar__group">
             <input type="text" name="busqueda" placeholder="Buscar por nombre, RUT, telefono, email..." value="{{ busqueda }}" class="filter-input">
@@ -34,14 +98,54 @@
         {% if busqueda or con_medidores or filtro_telefono %}
         <a href="{{ url_for('clientes.listar') }}" class="btn btn--secondary">Limpiar</a>
         {% endif %}
-        <button type="button" onclick="abrirModalExportar()" class="btn btn--success">Exportar Excel</button>
     </div>
 </form>
 
-<p class="total-results">Mostrando {{ clientes|length }} cliente(s)</p>
-
 {% if clientes %}
-<table class="data-table data-table--striped data-table--hover">
+<!-- CARDS - solo mobile -->
+<div class="hide-desktop" id="cardsContainer">
+    {% for c in clientes %}
+    <div class="cliente-card" data-expanded="false" onclick="toggleCard(this, event)">
+        <div class="cliente-card__summary">
+            <div class="cliente-card__left">
+                <div class="cliente-card__name">{{ c.nombre }}</div>
+                <div class="cliente-card__rut">{{ c.rut or 'Sin RUT' }}</div>
+            </div>
+            <div class="cliente-card__right">
+                <span class="badge {% if c.num_medidores > 0 %}badge--success{% else %}badge--secondary{% endif %}">
+                    {{ c.num_medidores }} med.
+                </span>
+                <span class="cliente-card__chevron"><i class="fas fa-chevron-down"></i></span>
+            </div>
+        </div>
+        <div class="cliente-card__details">
+            <div class="cliente-card__details-inner">
+                <div class="cliente-card__info">
+                    <div class="cliente-card__info-item">
+                        Telefono
+                        <span>{{ c.telefono or '-' }}</span>
+                    </div>
+                    <div class="cliente-card__info-item">
+                        Email
+                        <span>{{ c.email or '-' }}</span>
+                    </div>
+                </div>
+                <div class="cliente-card__actions-primary">
+                    <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn--primary" onclick="event.stopPropagation()">
+                        <i class="fas fa-eye"></i> Ver Detalle
+                    </a>
+                    <button class="btn btn--secondary" onclick="event.stopPropagation(); abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}')">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- TABLE - solo desktop -->
+<table class="data-table data-table--striped data-table--hover hide-mobile">
     <thead>
         <tr>
             <th class="sortable">ID</th>
@@ -78,8 +182,9 @@
         {% endfor %}
     </tbody>
 </table>
+
 {% else %}
-<div class="empty-state">
+<div class="empty-state hide-mobile">
     <div class="empty-state__icon"><i class="fas fa-users"></i></div>
     <h3 class="empty-state__title">No hay clientes</h3>
     <p class="empty-state__description">No se encontraron clientes con los filtros seleccionados.</p>
@@ -89,11 +194,51 @@
     <a href="{{ url_for('clientes.crear') }}" class="btn btn--primary">Nuevo Cliente</a>
     {% endif %}
 </div>
+<div class="empty-state hide-desktop">
+    <div class="empty-state__icon"><i class="fas fa-search"></i></div>
+    <h3 class="empty-state__title">Sin resultados</h3>
+    <p class="empty-state__description">Intenta cambiar los filtros o crea un nuevo cliente.</p>
+    <a href="{{ url_for('clientes.crear') }}" class="btn btn--primary">+ Nuevo Cliente</a>
+</div>
 {% endif %}
+
+<!-- Modal filtros avanzados (mobile) -->
+<div id="modalFiltrosClientes" class="modal">
+    <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
+            <h3>Buscar</h3>
+            <button class="modal__close" onclick="cerrarModal('modalFiltrosClientes')">&times;</button>
+        </div>
+        <div class="modal__body">
+            <form method="GET" id="formFiltrosMobileClientes">
+                {% if filtros.con_medidores %}
+                <input type="hidden" name="con_medidores" value="{{ filtros.con_medidores }}">
+                {% endif %}
+                {% if filtros.filtro_telefono %}
+                <input type="hidden" name="filtro_telefono" value="{{ filtros.filtro_telefono }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="mobile_busqueda">Buscar</label>
+                    <input type="text" name="busqueda" id="mobile_busqueda"
+                           placeholder="Nombre, RUT, telefono, email..."
+                           value="{{ filtros.busqueda or '' }}">
+                </div>
+
+                <div class="modal__actions">
+                    <a href="{{ url_for('clientes.listar') }}" class="btn btn--secondary">Limpiar</a>
+                    <button type="submit" class="btn btn--primary">Buscar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <!-- Modal para editar cliente -->
 <div id="modalEditar" class="modal">
     <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
         <div class="modal__header">
             <h3>Editar Cliente</h3>
             <button onclick="cerrarModalEditar()" class="modal__close">&times;</button>
@@ -143,6 +288,7 @@
 <!-- Modal para exportar con seleccion de columnas -->
 <div id="modalExportar" class="modal">
     <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
         <div class="modal__header">
             <h3>Exportar a Excel</h3>
             <button onclick="cerrarModalExportar()" class="modal__close">&times;</button>
@@ -176,6 +322,65 @@
 </div>
 
 <script>
+// === Card expansion (mobile) ===
+function toggleCard(card, event) {
+    if (event.target.closest('.cliente-card__actions-primary')) return;
+    var isExpanded = card.dataset.expanded === 'true';
+    document.querySelectorAll('.cliente-card[data-expanded="true"]').forEach(function(c) {
+        if (c !== card) c.dataset.expanded = 'false';
+    });
+    card.dataset.expanded = isExpanded ? 'false' : 'true';
+}
+
+// === Stats collapsible (desktop) ===
+function toggleStats() {
+    var toggle = document.getElementById('statsToggle');
+    var content = document.getElementById('statsContent');
+    var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    if (isOpen) {
+        content.classList.remove('stats-collapsible--open');
+    } else {
+        content.classList.add('stats-collapsible--open');
+    }
+    localStorage.setItem('clientes-stats-open', isOpen ? '0' : '1');
+}
+(function() {
+    var saved = localStorage.getItem('clientes-stats-open');
+    if (saved === '1') {
+        var toggle = document.getElementById('statsToggle');
+        var content = document.getElementById('statsContent');
+        if (toggle && content) {
+            toggle.setAttribute('aria-expanded', 'true');
+            content.classList.add('stats-collapsible--open');
+        }
+    }
+})();
+
+// === Filter auto-submit (desktop) ===
+if (window.FilterBar) {
+    FilterBar.init('#filterFormClientes', { debounceMs: 400, containerSelector: '.data-table' });
+}
+
+// === Loading on chip click (mobile) ===
+document.querySelectorAll('.filter-chips .chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+        var container = document.getElementById('cardsContainer');
+        if (container && window.Loading) {
+            Loading.show(container);
+        }
+    });
+});
+
+// === Modal utilities ===
+function abrirModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function cerrarModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+// === Edit modal ===
 function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, email) {
     document.getElementById('formEditar').action = '/clientes/' + clienteId + '/editar';
     document.getElementById('edit_nombre').value = nombre;
@@ -183,20 +388,21 @@ function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, emai
     document.getElementById('edit_rut').value = rut;
     document.getElementById('edit_telefono').value = telefono;
     document.getElementById('edit_email').value = email;
-    document.getElementById('modalEditar').classList.add('active');
+    abrirModal('modalEditar');
 }
 
 function cerrarModalEditar() {
-    document.getElementById('modalEditar').classList.remove('active');
+    cerrarModal('modalEditar');
     document.getElementById('formEditar').reset();
 }
 
+// === Export modal ===
 function abrirModalExportar() {
-    document.getElementById('modalExportar').classList.add('active');
+    abrirModal('modalExportar');
 }
 
 function cerrarModalExportar() {
-    document.getElementById('modalExportar').classList.remove('active');
+    cerrarModal('modalExportar');
 }
 
 function toggleTodasColumnas() {
