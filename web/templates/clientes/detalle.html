@@ -45,7 +45,7 @@
     <div class="modal-content">
         <h3>Eliminar Cliente</h3>
         <p>Esta a punto de eliminar al cliente <strong>{{ cliente.nombre }}</strong>.</p>
-        <p class="text-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el cliente no tiene medidores asociados.</p>
+        <p class="alert alert-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el cliente no tiene medidores asociados.</p>
         <form method="POST" action="{{ url_for('clientes.eliminar', cliente_id=cliente.id) }}">
             <div class="form-actions">
                 <button type="submit" class="btn btn-danger">Confirmar Eliminacion</button>

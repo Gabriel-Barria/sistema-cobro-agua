@@ -3,47 +3,75 @@
 {% block title %}Boletas - Sistema de Lecturas{% endblock %}
 
 {% block content %}
+<!-- HEADER -->
 <div class="page-header">
     <h1>Boletas</h1>
-    <div>
+    <div class="hide-mobile">
         <a href="{{ url_for('boletas.crear') }}" class="btn btn-primary">Nueva Boleta</a>
         <a href="{{ url_for('boletas.crear_masivo') }}" class="btn btn-secondary">Crear Masivo</a>
         <a href="{{ url_for('boletas.configuracion') }}" class="btn btn-secondary">Configuracion</a>
     </div>
+    <a href="{{ url_for('boletas.crear') }}" class="btn btn--primary hide-desktop">+ Nueva</a>
 </div>
 
+<!-- STATS - solo desktop, colapsable -->
 {% if stats %}
-<div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
-    <div class="stat-card" style="background: #f0f0f0; padding: 15px; border-radius: 5px; text-align: center;">
-        <div style="font-size: 24px; font-weight: bold;">{{ stats.total or 0 }}</div>
-        <div>Total Boletas</div>
-    </div>
-    <div class="stat-card" style="background: #d4edda; padding: 15px; border-radius: 5px; text-align: center;">
-        <div style="font-size: 24px; font-weight: bold;">{{ stats.pagadas or 0 }}</div>
-        <div>Pagadas</div>
-    </div>
-    <div class="stat-card" style="background: #d1ecf1; padding: 15px; border-radius: 5px; text-align: center;">
-        <div style="font-size: 24px; font-weight: bold;">{{ stats.en_revision or 0 }}</div>
-        <div>En Revisión</div>
-    </div>
-    <div class="stat-card" style="background: #fff3cd; padding: 15px; border-radius: 5px; text-align: center;">
-        <div style="font-size: 24px; font-weight: bold;">{{ stats.pendientes or 0 }}</div>
-        <div>Pendientes</div>
-    </div>
-    <div class="stat-card" style="background: #f8d7da; padding: 15px; border-radius: 5px; text-align: center;">
-        <div style="font-size: 24px; font-weight: bold;">{{ stats.sin_comprobante or 0 }}</div>
-        <div>Sin Comprobante</div>
-    </div>
-    <div class="stat-card" style="background: #cce5ff; padding: 15px; border-radius: 5px; text-align: center;">
-        <div style="font-size: 24px; font-weight: bold;">${{ (stats.monto_pendiente or 0)|formato_pesos }}</div>
-        <div>Por Cobrar</div>
+<div class="hide-mobile">
+    <button class="stats-toggle" id="statsToggle" aria-expanded="false" onclick="toggleStats()">
+        <span class="stats-toggle__icon"><i class="fas fa-chevron-right"></i></span>
+        Resumen
+    </button>
+    <div class="stats-collapsible" id="statsContent">
+        <div class="stats-grid">
+            <div class="stat-card stat-card--default">
+                <div class="stat-card__value">{{ stats.total or 0 }}</div>
+                <div class="stat-card__label">Total Boletas</div>
+            </div>
+            <div class="stat-card stat-card--success">
+                <div class="stat-card__value">{{ stats.pagadas or 0 }}</div>
+                <div class="stat-card__label">Pagadas</div>
+            </div>
+            <div class="stat-card stat-card--info">
+                <div class="stat-card__value">{{ stats.en_revision or 0 }}</div>
+                <div class="stat-card__label">En Revision</div>
+            </div>
+            <div class="stat-card stat-card--warning">
+                <div class="stat-card__value">{{ stats.pendientes or 0 }}</div>
+                <div class="stat-card__label">Pendientes</div>
+            </div>
+            <div class="stat-card stat-card--danger">
+                <div class="stat-card__value">{{ stats.sin_comprobante or 0 }}</div>
+                <div class="stat-card__label">Sin Comprobante</div>
+            </div>
+            <div class="stat-card stat-card--primary">
+                <div class="stat-card__value">${{ (stats.monto_pendiente or 0)|formato_pesos }}</div>
+                <div class="stat-card__label">Por Cobrar</div>
+            </div>
+        </div>
     </div>
 </div>
 {% endif %}
 
-<form method="GET" class="filter-form" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
-    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
-        <div class="form-group" style="margin: 0;">
+<!-- FILTER CHIPS - solo mobile -->
+<div class="filter-chips hide-desktop">
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '') }}"
+       class="chip {% if filtros.pagada is none %}chip--active{% endif %}">Todos</a>
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=0) }}"
+       class="chip {% if filtros.pagada == 0 %}chip--active{% endif %}">Pendientes</a>
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=1) }}"
+       class="chip {% if filtros.pagada == 1 %}chip--active{% endif %}">En Revision</a>
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=2) }}"
+       class="chip {% if filtros.pagada == 2 %}chip--active{% endif %}">Pagadas</a>
+    <button class="filter-chips__btn {% if filtros.cliente_id or filtros.año or filtros.mes or filtros.sin_comprobante %}filter-chips__btn--active{% endif %}"
+            onclick="abrirModal('modalFiltros')" title="Filtros avanzados">
+        <i class="fas fa-sliders-h"></i>
+    </button>
+</div>
+
+<!-- FILTER FORM - solo desktop -->
+<form method="GET" class="filter-bar hide-mobile">
+    <div class="filter-bar__fields">
+        <div class="filter-bar__group">
             <label for="cliente_id">Cliente</label>
             <select name="cliente_id" id="cliente_id" onchange="this.form.submit()">
                 <option value="">Todos</option>
@@ -56,7 +84,7 @@
         </div>
 
         {% if medidores %}
-        <div class="form-group" style="margin: 0;">
+        <div class="filter-bar__group">
             <label for="medidor_id">Medidor</label>
             <select name="medidor_id" id="medidor_id">
                 <option value="">Todos</option>
@@ -69,7 +97,7 @@
         </div>
         {% endif %}
 
-        <div class="form-group" style="margin: 0;">
+        <div class="filter-bar__group">
             <label for="año">Año</label>
             <select name="año" id="año">
                 <option value="">Todos</option>
@@ -79,7 +107,7 @@
             </select>
         </div>
 
-        <div class="form-group" style="margin: 0;">
+        <div class="filter-bar__group">
             <label for="mes">Mes</label>
             <select name="mes" id="mes">
                 <option value="">Todos</option>
@@ -89,37 +117,94 @@
             </select>
         </div>
 
-        <div class="form-group" style="margin: 0;">
+        <div class="filter-bar__group">
             <label for="pagada">Estado</label>
             <select name="pagada" id="pagada">
                 <option value="">Todos</option>
                 <option value="0" {{ 'selected' if filtros.pagada == 0 }}>Pendientes</option>
-                <option value="1" {{ 'selected' if filtros.pagada == 1 }}>En Revisión</option>
+                <option value="1" {{ 'selected' if filtros.pagada == 1 }}>En Revision</option>
                 <option value="2" {{ 'selected' if filtros.pagada == 2 }}>Pagadas</option>
             </select>
         </div>
 
-        <div class="form-group" style="margin: 0;">
-            <label style="display: flex; align-items: center; gap: 5px;">
-                <input type="checkbox" name="sin_comprobante" value="1"
-                       {{ 'checked' if filtros.sin_comprobante }}>
-                Sin comprobante
-            </label>
+        <div class="filter-bar__group filter-bar__group--checkbox">
+            <input type="checkbox" name="sin_comprobante" value="1"
+                   {{ 'checked' if filtros.sin_comprobante }}>
+            <label>Sin comprobante</label>
         </div>
+    </div>
 
-        <button type="submit" class="btn btn-primary">Filtrar</button>
-        <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary">Limpiar</a>
+    <div class="filter-bar__actions">
+        <button type="submit" class="btn btn--primary">Filtrar</button>
+        <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Limpiar</a>
         <a href="{{ url_for('boletas.exportar', cliente_id=filtros.cliente_id, medidor_id=filtros.medidor_id, año=filtros.año, mes=filtros.mes, pagada=filtros.pagada, sin_comprobante=filtros.sin_comprobante) }}"
-           class="btn btn-success"
-           style="background: #28a745;"
-           title="Exportar a Excel con filtros aplicados">
-            📊 Exportar a Excel
+           class="btn btn--success" title="Exportar a Excel">
+            Exportar
         </a>
     </div>
 </form>
 
 {% if boletas %}
-<table class="data-table">
+<!-- CARDS - solo mobile -->
+<div class="hide-desktop">
+    {% for boleta in boletas %}
+    <div class="boleta-card" data-expanded="false" onclick="toggleCard(this, event)">
+        <div class="boleta-card__summary">
+            <div class="boleta-card__left">
+                <div class="boleta-card__number">{{ boleta.numero_boleta }}</div>
+                <div class="boleta-card__client">{{ boleta.cliente_nombre }}</div>
+            </div>
+            <div class="boleta-card__right">
+                <div class="boleta-card__amount">${{ boleta.total|formato_pesos }}</div>
+                {% if boleta.pagada == 2 %}
+                    <span class="badge badge--success">Pagada</span>
+                {% elif boleta.pagada == 1 %}
+                    <span class="badge badge--info">En Revision</span>
+                {% else %}
+                    <span class="badge badge--danger">Pendiente</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="boleta-card__details">
+            <div class="boleta-card__info">
+                <div class="boleta-card__info-item">
+                    Periodo
+                    <span>{{ boleta.periodo_mes }}/{{ boleta.periodo_año }}</span>
+                </div>
+                <div class="boleta-card__info-item">
+                    Consumo
+                    <span>{{ boleta.consumo_m3 }} m3</span>
+                </div>
+                <div class="boleta-card__info-item">
+                    Total
+                    <span>${{ boleta.total|formato_pesos }}</span>
+                </div>
+                <div class="boleta-card__info-item">
+                    Pendiente
+                    <span class="{% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente == 0 %}text-success{% elif boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}text-warning{% endif %}">
+                        ${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}
+                    </span>
+                </div>
+            </div>
+            <div class="boleta-card__actions">
+                <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="btn btn--primary" onclick="event.stopPropagation()">Ver Detalle</a>
+                <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn--secondary" onclick="event.stopPropagation()">Descargar</a>
+                {% if boleta.pagada == 0 %}
+                <button class="btn btn--success" onclick="event.stopPropagation(); abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')">Marcar Pagada</button>
+                {% elif boleta.pagada == 1 %}
+                <button class="btn btn--success" onclick="event.stopPropagation(); aprobarBoleta({{ boleta.id }})">Aprobar</button>
+                <button class="btn btn--danger" onclick="event.stopPropagation(); rechazarBoleta({{ boleta.id }})">Rechazar</button>
+                {% elif boleta.pagada == 2 %}
+                <button class="btn btn--secondary" onclick="event.stopPropagation(); abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')">Desmarcar Pagada</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- TABLE - solo desktop -->
+<table class="data-table hide-mobile">
     <thead>
         <tr>
             <th class="sortable">N Boleta</th>
@@ -148,7 +233,7 @@
             <td data-sort="{{ boleta.total }}">${{ boleta.total|formato_pesos }}</td>
             <td data-sort="{{ boleta.saldo_pendiente or 0 }}">
                 {% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}
-                    <span style="color: {% if boleta.saldo_pendiente == 0 %}#28a745{% else %}#e67e22{% endif %};">
+                    <span class="{% if boleta.saldo_pendiente == 0 %}text-success{% else %}text-warning{% endif %}">
                         ${{ boleta.saldo_pendiente|formato_pesos }}
                     </span>
                 {% else %}
@@ -157,39 +242,35 @@
             </td>
             <td>
                 {% if boleta.pagada == 2 %}
-                    <span class="badge badge-success badge-clickable"
+                    <span class="badge badge--success badge--clickable"
                           onclick="abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
-                          style="cursor: pointer;"
                           title="Click para desmarcar como pagada">
                         Pagada
                     </span>
                     {% if not boleta.comprobante_path %}
-                        <span class="badge badge-warning badge-clickable"
+                        <span class="badge badge--warning badge--clickable"
                               onclick="abrirModalSubirComprobante({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
-                              style="cursor: pointer;"
                               title="Click para subir comprobante">
                             Sin comprobante
                         </span>
                     {% else %}
                         <span class="comprobante-icon"
                               onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')"
-                              style="cursor: pointer; margin-left: 5px; font-size: 16px;"
                               title="Click para ver comprobante">
                             📎
                         </span>
                     {% endif %}
                 {% elif boleta.pagada == 1 %}
-                    <span class="badge" style="background: #17a2b8; color: white;">En Revisión</span>
+                    <span class="badge badge--info">En Revision</span>
                     <br>
-                    <button onclick="aprobarBoleta({{ boleta.id }})" class="btn btn-sm" style="background: #28a745; color: white; margin-top: 5px; padding: 3px 8px; font-size: 12px;">Aprobar</button>
-                    <button onclick="rechazarBoleta({{ boleta.id }})" class="btn btn-sm" style="background: #dc3545; color: white; margin-top: 5px; padding: 3px 8px; font-size: 12px;">Rechazar</button>
+                    <button onclick="aprobarBoleta({{ boleta.id }})" class="btn btn--success btn--sm">Aprobar</button>
+                    <button onclick="rechazarBoleta({{ boleta.id }})" class="btn btn--danger btn--sm">Rechazar</button>
                     {% if boleta.comprobante_path %}
-                        <br><a href="/{{ boleta.comprobante_path }}" target="_blank" style="font-size: 12px; margin-top: 5px; display: inline-block;">Ver Comprobante</a>
+                        <br><a href="/{{ boleta.comprobante_path }}" target="_blank" class="comprobante-link">Ver Comprobante</a>
                     {% endif %}
                 {% else %}
-                    <span class="badge badge-danger badge-clickable"
+                    <span class="badge badge--danger badge--clickable"
                           onclick="abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
-                          style="cursor: pointer;"
                           title="Click para marcar como pagada">
                         Pendiente
                     </span>
@@ -213,43 +294,106 @@
 </div>
 {% endif %}
 
-<!-- Modal para marcar como pagada -->
-<div id="modalPago" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Marcar boleta como pagada</h3>
-            <button onclick="cerrarModalPago()" class="close-btn">&times;</button>
+<!-- Modal filtros avanzados (mobile) -->
+<div id="modalFiltros" class="modal">
+    <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
+            <h3>Filtros</h3>
+            <button class="modal__close" onclick="cerrarModal('modalFiltros')">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal__body">
+            <form method="GET" id="formFiltrosMobile">
+                {% if filtros.pagada is not none %}
+                <input type="hidden" name="pagada" value="{{ filtros.pagada }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="mobile_cliente">Cliente</label>
+                    <select name="cliente_id" id="mobile_cliente">
+                        <option value="">Todos</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>
+                            {{ cliente.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile_año">Año</label>
+                    <select name="año" id="mobile_año">
+                        <option value="">Todos</option>
+                        {% for a in años %}
+                        <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile_mes">Mes</label>
+                    <select name="mes" id="mobile_mes">
+                        <option value="">Todos</option>
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="sin_comprobante" value="1"
+                               {{ 'checked' if filtros.sin_comprobante }}
+                               style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;">
+                        Sin comprobante
+                    </label>
+                </div>
+
+                <div class="modal__actions">
+                    <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Limpiar</a>
+                    <button type="submit" class="btn btn--primary">Aplicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para marcar como pagada -->
+<div id="modalPago" class="modal">
+    <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
+            <h3>Marcar boleta como pagada</h3>
+            <button onclick="cerrarModalPago()" class="modal__close">&times;</button>
+        </div>
+        <div class="modal__body">
             <p>Boleta: <strong id="modal-numero-boleta"></strong></p>
             <form id="formPago" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="volver_a_lista" value="1">
-                <!-- Campos hidden para preservar filtros -->
                 <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
                 <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
                 <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
                 <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
                 <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
                 <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
-                <!-- Campos hidden para preservar ordenamiento -->
                 <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
                 <input type="hidden" name="sort_order" value="{{ filtros.sort_order or '' }}">
 
                 <div class="form-group">
-                    <label for="metodo_pago">Método de pago:</label>
-                    <select name="metodo_pago" id="metodo_pago" required style="width: 100%; padding: 8px;" onchange="toggleComprobante()">
+                    <label for="metodo_pago">Metodo de pago:</label>
+                    <select name="metodo_pago" id="metodo_pago" required onchange="toggleComprobante()">
                         <option value="efectivo">Efectivo</option>
                         <option value="transferencia">Transferencia</option>
                     </select>
                 </div>
-                <div id="comprobanteContainer" class="form-group" style="display: none; margin-top: 15px;">
+                <div id="comprobanteContainer" class="form-group" style="display: none;">
                     <label for="comprobante">Comprobante de pago:</label>
-                    <input type="file" name="comprobante" id="comprobante" accept=".png,.jpg,.jpeg,.gif,.pdf" style="width: 100%; padding: 8px;">
-                    <small style="color: #666; display: block; margin-top: 5px;">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</small>
+                    <input type="file" name="comprobante" id="comprobante" accept=".png,.jpg,.jpeg,.gif,.pdf">
+                    <small class="form-help">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</small>
                 </div>
-                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="cerrarModalPago()" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-success">Confirmar Pago</button>
+                <div class="modal__actions">
+                    <button type="button" onclick="cerrarModalPago()" class="btn btn--secondary">Cancelar</button>
+                    <button type="submit" class="btn btn--success">Confirmar Pago</button>
                 </div>
             </form>
         </div>
@@ -257,31 +401,30 @@
 </div>
 
 <!-- Modal para desmarcar como pagada -->
-<div id="modalDesmarcar" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>¿Desmarcar como pagada?</h3>
-            <button onclick="cerrarModalDesmarcar()" class="close-btn">&times;</button>
+<div id="modalDesmarcar" class="modal">
+    <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
+            <h3>Desmarcar como pagada?</h3>
+            <button onclick="cerrarModalDesmarcar()" class="modal__close">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal__body">
             <p>Boleta: <strong id="modal-desmarcar-numero"></strong></p>
-            <p>Esto revertirá el estado de pago. El comprobante NO será eliminado.</p>
+            <p>Esto revertira el estado de pago. El comprobante NO sera eliminado.</p>
             <form id="formDesmarcar" method="POST">
                 <input type="hidden" name="volver_a_lista" value="1">
-                <!-- Campos hidden para preservar filtros -->
                 <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
                 <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
                 <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
                 <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
                 <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
                 <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
-                <!-- Campos hidden para preservar ordenamiento -->
                 <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
                 <input type="hidden" name="sort_order" value="{{ filtros.sort_order or '' }}">
 
-                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="cerrarModalDesmarcar()" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Confirmar</button>
+                <div class="modal__actions">
+                    <button type="button" onclick="cerrarModalDesmarcar()" class="btn btn--secondary">Cancelar</button>
+                    <button type="submit" class="btn btn--primary">Confirmar</button>
                 </div>
             </form>
         </div>
@@ -289,36 +432,35 @@
 </div>
 
 <!-- Modal para subir comprobante -->
-<div id="modalComprobante" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
+<div id="modalComprobante" class="modal">
+    <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
             <h3>Subir comprobante de pago</h3>
-            <button onclick="cerrarModalComprobante()" class="close-btn">&times;</button>
+            <button onclick="cerrarModalComprobante()" class="modal__close">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal__body">
             <p>Boleta: <strong id="modal-comprobante-numero"></strong></p>
             <form id="formComprobante" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="volver_a_lista" value="1">
-                <!-- Campos hidden para preservar filtros -->
                 <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
                 <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
                 <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
                 <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
                 <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
                 <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
-                <!-- Campos hidden para preservar ordenamiento -->
                 <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
                 <input type="hidden" name="sort_order" value="{{ filtros.sort_order or '' }}">
 
                 <div class="form-group">
                     <label for="comprobante_upload">Seleccionar archivo:</label>
-                    <input type="file" name="comprobante" id="comprobante_upload" accept=".png,.jpg,.jpeg,.gif,.pdf" required style="width: 100%; padding: 8px;">
-                    <small style="color: #666; display: block; margin-top: 5px;">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</small>
+                    <input type="file" name="comprobante" id="comprobante_upload" accept=".png,.jpg,.jpeg,.gif,.pdf" required>
+                    <small class="form-help">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</small>
                 </div>
 
-                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="cerrarModalComprobante()" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Subir Comprobante</button>
+                <div class="modal__actions">
+                    <button type="button" onclick="cerrarModalComprobante()" class="btn btn--secondary">Cancelar</button>
+                    <button type="submit" class="btn btn--primary">Subir Comprobante</button>
                 </div>
             </form>
         </div>
@@ -326,87 +468,103 @@
 </div>
 
 <!-- Modal Ver Comprobante -->
-<div id="modalVerComprobante" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 90%; max-height: 90vh;">
-        <div class="modal-header">
-            <h3>Comprobante de Pago - <span id="modal-ver-comprobante-numero"></span></h3>
-            <button onclick="cerrarModalVerComprobante()" class="close-btn">&times;</button>
+<div id="modalVerComprobante" class="modal">
+    <div class="modal__content modal__content--lg">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
+            <h3>Comprobante - <span id="modal-ver-comprobante-numero"></span></h3>
+            <button onclick="cerrarModalVerComprobante()" class="modal__close">&times;</button>
         </div>
-        <div class="modal-body" style="max-height: 80vh; overflow: auto; padding: 10px;">
-            <div id="comprobante-container" style="text-align: center;">
-                <!-- Aquí se cargará la imagen o PDF -->
-            </div>
+        <div class="modal__body">
+            <div id="comprobante-container" class="comprobante-viewer"></div>
         </div>
     </div>
 </div>
 
 <script>
+// === Card expansion (mobile) ===
+function toggleCard(card, event) {
+    if (event.target.closest('.boleta-card__actions')) return;
+    const isExpanded = card.dataset.expanded === 'true';
+    // Close other cards
+    document.querySelectorAll('.boleta-card[data-expanded="true"]').forEach(function(c) {
+        if (c !== card) c.dataset.expanded = 'false';
+    });
+    card.dataset.expanded = isExpanded ? 'false' : 'true';
+}
+
+// === Stats collapsible (desktop) ===
+function toggleStats() {
+    var toggle = document.getElementById('statsToggle');
+    var content = document.getElementById('statsContent');
+    var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    if (isOpen) {
+        content.classList.remove('stats-collapsible--open');
+    } else {
+        content.classList.add('stats-collapsible--open');
+    }
+    localStorage.setItem('boletas-stats-open', isOpen ? '0' : '1');
+}
+// Restore stats state from localStorage
+(function() {
+    var saved = localStorage.getItem('boletas-stats-open');
+    if (saved === '1') {
+        var toggle = document.getElementById('statsToggle');
+        var content = document.getElementById('statsContent');
+        if (toggle && content) {
+            toggle.setAttribute('aria-expanded', 'true');
+            content.classList.add('stats-collapsible--open');
+        }
+    }
+})();
+
+// === Modal utilities ===
+function abrirModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function cerrarModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+// === Modal Pago ===
 function abrirModalPago(boletaId, numeroBoleta) {
-    // Configurar el formulario con la URL de la boleta
-    const form = document.getElementById('formPago');
-    form.action = `/boletas/${boletaId}/marcar-pagada`;
-
-    // Mostrar el número de boleta
+    document.getElementById('formPago').action = '/boletas/' + boletaId + '/marcar-pagada';
     document.getElementById('modal-numero-boleta').textContent = numeroBoleta;
-
-    // Mostrar el modal
-    document.getElementById('modalPago').style.display = 'flex';
+    abrirModal('modalPago');
 }
-
 function cerrarModalPago() {
-    document.getElementById('modalPago').style.display = 'none';
+    cerrarModal('modalPago');
     document.getElementById('formPago').reset();
+    document.getElementById('comprobanteContainer').style.display = 'none';
 }
 
-// Cerrar modal al hacer clic fuera de él
-window.onclick = function(event) {
-    const modal = document.getElementById('modalPago');
-    if (event.target === modal) {
-        cerrarModalPago();
-    }
-}
-
-// Cerrar modal con tecla Escape
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        cerrarModalPago();
-        cerrarModalDesmarcar();
-        cerrarModalComprobante();
-        cerrarModalVerComprobante();
-    }
-});
-
-// Funciones para modal de desmarcar
+// === Modal Desmarcar ===
 function abrirModalDesmarcar(boletaId, numeroBoleta) {
-    const form = document.getElementById('formDesmarcar');
-    form.action = `/boletas/${boletaId}/desmarcar-pagada`;
+    document.getElementById('formDesmarcar').action = '/boletas/' + boletaId + '/desmarcar-pagada';
     document.getElementById('modal-desmarcar-numero').textContent = numeroBoleta;
-    document.getElementById('modalDesmarcar').style.display = 'flex';
+    abrirModal('modalDesmarcar');
 }
-
 function cerrarModalDesmarcar() {
-    document.getElementById('modalDesmarcar').style.display = 'none';
+    cerrarModal('modalDesmarcar');
 }
 
-// Funciones para modal de subir comprobante
+// === Modal Subir Comprobante ===
 function abrirModalSubirComprobante(boletaId, numeroBoleta) {
-    const form = document.getElementById('formComprobante');
-    form.action = `/boletas/${boletaId}/subir-comprobante`;
+    document.getElementById('formComprobante').action = '/boletas/' + boletaId + '/subir-comprobante';
     document.getElementById('modal-comprobante-numero').textContent = numeroBoleta;
-    document.getElementById('modalComprobante').style.display = 'flex';
+    abrirModal('modalComprobante');
 }
-
 function cerrarModalComprobante() {
-    document.getElementById('modalComprobante').style.display = 'none';
+    cerrarModal('modalComprobante');
     document.getElementById('formComprobante').reset();
 }
 
-// Función para mostrar/ocultar campo de comprobante según método de pago
+// === Toggle comprobante field ===
 function toggleComprobante() {
-    const metodo = document.getElementById('metodo_pago').value;
-    const container = document.getElementById('comprobanteContainer');
-    const input = document.getElementById('comprobante');
-
+    var metodo = document.getElementById('metodo_pago').value;
+    var container = document.getElementById('comprobanteContainer');
+    var input = document.getElementById('comprobante');
     if (metodo === 'transferencia') {
         container.style.display = 'block';
         input.required = true;
@@ -417,216 +575,96 @@ function toggleComprobante() {
     }
 }
 
-// Funciones para modal de ver comprobante
+// === Modal Ver Comprobante ===
 function abrirModalVerComprobante(comprobantePath, numeroBoleta) {
     document.getElementById('modal-ver-comprobante-numero').textContent = numeroBoleta;
-
-    const container = document.getElementById('comprobante-container');
-    const comprobanteUrl = '/' + comprobantePath;
-
-    // Detectar tipo de archivo
-    const extension = comprobantePath.split('.').pop().toLowerCase();
-
-    if (extension === 'pdf') {
-        // Mostrar PDF en iframe
-        container.innerHTML = `
-            <iframe src="${comprobanteUrl}"
-                    style="width: 100%; height: 70vh; border: none;">
-            </iframe>
-            <p style="margin-top: 10px;">
-                <a href="${comprobanteUrl}" target="_blank" class="btn btn-primary">
-                    Abrir PDF en nueva pestaña
-                </a>
-            </p>
-        `;
+    var container = document.getElementById('comprobante-container');
+    var url = '/' + comprobantePath;
+    var ext = comprobantePath.split('.').pop().toLowerCase();
+    if (ext === 'pdf') {
+        container.innerHTML = '<iframe src="' + url + '" class="comprobante-viewer__iframe"></iframe>' +
+            '<p class="comprobante-viewer__link"><a href="' + url + '" target="_blank" class="btn btn--primary">Abrir en nueva pestana</a></p>';
     } else {
-        // Mostrar imagen
-        container.innerHTML = `
-            <img src="${comprobanteUrl}"
-                 alt="Comprobante de pago"
-                 style="max-width: 100%; max-height: 70vh; object-fit: contain;">
-            <p style="margin-top: 10px;">
-                <a href="${comprobanteUrl}" target="_blank" class="btn btn-primary">
-                    Abrir en nueva pestaña
-                </a>
-            </p>
-        `;
+        container.innerHTML = '<img src="' + url + '" alt="Comprobante" class="comprobante-viewer__img">' +
+            '<p class="comprobante-viewer__link"><a href="' + url + '" target="_blank" class="btn btn--primary">Abrir en nueva pestana</a></p>';
     }
-
-    document.getElementById('modalVerComprobante').style.display = 'flex';
+    abrirModal('modalVerComprobante');
 }
-
 function cerrarModalVerComprobante() {
-    document.getElementById('modalVerComprobante').style.display = 'none';
+    cerrarModal('modalVerComprobante');
     document.getElementById('comprobante-container').innerHTML = '';
 }
 
-// Funciones para aprobar boletas
+// === Close modals on overlay click / Escape ===
+document.querySelectorAll('.modal').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.classList.remove('active');
+    });
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal.active').forEach(function(m) {
+            m.classList.remove('active');
+        });
+    }
+});
+
+// === Aprobar / Rechazar boleta ===
 function aprobarBoleta(boletaId) {
-    if (confirm('¿Está seguro de aprobar esta boleta?')) {
-        const form = document.createElement('form');
+    if (confirm('Aprobar esta boleta?')) {
+        var form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/boletas/${boletaId}/aprobar`;
-
-        // Agregar campos hidden para preservar filtros
-        const filtros = {
-            'cliente_id': '{{ filtros.cliente_id or "" }}',
-            'medidor_id': '{{ filtros.medidor_id or "" }}',
-            'año': '{{ filtros.año or "" }}',
-            'mes': '{{ filtros.mes or "" }}',
-            'pagada': '{{ filtros.pagada if filtros.pagada is not none else "" }}',
-            'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}',
-            'sort_by': '{{ filtros.sort_by or "" }}',
-            'sort_order': '{{ filtros.sort_order or "" }}'
-        };
-
-        for (const [key, value] of Object.entries(filtros)) {
-            if (value) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = value;
-                form.appendChild(input);
-            }
-        }
-
+        form.action = '/boletas/' + boletaId + '/aprobar';
+        agregarFiltrosHidden(form);
         document.body.appendChild(form);
         form.submit();
     }
 }
 
-// Funciones para rechazar boletas
 function rechazarBoleta(boletaId) {
-    const motivo = prompt('Ingrese el motivo del rechazo:');
+    var motivo = prompt('Ingrese el motivo del rechazo:');
     if (motivo && motivo.trim() !== '') {
-        const form = document.createElement('form');
+        var form = document.createElement('form');
         form.method = 'POST';
-        form.action = `/boletas/${boletaId}/rechazar`;
-
-        const inputMotivo = document.createElement('input');
+        form.action = '/boletas/' + boletaId + '/rechazar';
+        var inputMotivo = document.createElement('input');
         inputMotivo.type = 'hidden';
         inputMotivo.name = 'motivo';
         inputMotivo.value = motivo.trim();
         form.appendChild(inputMotivo);
-
-        // Agregar campos hidden para preservar filtros
-        const filtros = {
-            'cliente_id': '{{ filtros.cliente_id or "" }}',
-            'medidor_id': '{{ filtros.medidor_id or "" }}',
-            'año': '{{ filtros.año or "" }}',
-            'mes': '{{ filtros.mes or "" }}',
-            'pagada': '{{ filtros.pagada if filtros.pagada is not none else "" }}',
-            'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}',
-            'sort_by': '{{ filtros.sort_by or "" }}',
-            'sort_order': '{{ filtros.sort_order or "" }}'
-        };
-
-        for (const [key, value] of Object.entries(filtros)) {
-            if (value) {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = key;
-                input.value = value;
-                form.appendChild(input);
-            }
-        }
-
+        agregarFiltrosHidden(form);
         document.body.appendChild(form);
         form.submit();
     } else if (motivo !== null) {
         alert('Debe ingresar un motivo para el rechazo');
     }
 }
+
+function agregarFiltrosHidden(form) {
+    var filtros = {
+        'cliente_id': '{{ filtros.cliente_id or "" }}',
+        'medidor_id': '{{ filtros.medidor_id or "" }}',
+        'año': '{{ filtros.año or "" }}',
+        'mes': '{{ filtros.mes or "" }}',
+        'pagada': '{{ filtros.pagada if filtros.pagada is not none else "" }}',
+        'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}',
+        'sort_by': '{{ filtros.sort_by or "" }}',
+        'sort_order': '{{ filtros.sort_order or "" }}'
+    };
+    for (var key in filtros) {
+        if (filtros[key]) {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = filtros[key];
+            form.appendChild(input);
+        }
+    }
+}
 </script>
 
 <style>
-.badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: bold;
-}
-.badge-success { background: #28a745; color: white; }
-.badge-danger { background: #dc3545; color: white; }
-.badge-warning { background: #ffc107; color: black; }
-.btn-sm { padding: 3px 8px; font-size: 12px; }
-.btn-success { background: #28a745; color: white; }
-
-/* Estilos del modal */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 500px;
-    animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #ddd;
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.3em;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 28px;
-    font-weight: bold;
-    color: #aaa;
-    cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    line-height: 1;
-}
-
-.close-btn:hover {
-    color: #000;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.modal-body p {
-    margin-top: 0;
-    font-size: 1.1em;
-}
-
-/* Iconos de acciones */
+/* Page-specific styles */
 .acciones-icons {
     white-space: nowrap;
 }
@@ -643,26 +681,63 @@ function rechazarBoleta(boletaId) {
     transform: scale(1.3);
 }
 
-/* Badges clickeables */
-.badge-clickable {
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.badge-clickable:hover {
-    opacity: 0.8;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Ícono de comprobante */
 .comprobante-icon {
     display: inline-block;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 5px;
     transition: transform 0.2s;
 }
 
 .comprobante-icon:hover {
     transform: scale(1.3);
+}
+
+.comprobante-link {
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+    display: inline-block;
+}
+
+.form-help {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: var(--font-size-sm);
+    margin-top: var(--spacing-xs);
+}
+
+.modal__content--lg {
+    max-height: 90vh;
+}
+
+.comprobante-viewer {
+    text-align: center;
+}
+
+.comprobante-viewer__iframe {
+    width: 100%;
+    height: 60vh;
+    border: none;
+}
+
+.comprobante-viewer__img {
+    max-width: 100%;
+    max-height: 60vh;
+    object-fit: contain;
+}
+
+.comprobante-viewer__link {
+    margin-top: var(--spacing-md);
+}
+
+@media (min-width: 768px) {
+    .comprobante-viewer__iframe {
+        height: 70vh;
+    }
+
+    .comprobante-viewer__img {
+        max-height: 70vh;
+    }
 }
 </style>
 {% endblock %}
