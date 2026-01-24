@@ -7,9 +7,9 @@
 <div class="page-header">
     <h1>Boletas</h1>
     <div class="hide-mobile">
-        <a href="{{ url_for('boletas.crear') }}" class="btn btn-primary">Nueva Boleta</a>
-        <a href="{{ url_for('boletas.crear_masivo') }}" class="btn btn-secondary">Crear Masivo</a>
-        <a href="{{ url_for('boletas.configuracion') }}" class="btn btn-secondary">Configuracion</a>
+        <a href="{{ url_for('boletas.crear') }}" class="btn btn--primary">Nueva Boleta</a>
+        <a href="{{ url_for('boletas.crear_masivo') }}" class="btn btn--secondary">Crear Masivo</a>
+        <a href="{{ url_for('boletas.configuracion') }}" class="btn btn--secondary">Configuracion</a>
     </div>
     <a href="{{ url_for('boletas.crear') }}" class="btn btn--primary hide-desktop">+ Nueva</a>
 </div>
@@ -17,9 +17,10 @@
 <!-- STATS - solo desktop, colapsable -->
 {% if stats %}
 <div class="hide-mobile">
-    <button class="stats-toggle" id="statsToggle" aria-expanded="false" onclick="toggleStats()">
-        <span class="stats-toggle__icon"><i class="fas fa-chevron-right"></i></span>
+    <button class="stats-toggle stats-toggle--enhanced" id="statsToggle" aria-expanded="false" onclick="toggleStats()">
+        <span class="stats-toggle__icon"><i class="fas fa-chart-bar"></i></span>
         Resumen
+        <span class="stats-toggle__arrow"><i class="fas fa-chevron-right"></i></span>
     </button>
     <div class="stats-collapsible" id="statsContent">
         <div class="stats-grid">
@@ -55,13 +56,25 @@
 <!-- FILTER CHIPS - solo mobile -->
 <div class="filter-chips hide-desktop">
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '') }}"
-       class="chip {% if filtros.pagada is none %}chip--active{% endif %}">Todos</a>
+       class="chip {% if filtros.pagada is none %}chip--active{% endif %}">
+        Todos
+        {% if stats %}<span class="chip__count">{{ stats.total or 0 }}</span>{% endif %}
+    </a>
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=0) }}"
-       class="chip {% if filtros.pagada == 0 %}chip--active{% endif %}">Pendientes</a>
+       class="chip {% if filtros.pagada == 0 %}chip--active{% endif %}">
+        Pendientes
+        {% if stats %}<span class="chip__count">{{ stats.pendientes or 0 }}</span>{% endif %}
+    </a>
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=1) }}"
-       class="chip {% if filtros.pagada == 1 %}chip--active{% endif %}">En Revision</a>
+       class="chip {% if filtros.pagada == 1 %}chip--active{% endif %}">
+        En Revision
+        {% if stats %}<span class="chip__count">{{ stats.en_revision or 0 }}</span>{% endif %}
+    </a>
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=2) }}"
-       class="chip {% if filtros.pagada == 2 %}chip--active{% endif %}">Pagadas</a>
+       class="chip {% if filtros.pagada == 2 %}chip--active{% endif %}">
+        Pagadas
+        {% if stats %}<span class="chip__count">{{ stats.pagadas or 0 }}</span>{% endif %}
+    </a>
     <button class="filter-chips__btn {% if filtros.cliente_id or filtros.año or filtros.mes or filtros.sin_comprobante %}filter-chips__btn--active{% endif %}"
             onclick="abrirModal('modalFiltros')" title="Filtros avanzados">
         <i class="fas fa-sliders-h"></i>
@@ -69,11 +82,11 @@
 </div>
 
 <!-- FILTER FORM - solo desktop -->
-<form method="GET" class="filter-bar hide-mobile">
+<form method="GET" class="filter-bar hide-mobile" id="filterFormDesktop">
     <div class="filter-bar__fields">
         <div class="filter-bar__group">
             <label for="cliente_id">Cliente</label>
-            <select name="cliente_id" id="cliente_id" onchange="this.form.submit()">
+            <select name="cliente_id" id="cliente_id">
                 <option value="">Todos</option>
                 {% for cliente in clientes %}
                 <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>
@@ -112,7 +125,7 @@
             <select name="mes" id="mes">
                 <option value="">Todos</option>
                 {% for m in range(1, 13) %}
-                <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m }}</option>
+                <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -146,57 +159,71 @@
 
 {% if boletas %}
 <!-- CARDS - solo mobile -->
-<div class="hide-desktop">
+<div class="hide-desktop" id="cardsContainer">
     {% for boleta in boletas %}
-    <div class="boleta-card" data-expanded="false" onclick="toggleCard(this, event)">
+    <div class="boleta-card {% if boleta.pagada == 2 %}boleta-card--success{% elif boleta.pagada == 1 %}boleta-card--warning{% else %}boleta-card--danger{% endif %}" data-expanded="false" onclick="toggleCard(this, event)">
         <div class="boleta-card__summary">
             <div class="boleta-card__left">
                 <div class="boleta-card__number">{{ boleta.numero_boleta }}</div>
                 <div class="boleta-card__client">{{ boleta.cliente_nombre }}</div>
+                <div class="boleta-card__period">{{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}</div>
             </div>
             <div class="boleta-card__right">
-                <div class="boleta-card__amount">${{ boleta.total|formato_pesos }}</div>
+                <div class="boleta-card__amount">${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}</div>
                 {% if boleta.pagada == 2 %}
-                    <span class="badge badge--success">Pagada</span>
+                    <span class="badge badge--success badge--lg">Pagada</span>
                 {% elif boleta.pagada == 1 %}
-                    <span class="badge badge--info">En Revision</span>
+                    <span class="badge badge--info badge--lg">En Revision</span>
                 {% else %}
-                    <span class="badge badge--danger">Pendiente</span>
+                    <span class="badge badge--danger badge--lg">Pendiente</span>
                 {% endif %}
+                <span class="boleta-card__chevron"><i class="fas fa-chevron-down"></i></span>
             </div>
         </div>
         <div class="boleta-card__details">
-            <div class="boleta-card__info">
-                <div class="boleta-card__info-item">
-                    Periodo
-                    <span>{{ boleta.periodo_mes }}/{{ boleta.periodo_año }}</span>
+            <div class="boleta-card__details-inner">
+                <div class="boleta-card__info">
+                    <div class="boleta-card__info-item">
+                        Consumo
+                        <span>{{ boleta.consumo_m3 }} m3</span>
+                    </div>
+                    <div class="boleta-card__info-item">
+                        Total
+                        <span>${{ boleta.total|formato_pesos }}</span>
+                    </div>
+                    <div class="boleta-card__info-item">
+                        Pendiente
+                        <span class="{% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente == 0 %}text-success{% elif boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}text-warning{% endif %}">
+                            ${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}
+                        </span>
+                    </div>
                 </div>
-                <div class="boleta-card__info-item">
-                    Consumo
-                    <span>{{ boleta.consumo_m3 }} m3</span>
+                <div class="boleta-card__actions boleta-card__actions-primary">
+                    <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="btn btn--primary" onclick="event.stopPropagation()">
+                        <i class="fas fa-eye"></i> Ver Detalle
+                    </a>
+                    <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn--secondary" onclick="event.stopPropagation()">
+                        <i class="fas fa-download"></i> Descargar
+                    </a>
                 </div>
-                <div class="boleta-card__info-item">
-                    Total
-                    <span>${{ boleta.total|formato_pesos }}</span>
+                <div class="boleta-card__actions boleta-card__actions-secondary">
+                    {% if boleta.pagada == 0 %}
+                    <button class="btn btn--success" onclick="event.stopPropagation(); abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')">
+                        <i class="fas fa-check"></i> Marcar Pagada
+                    </button>
+                    {% elif boleta.pagada == 1 %}
+                    <button class="btn btn--success" onclick="event.stopPropagation(); aprobarBoleta({{ boleta.id }})">
+                        <i class="fas fa-check-circle"></i> Aprobar
+                    </button>
+                    <button class="btn btn--danger" onclick="event.stopPropagation(); rechazarBoleta({{ boleta.id }})">
+                        <i class="fas fa-times-circle"></i> Rechazar
+                    </button>
+                    {% elif boleta.pagada == 2 %}
+                    <button class="btn btn--secondary" onclick="event.stopPropagation(); abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')">
+                        <i class="fas fa-undo"></i> Desmarcar
+                    </button>
+                    {% endif %}
                 </div>
-                <div class="boleta-card__info-item">
-                    Pendiente
-                    <span class="{% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente == 0 %}text-success{% elif boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}text-warning{% endif %}">
-                        ${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}
-                    </span>
-                </div>
-            </div>
-            <div class="boleta-card__actions">
-                <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="btn btn--primary" onclick="event.stopPropagation()">Ver Detalle</a>
-                <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn--secondary" onclick="event.stopPropagation()">Descargar</a>
-                {% if boleta.pagada == 0 %}
-                <button class="btn btn--success" onclick="event.stopPropagation(); abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')">Marcar Pagada</button>
-                {% elif boleta.pagada == 1 %}
-                <button class="btn btn--success" onclick="event.stopPropagation(); aprobarBoleta({{ boleta.id }})">Aprobar</button>
-                <button class="btn btn--danger" onclick="event.stopPropagation(); rechazarBoleta({{ boleta.id }})">Rechazar</button>
-                {% elif boleta.pagada == 2 %}
-                <button class="btn btn--secondary" onclick="event.stopPropagation(); abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')">Desmarcar Pagada</button>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -204,7 +231,7 @@
 </div>
 
 <!-- TABLE - solo desktop -->
-<table class="data-table hide-mobile">
+<table class="data-table data-table--striped data-table--hover hide-mobile">
     <thead>
         <tr>
             <th class="sortable">N Boleta</th>
@@ -227,7 +254,7 @@
                 </a>
             </td>
             <td data-sort="{{ '%04d%02d'|format(boleta.periodo_año, boleta.periodo_mes) }}">
-                {{ boleta.periodo_mes }}/{{ boleta.periodo_año }}
+                {{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}
             </td>
             <td data-sort="{{ boleta.consumo_m3 }}">{{ boleta.consumo_m3 }} m3</td>
             <td data-sort="{{ boleta.total }}">${{ boleta.total|formato_pesos }}</td>
@@ -240,57 +267,76 @@
                     ${{ (boleta.saldo_pendiente or boleta.total)|formato_pesos }}
                 {% endif %}
             </td>
-            <td>
+            <td class="estado-cell">
                 {% if boleta.pagada == 2 %}
-                    <span class="badge badge--success badge--clickable"
+                    <span class="badge badge--success badge--clickable" role="button"
                           onclick="abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
                           title="Click para desmarcar como pagada">
                         Pagada
                     </span>
-                    {% if not boleta.comprobante_path %}
-                        <span class="badge badge--warning badge--clickable"
+                    {% if boleta.comprobante_path %}
+                        <button class="action-btn" onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')" title="Ver comprobante">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                    {% else %}
+                        <span class="badge badge--warning badge--clickable" role="button"
                               onclick="abrirModalSubirComprobante({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
                               title="Click para subir comprobante">
-                            Sin comprobante
-                        </span>
-                    {% else %}
-                        <span class="comprobante-icon"
-                              onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')"
-                              title="Click para ver comprobante">
-                            📎
+                            Sin comp.
                         </span>
                     {% endif %}
                 {% elif boleta.pagada == 1 %}
                     <span class="badge badge--info">En Revision</span>
-                    <br>
-                    <button onclick="aprobarBoleta({{ boleta.id }})" class="btn btn--success btn--sm">Aprobar</button>
-                    <button onclick="rechazarBoleta({{ boleta.id }})" class="btn btn--danger btn--sm">Rechazar</button>
-                    {% if boleta.comprobante_path %}
-                        <br><a href="/{{ boleta.comprobante_path }}" target="_blank" class="comprobante-link">Ver Comprobante</a>
-                    {% endif %}
+                    <div class="action-btn-group">
+                        <button class="action-btn action-btn--success" onclick="aprobarBoleta({{ boleta.id }})" title="Aprobar pago">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="action-btn action-btn--danger" onclick="rechazarBoleta({{ boleta.id }})" title="Rechazar pago">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% if boleta.comprobante_path %}
+                        <button class="action-btn" onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')" title="Ver comprobante">
+                            <i class="fas fa-paperclip"></i>
+                        </button>
+                        {% endif %}
+                    </div>
                 {% else %}
-                    <span class="badge badge--danger badge--clickable"
+                    <span class="badge badge--danger badge--clickable" role="button"
                           onclick="abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
                           title="Click para marcar como pagada">
                         Pendiente
                     </span>
                 {% endif %}
             </td>
-            <td class="acciones-icons">
-                <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}"
-                   class="action-icon"
-                   title="Ver detalle">👁️</a>
-                <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}"
-                   class="action-icon"
-                   title="Descargar boleta">💾</a>
+            <td>
+                <div class="action-btn-group">
+                    <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="action-btn" title="Ver detalle">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="action-btn" title="Descargar boleta">
+                        <i class="fas fa-download"></i>
+                    </a>
+                </div>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+
+{% include 'partials/pagination.html' %}
 {% else %}
-<div class="alert alert-info">
-    No hay boletas que coincidan con los filtros seleccionados.
+<!-- Empty state -->
+<div class="empty-state hide-mobile">
+    <div class="empty-state__icon"><i class="fas fa-file-invoice"></i></div>
+    <h3 class="empty-state__title">No hay boletas</h3>
+    <p class="empty-state__description">No se encontraron boletas con los filtros seleccionados.</p>
+    <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
+</div>
+<div class="empty-state hide-desktop">
+    <div class="empty-state__icon"><i class="fas fa-search"></i></div>
+    <h3 class="empty-state__title">Sin resultados</h3>
+    <p class="empty-state__description">Intenta cambiar los filtros o crea una nueva boleta.</p>
+    <a href="{{ url_for('boletas.crear') }}" class="btn btn--primary">+ Nueva Boleta</a>
 </div>
 {% endif %}
 
@@ -335,7 +381,7 @@
                     <select name="mes" id="mobile_mes">
                         <option value="">Todos</option>
                         {% for m in range(1, 13) %}
-                        <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m }}</option>
+                        <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -482,10 +528,10 @@
 </div>
 
 <script>
-// === Card expansion (mobile) ===
+// === Card expansion (mobile) with animation ===
 function toggleCard(card, event) {
     if (event.target.closest('.boleta-card__actions')) return;
-    const isExpanded = card.dataset.expanded === 'true';
+    var isExpanded = card.dataset.expanded === 'true';
     // Close other cards
     document.querySelectorAll('.boleta-card[data-expanded="true"]').forEach(function(c) {
         if (c !== card) c.dataset.expanded = 'false';
@@ -518,6 +564,21 @@ function toggleStats() {
         }
     }
 })();
+
+// === Filter auto-submit (desktop) ===
+if (window.FilterBar) {
+    FilterBar.init('#filterFormDesktop', { debounceMs: 400, containerSelector: '.data-table' });
+}
+
+// === Loading on chip click (mobile) ===
+document.querySelectorAll('.filter-chips .chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+        var container = document.getElementById('cardsContainer');
+        if (container && window.Loading) {
+            Loading.show(container);
+        }
+    });
+});
 
 // === Modal utilities ===
 function abrirModal(id) {
@@ -609,35 +670,52 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// === Aprobar / Rechazar boleta ===
+// === Aprobar / Rechazar boleta (custom modals) ===
 function aprobarBoleta(boletaId) {
-    if (confirm('Aprobar esta boleta?')) {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/boletas/' + boletaId + '/aprobar';
-        agregarFiltrosHidden(form);
-        document.body.appendChild(form);
-        form.submit();
-    }
+    ConfirmModal.show({
+        title: 'Aprobar Boleta',
+        message: 'Se aprobara el pago y la boleta sera marcada como pagada.',
+        icon: 'success',
+        confirmText: 'Aprobar',
+        confirmClass: 'btn--success'
+    }).then(function(ok) {
+        if (ok) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/boletas/' + boletaId + '/aprobar';
+            agregarFiltrosHidden(form);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
 function rechazarBoleta(boletaId) {
-    var motivo = prompt('Ingrese el motivo del rechazo:');
-    if (motivo && motivo.trim() !== '') {
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/boletas/' + boletaId + '/rechazar';
-        var inputMotivo = document.createElement('input');
-        inputMotivo.type = 'hidden';
-        inputMotivo.name = 'motivo';
-        inputMotivo.value = motivo.trim();
-        form.appendChild(inputMotivo);
-        agregarFiltrosHidden(form);
-        document.body.appendChild(form);
-        form.submit();
-    } else if (motivo !== null) {
-        alert('Debe ingresar un motivo para el rechazo');
-    }
+    ConfirmModal.show({
+        title: 'Rechazar Boleta',
+        message: 'El usuario sera notificado del rechazo.',
+        icon: 'danger',
+        confirmText: 'Rechazar',
+        confirmClass: 'btn--danger',
+        showInput: true,
+        inputLabel: 'Motivo del rechazo:',
+        inputPlaceholder: 'Ingrese el motivo...',
+        inputRequired: true
+    }).then(function(motivo) {
+        if (motivo) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/boletas/' + boletaId + '/rechazar';
+            var inputMotivo = document.createElement('input');
+            inputMotivo.type = 'hidden';
+            inputMotivo.name = 'motivo';
+            inputMotivo.value = motivo;
+            form.appendChild(inputMotivo);
+            agregarFiltrosHidden(form);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
 }
 
 function agregarFiltrosHidden(form) {
@@ -665,38 +743,8 @@ function agregarFiltrosHidden(form) {
 
 <style>
 /* Page-specific styles */
-.acciones-icons {
+.estado-cell {
     white-space: nowrap;
-}
-
-.action-icon {
-    display: inline-block;
-    font-size: 18px;
-    margin: 0 5px;
-    text-decoration: none;
-    transition: transform 0.2s;
-}
-
-.action-icon:hover {
-    transform: scale(1.3);
-}
-
-.comprobante-icon {
-    display: inline-block;
-    cursor: pointer;
-    font-size: 16px;
-    margin-left: 5px;
-    transition: transform 0.2s;
-}
-
-.comprobante-icon:hover {
-    transform: scale(1.3);
-}
-
-.comprobante-link {
-    font-size: var(--font-size-sm);
-    margin-top: var(--spacing-xs);
-    display: inline-block;
 }
 
 .form-help {
