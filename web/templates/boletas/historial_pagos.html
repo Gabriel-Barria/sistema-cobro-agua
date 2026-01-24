@@ -5,16 +5,14 @@
 {% block content %}
 <div class="page-header">
     <h1>Historial de Pagos</h1>
-    <div>
-        <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary">Volver a Boletas</a>
-    </div>
+    <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Volver a Boletas</a>
 </div>
 
-<form method="GET" class="filter-form" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
-    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
-        <div class="form-group" style="margin: 0;">
-            <label for="estado">Filtrar por Estado</label>
-            <select name="estado" id="estado" onchange="this.form.submit()">
+<form method="GET" class="filter-bar" id="filterFormHistorial">
+    <div class="filter-bar__fields">
+        <div class="filter-bar__group">
+            <label for="estado">Estado</label>
+            <select name="estado" id="estado">
                 <option value="">Todos</option>
                 <option value="en_revision" {{ 'selected' if estado_filtro == 'en_revision' }}>En Revision</option>
                 <option value="aprobado" {{ 'selected' if estado_filtro == 'aprobado' }}>Aprobados</option>
@@ -22,10 +20,16 @@
             </select>
         </div>
     </div>
+    <div class="filter-bar__actions">
+        <button type="submit" class="btn btn--primary">Filtrar</button>
+        {% if estado_filtro %}
+        <a href="{{ url_for('boletas.historial_pagos') }}" class="btn btn--secondary">Limpiar</a>
+        {% endif %}
+    </div>
 </form>
 
 {% if historial %}
-<table class="data-table">
+<table class="data-table data-table--striped data-table--hover">
     <thead>
         <tr>
             <th>#</th>
@@ -54,11 +58,11 @@
             <td>{{ h.fecha_envio }}</td>
             <td>
                 {% if h.estado == 'aprobado' %}
-                    <span class="badge badge-success">Aprobado</span>
+                    <span class="badge badge--success">Aprobado</span>
                 {% elif h.estado == 'rechazado' %}
-                    <span class="badge badge-danger">Rechazado</span>
+                    <span class="badge badge--danger">Rechazado</span>
                 {% else %}
-                    <span class="badge badge-warning">En Revision</span>
+                    <span class="badge badge--warning">En Revision</span>
                 {% endif %}
             </td>
             <td>{{ h.fecha_procesamiento or '-' }}</td>
@@ -72,36 +76,33 @@
                 {% endif %}
             </td>
             <td>
-                <a href="/{{ h.comprobante_path }}" target="_blank">Ver</a>
+                <a href="/{{ h.comprobante_path }}" target="_blank" class="action-btn" title="Ver comprobante">
+                    <i class="fas fa-paperclip"></i>
+                </a>
             </td>
             <td>
-                <a href="{{ url_for('boletas.detalle', boleta_id=h.boleta_id) }}" class="btn btn-small">Ver Boleta</a>
+                <a href="{{ url_for('boletas.detalle', boleta_id=h.boleta_id) }}" class="action-btn" title="Ver boleta">
+                    <i class="fas fa-eye"></i>
+                </a>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% else %}
-<div style="text-align: center; padding: 40px; background: #f9f9f9; border-radius: 5px;">
-    <p>No hay registros en el historial de pagos.</p>
-    <p class="text-muted">Los registros apareceran cuando los clientes envien comprobantes desde el portal.</p>
+<div class="empty-state">
+    <div class="empty-state__icon"><i class="fas fa-history"></i></div>
+    <h3 class="empty-state__title">Sin historial</h3>
+    <p class="empty-state__description">No hay registros en el historial de pagos. Los registros apareceran cuando los clientes envien comprobantes desde el portal.</p>
+    {% if estado_filtro %}
+    <a href="{{ url_for('boletas.historial_pagos') }}" class="btn btn--secondary">Limpiar Filtros</a>
+    {% endif %}
 </div>
 {% endif %}
 
-<style>
-.badge {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: 3px;
-    font-size: 12px;
-    font-weight: bold;
+<script>
+if (window.FilterBar) {
+    FilterBar.init('#filterFormHistorial', { debounceMs: 400, containerSelector: '.data-table' });
 }
-.badge-success { background: #28a745; color: white; }
-.badge-warning { background: #ffc107; color: black; }
-.badge-danger { background: #dc3545; color: white; }
-.btn-small {
-    padding: 3px 8px;
-    font-size: 12px;
-}
-</style>
+</script>
 {% endblock %}

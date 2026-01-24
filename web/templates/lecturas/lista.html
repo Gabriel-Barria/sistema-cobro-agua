@@ -5,57 +5,67 @@
 {% block content %}
 <div class="page-header">
     <h1>Lecturas</h1>
-    <div class="header-buttons">
-        <a href="{{ url_for('lecturas.crear') }}" class="btn btn-primary">Nueva Lectura</a>
-        <a href="{{ url_for('lecturas.crear_multiple') }}" class="btn btn-secondary">Lectura Multiple</a>
+    <div>
+        <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary">Nueva Lectura</a>
+        <a href="{{ url_for('lecturas.crear_multiple') }}" class="btn btn--secondary">Lectura Multiple</a>
     </div>
 </div>
 
-<div class="filters">
-    <form method="GET" class="filter-form">
-        <select name="año">
-            <option value="">Todos los años</option>
-            {% for a in años %}
-            <option value="{{ a }}" {% if a == año_sel %}selected{% endif %}>{{ a }}</option>
-            {% endfor %}
-        </select>
+<form method="GET" class="filter-bar" id="filterFormLecturas">
+    <div class="filter-bar__fields">
+        <div class="filter-bar__group">
+            <select name="año">
+                <option value="">Todos los años</option>
+                {% for a in años %}
+                <option value="{{ a }}" {% if a == año_sel %}selected{% endif %}>{{ a }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <select name="mes">
-            <option value="">Todos los meses</option>
-            {% for m in range(1, 13) %}
-            <option value="{{ m }}" {% if m == mes_sel %}selected{% endif %}>{{ m|mes_nombre }}</option>
-            {% endfor %}
-        </select>
+        <div class="filter-bar__group">
+            <select name="mes">
+                <option value="">Todos los meses</option>
+                {% for m in range(1, 13) %}
+                <option value="{{ m }}" {% if m == mes_sel %}selected{% endif %}>{{ m|mes_nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <select name="cliente_id" id="cliente_id">
-            <option value="">Todos los clientes</option>
-            {% for c in clientes %}
-            {% if not incompletos or c.id in clientes_incompletos %}
-            <option value="{{ c.id }}" {% if c.id == cliente_sel %}selected{% endif %}>{{ c.nombre }}</option>
-            {% endif %}
-            {% endfor %}
-        </select>
+        <div class="filter-bar__group">
+            <select name="cliente_id" id="cliente_id">
+                <option value="">Todos los clientes</option>
+                {% for c in clientes %}
+                {% if not incompletos or c.id in clientes_incompletos %}
+                <option value="{{ c.id }}" {% if c.id == cliente_sel %}selected{% endif %}>{{ c.nombre }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
 
-        <select name="medidor_id" id="medidor_id">
-            <option value="">Todos los medidores</option>
-            {% for m in medidores %}
-            <option value="{{ m.id }}" {% if m.id == medidor_sel %}selected{% endif %}>{{ m.cliente_nombre }} - #{{ m.id }}</option>
-            {% endfor %}
-        </select>
+        <div class="filter-bar__group">
+            <select name="medidor_id" id="medidor_id">
+                <option value="">Todos los medidores</option>
+                {% for m in medidores %}
+                <option value="{{ m.id }}" {% if m.id == medidor_sel %}selected{% endif %}>{{ m.cliente_nombre }} - #{{ m.id }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-        <label class="checkbox-filter">
+        <div class="filter-bar__group filter-bar__group--checkbox">
             <input type="checkbox" name="incompletos" value="1" {% if incompletos %}checked{% endif %}>
-            Solo incompletos
-        </label>
-
-        <button type="submit" class="btn">Filtrar</button>
-        <a href="{{ url_for('lecturas.listar') }}" class="btn btn-secondary">Limpiar</a>
-    </form>
-</div>
+            <label>Solo incompletos</label>
+        </div>
+    </div>
+    <div class="filter-bar__actions">
+        <button type="submit" class="btn btn--primary">Filtrar</button>
+        <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Limpiar</a>
+    </div>
+</form>
 
 <p class="total-results">Total: {{ total }} lecturas</p>
 
-<table class="data-table">
+{% if lecturas %}
+<table class="data-table data-table--striped data-table--hover">
     <thead>
         <tr>
             <th class="sortable {% if orden_col == 'id' %}{{ orden_dir }}{% endif %}">
@@ -84,63 +94,70 @@
             <td data-sort="{{ l.año * 100 + l.mes }}">{{ l.mes|mes_nombre }} {{ l.año }}</td>
             <td>{{ l.lectura_m3 }}</td>
             <td>{{ l.fecha_lectura|fecha_formato }}</td>
-            <td class="actions">
-                <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-small">Ver</a>
-                <a href="{{ url_for('lecturas.editar', lectura_id=l.id) }}" class="btn btn-small">Editar</a>
+            <td>
+                <div class="action-btn-group">
+                    <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="action-btn" title="Ver detalle">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ url_for('lecturas.editar', lectura_id=l.id) }}" class="action-btn" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                </div>
             </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="6" class="empty">No hay lecturas</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 
 {% if total > per_page %}
-<div class="pagination">
-    {% if page > 1 %}
-    <a href="{{ url_for('lecturas.listar', page=page-1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="btn">&laquo; Anterior</a>
-    {% endif %}
+<nav class="pagination">
+    <span class="pagination__info">Pagina {{ page }} de {{ (total // per_page) + 1 }}</span>
+    <div class="pagination__items">
+        {% if page > 1 %}
+        <a href="{{ url_for('lecturas.listar', page=page-1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="pagination__item" aria-label="Anterior">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        {% endif %}
 
-    <span>Pagina {{ page }} de {{ (total // per_page) + 1 }}</span>
+        {% if page * per_page < total %}
+        <a href="{{ url_for('lecturas.listar', page=page+1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="pagination__item" aria-label="Siguiente">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}
 
-    {% if page * per_page < total %}
-    <a href="{{ url_for('lecturas.listar', page=page+1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="btn">Siguiente &raquo;</a>
-    {% endif %}
+{% else %}
+<div class="empty-state">
+    <div class="empty-state__icon"><i class="fas fa-tachometer-alt"></i></div>
+    <h3 class="empty-state__title">No hay lecturas</h3>
+    <p class="empty-state__description">No se encontraron lecturas con los filtros seleccionados.</p>
+    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
 </div>
 {% endif %}
 
 <script>
 document.getElementById('cliente_id').addEventListener('change', function() {
-    const clienteId = this.value;
-    const medidorSelect = document.getElementById('medidor_id');
-
-    // Limpiar seleccion de medidor
+    var clienteId = this.value;
+    var medidorSelect = document.getElementById('medidor_id');
     medidorSelect.value = '';
 
-    // Obtener medidores filtrados
-    let url = '{{ url_for("lecturas.api_medidores") }}';
+    var url = '{{ url_for("lecturas.api_medidores") }}';
     if (clienteId) {
         url += '?cliente_id=' + clienteId;
     }
 
     fetch(url)
-        .then(response => response.json())
-        .then(medidores => {
-            // Limpiar opciones existentes
+        .then(function(response) { return response.json(); })
+        .then(function(medidores) {
             medidorSelect.innerHTML = '<option value="">Todos los medidores</option>';
-
-            // Agregar nuevas opciones
-            medidores.forEach(m => {
-                const option = document.createElement('option');
+            medidores.forEach(function(m) {
+                var option = document.createElement('option');
                 option.value = m.id;
                 option.textContent = m.cliente_nombre + ' - #' + m.id;
                 medidorSelect.appendChild(option);
             });
-        })
-        .catch(error => {
-            console.error('Error al cargar medidores:', error);
         });
 });
 </script>

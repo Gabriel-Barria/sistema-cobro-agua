@@ -5,36 +5,43 @@
 {% block content %}
 <div class="page-header">
     <h1>Clientes</h1>
-    <a href="{{ url_for('clientes.crear') }}" class="btn btn-primary">Nuevo Cliente</a>
+    <a href="{{ url_for('clientes.crear') }}" class="btn btn--primary">Nuevo Cliente</a>
 </div>
 
 <!-- Filtros -->
-<div class="filters">
-    <form method="GET" class="filter-form">
-        <input type="text" name="busqueda" placeholder="Buscar por nombre, RUT, telefono, email..." value="{{ busqueda }}" class="filter-input">
-        <select name="con_medidores">
-            <option value="">Todos los clientes</option>
-            <option value="si" {% if con_medidores == 'si' %}selected{% endif %}>Con medidores</option>
-            <option value="no" {% if con_medidores == 'no' %}selected{% endif %}>Sin medidores</option>
-        </select>
-        <select name="filtro_telefono">
-            <option value="">Todos (telefono)</option>
-            <option value="con" {% if filtro_telefono == 'con' %}selected{% endif %}>Con telefono</option>
-            <option value="sin" {% if filtro_telefono == 'sin' %}selected{% endif %}>Sin telefono</option>
-        </select>
-        <button type="submit" class="btn">Filtrar</button>
+<form method="GET" class="filter-bar" id="filterFormClientes">
+    <div class="filter-bar__fields">
+        <div class="filter-bar__group">
+            <input type="text" name="busqueda" placeholder="Buscar por nombre, RUT, telefono, email..." value="{{ busqueda }}" class="filter-input">
+        </div>
+        <div class="filter-bar__group">
+            <select name="con_medidores">
+                <option value="">Todos los clientes</option>
+                <option value="si" {% if con_medidores == 'si' %}selected{% endif %}>Con medidores</option>
+                <option value="no" {% if con_medidores == 'no' %}selected{% endif %}>Sin medidores</option>
+            </select>
+        </div>
+        <div class="filter-bar__group">
+            <select name="filtro_telefono">
+                <option value="">Todos (telefono)</option>
+                <option value="con" {% if filtro_telefono == 'con' %}selected{% endif %}>Con telefono</option>
+                <option value="sin" {% if filtro_telefono == 'sin' %}selected{% endif %}>Sin telefono</option>
+            </select>
+        </div>
+    </div>
+    <div class="filter-bar__actions">
+        <button type="submit" class="btn btn--primary">Filtrar</button>
         {% if busqueda or con_medidores or filtro_telefono %}
-        <a href="{{ url_for('clientes.listar') }}" class="btn btn-secondary">Limpiar</a>
+        <a href="{{ url_for('clientes.listar') }}" class="btn btn--secondary">Limpiar</a>
         {% endif %}
-        <button type="button" onclick="abrirModalExportar()" class="btn btn-success" style="background: #28a745;">
-            Exportar Excel
-        </button>
-    </form>
-</div>
+        <button type="button" onclick="abrirModalExportar()" class="btn btn--success">Exportar Excel</button>
+    </div>
+</form>
 
 <p class="total-results">Mostrando {{ clientes|length }} cliente(s)</p>
 
-<table class="data-table">
+{% if clientes %}
+<table class="data-table data-table--striped data-table--hover">
     <thead>
         <tr>
             <th class="sortable">ID</th>
@@ -57,120 +64,112 @@
             <td>{{ c.telefono or '-' }}</td>
             <td>{{ c.email or '-' }}</td>
             <td>{{ c.num_medidores }}</td>
-            <td class="actions">
-                <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-small">Ver</a>
-                <button onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}')" class="btn btn-small">Editar</button>
+            <td>
+                <div class="action-btn-group">
+                    <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="action-btn" title="Ver detalle">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <button onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}')" class="action-btn" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </div>
             </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="8" class="empty">No hay clientes</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+{% else %}
+<div class="empty-state">
+    <div class="empty-state__icon"><i class="fas fa-users"></i></div>
+    <h3 class="empty-state__title">No hay clientes</h3>
+    <p class="empty-state__description">No se encontraron clientes con los filtros seleccionados.</p>
+    {% if busqueda or con_medidores or filtro_telefono %}
+    <a href="{{ url_for('clientes.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
+    {% else %}
+    <a href="{{ url_for('clientes.crear') }}" class="btn btn--primary">Nuevo Cliente</a>
+    {% endif %}
+</div>
+{% endif %}
 
 <!-- Modal para editar cliente -->
-<div id="modalEditar" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
+<div id="modalEditar" class="modal">
+    <div class="modal__content">
+        <div class="modal__header">
             <h3>Editar Cliente</h3>
-            <button onclick="cerrarModalEditar()" class="close-btn">&times;</button>
+            <button onclick="cerrarModalEditar()" class="modal__close">&times;</button>
         </div>
-        <div class="modal-body">
+        <div class="modal__body">
             <form id="formEditar" method="POST">
                 <input type="hidden" name="volver_a_lista" value="1">
-                <!-- Campos hidden para preservar filtros -->
                 <input type="hidden" name="busqueda" value="{{ busqueda }}">
                 <input type="hidden" name="con_medidores" value="{{ con_medidores }}">
                 <input type="hidden" name="filtro_telefono" value="{{ filtro_telefono }}">
 
                 <div class="form-group">
                     <label for="edit_nombre">Nombre *</label>
-                    <input type="text" name="nombre" id="edit_nombre" required style="width: 100%; padding: 8px;">
-                    <small style="color: #666;">Nombre corto/identificador (se guarda en minusculas)</small>
+                    <input type="text" name="nombre" id="edit_nombre" required>
+                    <small class="form-help">Nombre corto/identificador (se guarda en minusculas)</small>
                 </div>
 
-                <div class="form-group" style="margin-top: 15px;">
+                <div class="form-group">
                     <label for="edit_nombre_completo">Nombre Completo</label>
-                    <input type="text" name="nombre_completo" id="edit_nombre_completo" style="width: 100%; padding: 8px;" placeholder="Nombre legal completo">
+                    <input type="text" name="nombre_completo" id="edit_nombre_completo" placeholder="Nombre legal completo">
                 </div>
 
-                <div class="form-group" style="margin-top: 15px;">
+                <div class="form-group">
                     <label for="edit_rut">RUT</label>
-                    <input type="text" name="rut" id="edit_rut" style="width: 100%; padding: 8px;" placeholder="12.345.678-9">
+                    <input type="text" name="rut" id="edit_rut" placeholder="12.345.678-9">
                 </div>
 
-                <div class="form-group" style="margin-top: 15px;">
+                <div class="form-group">
                     <label for="edit_telefono">Telefono</label>
-                    <input type="tel" name="telefono" id="edit_telefono" style="width: 100%; padding: 8px;" placeholder="+56 9 1234 5678">
+                    <input type="tel" name="telefono" id="edit_telefono" placeholder="+56 9 1234 5678">
                 </div>
 
-                <div class="form-group" style="margin-top: 15px;">
+                <div class="form-group">
                     <label for="edit_email">Correo Electronico</label>
-                    <input type="email" name="email" id="edit_email" style="width: 100%; padding: 8px;" placeholder="cliente@ejemplo.com">
+                    <input type="email" name="email" id="edit_email" placeholder="cliente@ejemplo.com">
                 </div>
 
-                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                    <button type="button" onclick="cerrarModalEditar()" class="btn btn-secondary">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                <div class="modal__actions">
+                    <button type="button" onclick="cerrarModalEditar()" class="btn btn--secondary">Cancelar</button>
+                    <button type="submit" class="btn btn--primary">Guardar Cambios</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal para exportar con selección de columnas -->
-<div id="modalExportar" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
+<!-- Modal para exportar con seleccion de columnas -->
+<div id="modalExportar" class="modal">
+    <div class="modal__content">
+        <div class="modal__header">
             <h3>Exportar a Excel</h3>
-            <button onclick="cerrarModalExportar()" class="close-btn">&times;</button>
+            <button onclick="cerrarModalExportar()" class="modal__close">&times;</button>
         </div>
-        <div class="modal-body">
-            <p style="margin-bottom: 15px; color: #666;">Selecciona las columnas que deseas exportar:</p>
+        <div class="modal__body">
+            <p class="form-help" style="margin-bottom: var(--spacing-md);">Selecciona las columnas que deseas exportar:</p>
 
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="col_id" checked>
-                    <span>ID</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="col_nombre" checked>
-                    <span>Nombre</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="col_nombre_completo" checked>
-                    <span>Nombre Completo</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="col_rut" checked>
-                    <span>RUT</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="col_telefono" checked>
-                    <span>Teléfono</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="col_email" checked>
-                    <span>Email</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                    <input type="checkbox" id="col_medidores" checked>
-                    <span>Medidores</span>
-                </label>
+            <div class="checkbox-list">
+                <label class="checkbox-list__item"><input type="checkbox" id="col_id" checked> ID</label>
+                <label class="checkbox-list__item"><input type="checkbox" id="col_nombre" checked> Nombre</label>
+                <label class="checkbox-list__item"><input type="checkbox" id="col_nombre_completo" checked> Nombre Completo</label>
+                <label class="checkbox-list__item"><input type="checkbox" id="col_rut" checked> RUT</label>
+                <label class="checkbox-list__item"><input type="checkbox" id="col_telefono" checked> Telefono</label>
+                <label class="checkbox-list__item"><input type="checkbox" id="col_email" checked> Email</label>
+                <label class="checkbox-list__item"><input type="checkbox" id="col_medidores" checked> Medidores</label>
             </div>
 
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">
-                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #666;">
+            <div style="margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--color-border);">
+                <label class="checkbox-list__item">
                     <input type="checkbox" id="seleccionar_todas" checked onchange="toggleTodasColumnas()">
-                    <span>Seleccionar/Deseleccionar todas</span>
+                    Seleccionar/Deseleccionar todas
                 </label>
             </div>
 
-            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" onclick="cerrarModalExportar()" class="btn btn-secondary">Cancelar</button>
-                <button type="button" onclick="exportarExcel()" class="btn btn-success" style="background: #28a745;">Exportar</button>
+            <div class="modal__actions">
+                <button type="button" onclick="cerrarModalExportar()" class="btn btn--secondary">Cancelar</button>
+                <button type="button" onclick="exportarExcel()" class="btn btn--success">Exportar</button>
             </div>
         </div>
     </div>
@@ -178,62 +177,38 @@
 
 <script>
 function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, email) {
-    // Configurar la URL del formulario
-    const form = document.getElementById('formEditar');
-    form.action = `/clientes/${clienteId}/editar`;
-
-    // Llenar los campos con los datos actuales
+    document.getElementById('formEditar').action = '/clientes/' + clienteId + '/editar';
     document.getElementById('edit_nombre').value = nombre;
     document.getElementById('edit_nombre_completo').value = nombreCompleto;
     document.getElementById('edit_rut').value = rut;
     document.getElementById('edit_telefono').value = telefono;
     document.getElementById('edit_email').value = email;
-
-    // Mostrar el modal
-    document.getElementById('modalEditar').style.display = 'flex';
+    document.getElementById('modalEditar').classList.add('active');
 }
 
 function cerrarModalEditar() {
-    document.getElementById('modalEditar').style.display = 'none';
+    document.getElementById('modalEditar').classList.remove('active');
     document.getElementById('formEditar').reset();
 }
 
-// Cerrar modal al hacer clic fuera de él
-window.onclick = function(event) {
-    const modal = document.getElementById('modalEditar');
-    if (event.target === modal) {
-        cerrarModalEditar();
-    }
-}
-
-// Cerrar modal con tecla Escape
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape') {
-        cerrarModalEditar();
-        cerrarModalExportar();
-    }
-});
-
-// Funciones para modal de exportación
 function abrirModalExportar() {
-    document.getElementById('modalExportar').style.display = 'flex';
+    document.getElementById('modalExportar').classList.add('active');
 }
 
 function cerrarModalExportar() {
-    document.getElementById('modalExportar').style.display = 'none';
+    document.getElementById('modalExportar').classList.remove('active');
 }
 
 function toggleTodasColumnas() {
-    const checked = document.getElementById('seleccionar_todas').checked;
-    const columnas = ['col_id', 'col_nombre', 'col_nombre_completo', 'col_rut', 'col_telefono', 'col_email', 'col_medidores'];
-    columnas.forEach(id => {
+    var checked = document.getElementById('seleccionar_todas').checked;
+    var columnas = ['col_id', 'col_nombre', 'col_nombre_completo', 'col_rut', 'col_telefono', 'col_email', 'col_medidores'];
+    columnas.forEach(function(id) {
         document.getElementById(id).checked = checked;
     });
 }
 
 function exportarExcel() {
-    // Recoger columnas seleccionadas
-    const columnas = [];
+    var columnas = [];
     if (document.getElementById('col_id').checked) columnas.push('id');
     if (document.getElementById('col_nombre').checked) columnas.push('nombre');
     if (document.getElementById('col_nombre_completo').checked) columnas.push('nombre_completo');
@@ -243,102 +218,54 @@ function exportarExcel() {
     if (document.getElementById('col_medidores').checked) columnas.push('medidores');
 
     if (columnas.length === 0) {
-        alert('Debes seleccionar al menos una columna');
+        Toast.warning('Debes seleccionar al menos una columna');
         return;
     }
 
-    // Construir URL con filtros actuales y columnas seleccionadas
-    const params = new URLSearchParams();
-    const busqueda = '{{ busqueda or "" }}';
-    const con_medidores = '{{ con_medidores or "" }}';
-    const filtro_telefono = '{{ filtro_telefono or "" }}';
+    var params = new URLSearchParams();
+    var busqueda = '{{ busqueda or "" }}';
+    var con_medidores = '{{ con_medidores or "" }}';
+    var filtro_telefono = '{{ filtro_telefono or "" }}';
 
     if (busqueda) params.append('busqueda', busqueda);
     if (con_medidores) params.append('con_medidores', con_medidores);
     if (filtro_telefono) params.append('filtro_telefono', filtro_telefono);
     params.append('columnas', columnas.join(','));
 
-    // Redirigir a la URL de exportación
     window.location.href = '/clientes/exportar?' + params.toString();
     cerrarModalExportar();
 }
 
-// Cerrar modal de exportación al hacer clic fuera
-window.addEventListener('click', function(event) {
-    const modalExportar = document.getElementById('modalExportar');
-    if (event.target === modalExportar) {
-        cerrarModalExportar();
+// Close modals on overlay/escape
+document.querySelectorAll('.modal').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.classList.remove('active');
+    });
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal.active').forEach(function(m) {
+            m.classList.remove('active');
+        });
     }
 });
 </script>
 
 <style>
-/* Estilos del modal */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-content {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    width: 90%;
-    max-width: 500px;
-    animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.modal-header {
+.checkbox-list {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+.checkbox-list__item {
+    display: flex;
     align-items: center;
-    padding: 20px;
-    border-bottom: 1px solid #ddd;
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 1.3em;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 28px;
-    font-weight: bold;
-    color: #aaa;
+    gap: var(--spacing-sm);
     cursor: pointer;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    line-height: 1;
 }
-
-.close-btn:hover {
-    color: #000;
-}
-
-.modal-body {
-    padding: 20px;
+.checkbox-list__item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
 }
 </style>
 {% endblock %}
