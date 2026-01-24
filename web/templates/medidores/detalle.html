@@ -130,7 +130,7 @@
     <div class="modal-content">
         <h3>Eliminar Medidor</h3>
         <p>Esta a punto de eliminar el medidor <strong>#{{ medidor.id }}</strong> del cliente <strong>{{ medidor.cliente_nombre }}</strong>.</p>
-        <p class="text-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el medidor no tiene lecturas ni boletas asociadas.</p>
+        <p class="alert alert-warning">Esta accion no se puede deshacer. Solo se puede eliminar si el medidor no tiene lecturas ni boletas asociadas.</p>
         <form method="POST" action="{{ url_for('medidores.eliminar', medidor_id=medidor.id) }}">
             <div class="form-actions">
                 <button type="submit" class="btn btn-danger">Confirmar Eliminacion</button>
