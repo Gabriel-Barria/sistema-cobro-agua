@@ -45,7 +45,7 @@
     <div class="detail-section">
         <h3>Foto</h3>
         {% if lectura.foto_path %}
-        <img src="/foto/{{ lectura.foto_path }}" alt="Foto de lectura" style="max-width: 100%; border-radius: var(--radius-md);">
+        <img src="/foto/{{ lectura.foto_path }}" alt="Foto de lectura" class="lectura-foto">
         {% else %}
         <div class="empty-state">
             <div class="empty-state__icon"><i class="fas fa-image"></i></div>
@@ -55,8 +55,8 @@
     </div>
 </div>
 
-<div class="actions-section" style="margin-top: var(--spacing-lg); border-top: 2px solid var(--color-danger);">
-    <h3 style="color: var(--color-danger);">Zona de Peligro</h3>
+<div class="actions-section actions-section--danger">
+    <h3>Zona de Peligro</h3>
     <button type="button" class="btn btn--danger" onclick="eliminarLectura()"><i class="fas fa-trash"></i> Eliminar Lectura</button>
 </div>
 

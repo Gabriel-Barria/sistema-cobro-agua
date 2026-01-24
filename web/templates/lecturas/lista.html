@@ -3,15 +3,72 @@
 {% block title %}Lecturas - Sistema de Lecturas{% endblock %}
 
 {% block content %}
+<!-- HEADER -->
 <div class="page-header">
     <h1>Lecturas</h1>
-    <div>
+    <div class="hide-mobile">
         <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary">Nueva Lectura</a>
         <a href="{{ url_for('lecturas.crear_multiple') }}" class="btn btn--secondary">Lectura Multiple</a>
     </div>
+    <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary hide-desktop">+ Nueva</a>
 </div>
 
-<form method="GET" class="filter-bar" id="filterFormLecturas">
+<!-- STATS - solo desktop, colapsable -->
+{% if stats %}
+<div class="hide-mobile">
+    <button class="stats-toggle stats-toggle--enhanced" id="statsToggle" aria-expanded="false" onclick="toggleStats()">
+        <span class="stats-toggle__icon"><i class="fas fa-chart-bar"></i></span>
+        Resumen
+        <span class="stats-toggle__arrow"><i class="fas fa-chevron-right"></i></span>
+    </button>
+    <div class="stats-collapsible" id="statsContent">
+        <div class="stats-grid">
+            <div class="stat-card stat-card--default">
+                <div class="stat-card__value">{{ stats.total or 0 }}</div>
+                <div class="stat-card__label">Total Lecturas</div>
+            </div>
+            <div class="stat-card stat-card--info">
+                <div class="stat-card__value">{{ stats.promedio_m3 or 0 }} m3</div>
+                <div class="stat-card__label">Promedio</div>
+            </div>
+            <div class="stat-card stat-card--success">
+                <div class="stat-card__value">{{ stats.con_foto or 0 }}</div>
+                <div class="stat-card__label">Con Foto</div>
+            </div>
+            <div class="stat-card stat-card--warning">
+                <div class="stat-card__value">{{ stats.sin_foto or 0 }}</div>
+                <div class="stat-card__label">Sin Foto</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- FILTER CHIPS - solo mobile -->
+<div class="filter-chips hide-desktop">
+    <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '') }}"
+       class="chip {% if filtros.con_foto is none %}chip--active{% endif %}">
+        Todas
+        {% if stats %}<span class="chip__count">{{ stats.total or 0 }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=1) }}"
+       class="chip {% if filtros.con_foto == 1 %}chip--active{% endif %}">
+        Con foto
+        {% if stats %}<span class="chip__count">{{ stats.con_foto or 0 }}</span>{% endif %}
+    </a>
+    <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=0) }}"
+       class="chip {% if filtros.con_foto == 0 %}chip--active{% endif %}">
+        Sin foto
+        {% if stats %}<span class="chip__count">{{ stats.sin_foto or 0 }}</span>{% endif %}
+    </a>
+    <button class="filter-chips__btn {% if filtros.año or filtros.mes or filtros.cliente_id or filtros.medidor_id or filtros.incompletos %}filter-chips__btn--active{% endif %}"
+            onclick="abrirModal('modalFiltrosLecturas')" title="Filtros avanzados">
+        <i class="fas fa-sliders-h"></i>
+    </button>
+</div>
+
+<!-- FILTER FORM - solo desktop -->
+<form method="GET" class="filter-bar hide-mobile" id="filterFormLecturas">
     <div class="filter-bar__fields">
         <div class="filter-bar__group">
             <select name="año">
@@ -62,10 +119,54 @@
     </div>
 </form>
 
-<p class="total-results">Total: {{ total }} lecturas</p>
-
 {% if lecturas %}
-<table class="data-table data-table--striped data-table--hover">
+<!-- CARDS - solo mobile -->
+<div class="hide-desktop" id="cardsContainer">
+    {% for l in lecturas %}
+    <div class="lectura-card {% if l.foto_path and l.foto_path != '' and l.foto_nombre != 'sin_foto' %}lectura-card--success{% else %}lectura-card--warning{% endif %}" data-expanded="false" onclick="toggleCard(this, event)">
+        <div class="lectura-card__summary">
+            <div class="lectura-card__left">
+                <div class="lectura-card__period">{{ l.mes|mes_nombre }} {{ l.año }}</div>
+                <div class="lectura-card__client">{{ l.cliente_nombre }}</div>
+            </div>
+            <div class="lectura-card__right">
+                <div class="lectura-card__value">{{ l.lectura_m3 }} m3</div>
+                {% if l.foto_path and l.foto_path != '' and l.foto_nombre != 'sin_foto' %}
+                    <span class="badge badge--success">Con foto</span>
+                {% else %}
+                    <span class="badge badge--warning">Sin foto</span>
+                {% endif %}
+                <span class="lectura-card__chevron"><i class="fas fa-chevron-down"></i></span>
+            </div>
+        </div>
+        <div class="lectura-card__details">
+            <div class="lectura-card__details-inner">
+                <div class="lectura-card__info">
+                    <div class="lectura-card__info-item">
+                        Fecha
+                        <span>{{ l.fecha_lectura|fecha_formato }}</span>
+                    </div>
+                    <div class="lectura-card__info-item">
+                        Medidor
+                        <span>{{ l.numero_medidor or ('#' ~ l.medidor_id) }}</span>
+                    </div>
+                </div>
+                <div class="lectura-card__actions-primary">
+                    <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn--primary" onclick="event.stopPropagation()">
+                        <i class="fas fa-eye"></i> Ver Detalle
+                    </a>
+                    <a href="{{ url_for('lecturas.editar', lectura_id=l.id) }}" class="btn btn--secondary" onclick="event.stopPropagation()">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- TABLE - solo desktop -->
+<table class="data-table data-table--striped data-table--hover hide-mobile">
     <thead>
         <tr>
             <th class="sortable {% if orden_col == 'id' %}{{ orden_dir }}{% endif %}">
@@ -109,35 +210,159 @@
     </tbody>
 </table>
 
-{% if total > per_page %}
-<nav class="pagination">
-    <span class="pagination__info">Pagina {{ page }} de {{ (total // per_page) + 1 }}</span>
-    <div class="pagination__items">
-        {% if page > 1 %}
-        <a href="{{ url_for('lecturas.listar', page=page-1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="pagination__item" aria-label="Anterior">
-            <i class="fas fa-chevron-left"></i>
-        </a>
-        {% endif %}
-
-        {% if page * per_page < total %}
-        <a href="{{ url_for('lecturas.listar', page=page+1, año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden=orden_col, dir=orden_dir) }}" class="pagination__item" aria-label="Siguiente">
-            <i class="fas fa-chevron-right"></i>
-        </a>
-        {% endif %}
-    </div>
-</nav>
-{% endif %}
+{% include 'partials/pagination.html' %}
 
 {% else %}
-<div class="empty-state">
+<div class="empty-state hide-mobile">
     <div class="empty-state__icon"><i class="fas fa-tachometer-alt"></i></div>
     <h3 class="empty-state__title">No hay lecturas</h3>
     <p class="empty-state__description">No se encontraron lecturas con los filtros seleccionados.</p>
     <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
 </div>
+<div class="empty-state hide-desktop">
+    <div class="empty-state__icon"><i class="fas fa-search"></i></div>
+    <h3 class="empty-state__title">Sin resultados</h3>
+    <p class="empty-state__description">Intenta cambiar los filtros o crea una nueva lectura.</p>
+    <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary">+ Nueva Lectura</a>
+</div>
 {% endif %}
 
+<!-- Modal filtros avanzados (mobile) -->
+<div id="modalFiltrosLecturas" class="modal">
+    <div class="modal__content">
+        <div class="modal__drag-indicator"></div>
+        <div class="modal__header">
+            <h3>Filtros</h3>
+            <button class="modal__close" onclick="cerrarModal('modalFiltrosLecturas')">&times;</button>
+        </div>
+        <div class="modal__body">
+            <form method="GET" id="formFiltrosMobile">
+                {% if filtros.con_foto is not none %}
+                <input type="hidden" name="con_foto" value="{{ filtros.con_foto }}">
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="mobile_año">Año</label>
+                    <select name="año" id="mobile_año">
+                        <option value="">Todos</option>
+                        {% for a in años %}
+                        <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile_mes">Mes</label>
+                    <select name="mes" id="mobile_mes">
+                        <option value="">Todos</option>
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile_cliente">Cliente</label>
+                    <select name="cliente_id" id="mobile_cliente">
+                        <option value="">Todos</option>
+                        {% for c in clientes %}
+                        <option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>
+                            {{ c.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="mobile_medidor">Medidor</label>
+                    <select name="medidor_id" id="mobile_medidor">
+                        <option value="">Todos</option>
+                        {% for m in medidores %}
+                        <option value="{{ m.id }}" {{ 'selected' if filtros.medidor_id == m.id }}>
+                            {{ m.cliente_nombre }} - #{{ m.id }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="incompletos" value="1"
+                               {{ 'checked' if filtros.incompletos }}
+                               style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;">
+                        Solo incompletos
+                    </label>
+                </div>
+
+                <div class="modal__actions">
+                    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Limpiar</a>
+                    <button type="submit" class="btn btn--primary">Aplicar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+// === Card expansion (mobile) ===
+function toggleCard(card, event) {
+    if (event.target.closest('.lectura-card__actions-primary')) return;
+    var isExpanded = card.dataset.expanded === 'true';
+    document.querySelectorAll('.lectura-card[data-expanded="true"]').forEach(function(c) {
+        if (c !== card) c.dataset.expanded = 'false';
+    });
+    card.dataset.expanded = isExpanded ? 'false' : 'true';
+}
+
+// === Stats collapsible (desktop) ===
+function toggleStats() {
+    var toggle = document.getElementById('statsToggle');
+    var content = document.getElementById('statsContent');
+    var isOpen = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    if (isOpen) {
+        content.classList.remove('stats-collapsible--open');
+    } else {
+        content.classList.add('stats-collapsible--open');
+    }
+    localStorage.setItem('lecturas-stats-open', isOpen ? '0' : '1');
+}
+(function() {
+    var saved = localStorage.getItem('lecturas-stats-open');
+    if (saved === '1') {
+        var toggle = document.getElementById('statsToggle');
+        var content = document.getElementById('statsContent');
+        if (toggle && content) {
+            toggle.setAttribute('aria-expanded', 'true');
+            content.classList.add('stats-collapsible--open');
+        }
+    }
+})();
+
+// === Filter auto-submit (desktop) ===
+if (window.FilterBar) {
+    FilterBar.init('#filterFormLecturas', { debounceMs: 400, containerSelector: '.data-table' });
+}
+
+// === Loading on chip click (mobile) ===
+document.querySelectorAll('.filter-chips .chip').forEach(function(chip) {
+    chip.addEventListener('click', function() {
+        var container = document.getElementById('cardsContainer');
+        if (container && window.Loading) {
+            Loading.show(container);
+        }
+    });
+});
+
+// === Modal utilities ===
+function abrirModal(id) {
+    document.getElementById(id).classList.add('active');
+}
+function cerrarModal(id) {
+    document.getElementById(id).classList.remove('active');
+}
+
+// === Dynamic medidor loading by client ===
 document.getElementById('cliente_id').addEventListener('change', function() {
     var clienteId = this.value;
     var medidorSelect = document.getElementById('medidor_id');
