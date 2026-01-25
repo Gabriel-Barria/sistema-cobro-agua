@@ -1,15 +1,25 @@
 {% extends "portal/base_portal.html" %}
 
 {% block content %}
-<div class="confirmacion">
-    <div class="confirmacion-icon">&#10003;</div>
-    <h2>Pago Enviado Exitosamente!</h2>
-    <p>Su comprobante ha sido recibido y esta en revision.</p>
-    <p>Recibira una confirmacion una vez que el administrador apruebe su pago.</p>
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body items-center text-center py-12">
+        <div class="text-6xl text-success mb-4">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h2 class="card-title text-2xl mb-2">Pago Enviado Exitosamente!</h2>
+        <p class="text-base-content/70 mb-2">Su comprobante ha sido recibido y esta en revision.</p>
+        <p class="text-base-content/70 mb-6">Recibira una confirmacion una vez que el administrador apruebe su pago.</p>
 
-    <div class="btn-group">
-        <a href="{{ url_for('portal.mis_boletas') }}" class="btn btn-primary">Ver Mis Boletas</a>
-        <a href="{{ url_for('portal.salir') }}" class="btn btn-secondary">Cerrar Sesion</a>
+        <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <a href="{{ url_for('portal.mis_boletas') }}" class="btn btn-primary">
+                <i class="fas fa-file-invoice mr-2"></i>
+                Ver Mis Boletas
+            </a>
+            <a href="{{ url_for('portal.salir') }}" class="btn btn-ghost">
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                Cerrar Sesion
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -45,6 +45,10 @@ docker-compose.override.yml
 # OS
 .DS_Store
 Thumbs.db
+# Build artifacts (Tailwind/DaisyUI)
+web/static/css/build/tailwindcss*
+web/static/css/build/*.mjs
+
 # Backups y scripts de desarrollo local
 *.backup_*
 *.tar.gz

@@ -3,38 +3,50 @@
 {% block title %}Crear Usuario{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Crear Nuevo Usuario</h1>
-    <a href="{{ url_for('usuarios.lista') }}" class="btn btn--secondary">Cancelar</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Crear Nuevo Usuario</h1>
+    <a href="{{ url_for('usuarios.lista') }}" class="btn btn-secondary">Cancelar</a>
 </div>
 
-<form method="POST" class="form">
-    <div class="form-group">
-        <label for="username">Usuario *</label>
-        <input type="text" id="username" name="username" required>
-    </div>
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <form method="POST">
+            <div class="form-control mb-3">
+                <label class="label" for="username">
+                    <span class="label-text">Usuario *</span>
+                </label>
+                <input type="text" id="username" name="username" class="input input-bordered w-full" required>
+            </div>
 
-    <div class="form-group">
-        <label for="password">Contrasena *</label>
-        <input type="password" id="password" name="password" required>
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="password">
+                    <span class="label-text">Contrasena *</span>
+                </label>
+                <input type="password" id="password" name="password" class="input input-bordered w-full" required>
+            </div>
 
-    <div class="form-group">
-        <label for="nombre_completo">Nombre Completo *</label>
-        <input type="text" id="nombre_completo" name="nombre_completo" required>
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="nombre_completo">
+                    <span class="label-text">Nombre Completo *</span>
+                </label>
+                <input type="text" id="nombre_completo" name="nombre_completo" class="input input-bordered w-full" required>
+            </div>
 
-    <div class="form-group">
-        <label for="rol">Rol *</label>
-        <select id="rol" name="rol" required>
-            <option value="">Seleccionar rol...</option>
-            <option value="administrador">Administrador</option>
-            <option value="registrador">Registrador</option>
-        </select>
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="rol">
+                    <span class="label-text">Rol *</span>
+                </label>
+                <select id="rol" name="rol" class="select select-bordered w-full" required>
+                    <option value="">Seleccionar rol...</option>
+                    <option value="administrador">Administrador</option>
+                    <option value="registrador">Registrador</option>
+                </select>
+            </div>
 
-    <div class="form-actions">
-        <button type="submit" class="btn btn--primary">Crear Usuario</button>
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Crear Usuario</button>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 {% endblock %}

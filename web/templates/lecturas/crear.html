@@ -3,60 +3,78 @@
 {% block title %}Nueva Lectura - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Nueva Lectura</h1>
-    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Cancelar</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Nueva Lectura</h1>
+    <a href="{{ url_for('lecturas.listar') }}" class="btn btn-secondary">Cancelar</a>
 </div>
 
-<form method="POST" enctype="multipart/form-data" class="form">
-    <div class="form-group">
-        <label for="medidor_id">Medidor *</label>
-        <select name="medidor_id" id="medidor_id" required>
-            <option value="">Seleccione un medidor</option>
-            {% for m in medidores %}
-            <option value="{{ m.id }}">{{ m.cliente_nombre }} - Medidor #{{ m.id }}</option>
-            {% endfor %}
-        </select>
-    </div>
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-control mb-3">
+                <label class="label" for="medidor_id">
+                    <span class="label-text">Medidor *</span>
+                </label>
+                <select name="medidor_id" id="medidor_id" class="select select-bordered w-full" required>
+                    <option value="">Seleccione un medidor</option>
+                    {% for m in medidores %}
+                    <option value="{{ m.id }}">{{ m.cliente_nombre }} - Medidor #{{ m.id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <div class="form-row">
-        <div class="form-group">
-            <label for="año">Año del Periodo *</label>
-            <select name="año" id="año" required>
-                {% for a in años %}
-                <option value="{{ a }}">{{ a }}</option>
-                {% endfor %}
-            </select>
-        </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="form-control mb-3">
+                    <label class="label" for="año">
+                        <span class="label-text">Ano del Periodo *</span>
+                    </label>
+                    <select name="año" id="año" class="select select-bordered w-full" required>
+                        {% for a in años %}
+                        <option value="{{ a }}">{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-        <div class="form-group">
-            <label for="mes">Mes del Periodo *</label>
-            <select name="mes" id="mes" required>
-                {% for m in range(1, 13) %}
-                <option value="{{ m }}">{{ m|mes_nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
+                <div class="form-control mb-3">
+                    <label class="label" for="mes">
+                        <span class="label-text">Mes del Periodo *</span>
+                    </label>
+                    <select name="mes" id="mes" class="select select-bordered w-full" required>
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}">{{ m|mes_nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
 
-    <div class="form-group">
-        <label for="lectura_m3">Lectura (m3) *</label>
-        <input type="number" name="lectura_m3" id="lectura_m3" min="0" required>
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="lectura_m3">
+                    <span class="label-text">Lectura (m3) *</span>
+                </label>
+                <input type="number" name="lectura_m3" id="lectura_m3" class="input input-bordered w-full" min="0" required>
+            </div>
 
-    <div class="form-group">
-        <label for="fecha_lectura">Fecha de Lectura *</label>
-        <input type="date" name="fecha_lectura" id="fecha_lectura" required>
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="fecha_lectura">
+                    <span class="label-text">Fecha de Lectura *</span>
+                </label>
+                <input type="date" name="fecha_lectura" id="fecha_lectura" class="input input-bordered w-full" required>
+            </div>
 
-    <div class="form-group">
-        <label for="foto">Foto de la Lectura</label>
-        <input type="file" name="foto" id="foto" accept="image/*">
-        <small>Formatos: JPG, JPEG, PNG. Requerida solo para lecturas desde el 10/01/2025.</small>
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="foto">
+                    <span class="label-text">Foto de la Lectura</span>
+                </label>
+                <input type="file" name="foto" id="foto" class="file-input file-input-bordered w-full" accept="image/*">
+                <label class="label">
+                    <span class="label-text-alt text-base-content/60">Formatos: JPG, JPEG, PNG. Requerida solo para lecturas desde el 10/01/2025.</span>
+                </label>
+            </div>
 
-    <div class="form-actions">
-        <button type="submit" class="btn btn--primary">Crear Lectura</button>
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Crear Lectura</button>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 {% endblock %}

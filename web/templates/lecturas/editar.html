@@ -3,38 +3,50 @@
 {% block title %}Editar Lectura #{{ lectura.id }} - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Editar Lectura #{{ lectura.id }}</h1>
-    <a href="{{ url_for('lecturas.detalle', lectura_id=lectura.id) }}" class="btn btn--secondary">Cancelar</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Editar Lectura #{{ lectura.id }}</h1>
+    <a href="{{ url_for('lecturas.detalle', lectura_id=lectura.id) }}" class="btn btn-secondary">Cancelar</a>
 </div>
 
-<div class="edit-context">
-    <p><strong>Cliente:</strong> {{ lectura.cliente_nombre }}</p>
-    <p><strong>Periodo:</strong> {{ lectura.mes|mes_nombre }} {{ lectura.año }}</p>
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body py-4">
+        <p><strong>Cliente:</strong> {{ lectura.cliente_nombre }}</p>
+        <p><strong>Periodo:</strong> {{ lectura.mes|mes_nombre }} {{ lectura.año }}</p>
+    </div>
 </div>
 
-<form method="POST" class="form">
-    <div class="form-group">
-        <label for="lectura_m3">Lectura (m3) *</label>
-        <input type="number" name="lectura_m3" id="lectura_m3" min="0" value="{{ lectura.lectura_m3 }}" required>
-    </div>
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <form method="POST">
+            <div class="form-control mb-3">
+                <label class="label" for="lectura_m3">
+                    <span class="label-text">Lectura (m3) *</span>
+                </label>
+                <input type="number" name="lectura_m3" id="lectura_m3" class="input input-bordered w-full" min="0" value="{{ lectura.lectura_m3 }}" required>
+            </div>
 
-    <div class="form-group">
-        <label for="fecha_lectura">Fecha de Lectura</label>
-        <input type="date" name="fecha_lectura" id="fecha_lectura" value="{{ lectura.fecha_lectura }}">
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="fecha_lectura">
+                    <span class="label-text">Fecha de Lectura</span>
+                </label>
+                <input type="date" name="fecha_lectura" id="fecha_lectura" class="input input-bordered w-full" value="{{ lectura.fecha_lectura }}">
+            </div>
 
-    <div class="form-group">
-        <label>Foto Actual</label>
-        {% if lectura.foto_path %}
-        <img src="/foto/{{ lectura.foto_path }}" alt="Foto actual" class="foto-preview">
-        {% else %}
-        <p>Sin foto</p>
-        {% endif %}
-    </div>
+            <div class="form-control mb-3">
+                <label class="label">
+                    <span class="label-text">Foto Actual</span>
+                </label>
+                {% if lectura.foto_path %}
+                <img src="/foto/{{ lectura.foto_path }}" alt="Foto actual" class="max-w-xs rounded-lg shadow">
+                {% else %}
+                <p class="text-base-content/60">Sin foto</p>
+                {% endif %}
+            </div>
 
-    <div class="form-actions">
-        <button type="submit" class="btn btn--primary">Guardar Cambios</button>
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 {% endblock %}

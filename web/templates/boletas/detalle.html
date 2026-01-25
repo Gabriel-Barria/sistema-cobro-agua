@@ -3,204 +3,368 @@
 {% block title %}Boleta {{ boleta.numero_boleta }} - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Boleta {{ boleta.numero_boleta }}</h1>
-    <div>
-        <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn--primary"><i class="fas fa-download"></i> Descargar</a>
-        <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Volver</a>
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Boleta {{ boleta.numero_boleta }}</h1>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Descargar</a>
+        <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary btn-sm">Volver</a>
     </div>
 </div>
 
-<div class="detail-grid">
-    <div class="detail-section">
-        <h3>Datos del Cliente</h3>
-        <table class="detail-table">
-            <tr>
-                <th>Cliente:</th>
-                <td>{{ boleta.cliente_nombre }}</td>
-            </tr>
-            <tr>
-                <th>Medidor ID:</th>
-                <td>{{ boleta.medidor_id }}</td>
-            </tr>
-            <tr>
-                <th>Periodo:</th>
-                <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
-            </tr>
-            <tr>
-                <th>Fecha Emision:</th>
-                <td>{{ boleta.fecha_emision }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="detail-section detail-section--{{ 'success' if boleta.pagada == 2 else 'warning' if boleta.pagada == 1 else 'danger' }}">
-        <h3>Estado de Pago</h3>
-        {% if boleta.pagada == 2 %}
-            <span class="badge badge--success" style="font-size: 14px;">PAGADA</span>
-            <p style="margin-top: var(--spacing-sm);">
-                <strong>Fecha de pago:</strong> {{ boleta.fecha_pago }}<br>
-                <strong>Metodo:</strong> {{ boleta.metodo_pago|capitalize if boleta.metodo_pago else '-' }}
-            </p>
-            {% if boleta.comprobante_path %}
-                <p><a href="/{{ boleta.comprobante_path }}" target="_blank" class="btn btn--primary btn--sm"><i class="fas fa-paperclip"></i> Ver comprobante</a></p>
+<!-- Stats Section -->
+<div class="stats stats-vertical lg:stats-horizontal shadow mb-6 w-full">
+    <div class="stat">
+        <div class="stat-title">Estado</div>
+        <div class="stat-value text-lg">
+            {% if boleta.pagada == 2 %}
+            <span class="badge badge-success">PAGADA</span>
+            {% elif boleta.pagada == 1 %}
+            <span class="badge badge-warning">EN REVISION</span>
             {% else %}
-                <p class="form-help" style="margin-top: var(--spacing-sm);"><i class="fas fa-exclamation-triangle"></i> Sin comprobante adjunto</p>
+            <span class="badge badge-error">PENDIENTE</span>
             {% endif %}
-        {% elif boleta.pagada == 1 %}
-            <span class="badge badge--warning" style="font-size: 14px;">EN REVISION</span>
-            <p style="margin-top: var(--spacing-sm);">Comprobante enviado, pendiente de aprobacion.</p>
-            {% if boleta.comprobante_path %}
-                <p><a href="/{{ boleta.comprobante_path }}" target="_blank" class="btn btn--primary btn--sm"><i class="fas fa-paperclip"></i> Ver comprobante</a></p>
-            {% endif %}
-        {% else %}
-            <span class="badge badge--danger" style="font-size: 14px;">PENDIENTE</span>
-        {% endif %}
+        </div>
+    </div>
+    <div class="stat">
+        <div class="stat-title">Periodo</div>
+        <div class="stat-value text-lg">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</div>
+    </div>
+    <div class="stat">
+        <div class="stat-title">Total</div>
+        <div class="stat-value text-lg text-primary">${{ boleta.total|formato_pesos }}</div>
     </div>
 </div>
 
-<div class="detail-section" style="margin-top: var(--spacing-lg);">
-    <h3>Detalle de Consumo</h3>
-    <table class="data-table data-table--striped">
-        <thead>
-            <tr>
-                <th>Concepto</th>
-                <th>Cantidad</th>
-                <th>Precio Unitario</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>Cargo Fijo</td>
-                <td>1</td>
-                <td>${{ boleta.cargo_fijo|formato_pesos }}</td>
-                <td>${{ boleta.cargo_fijo|formato_pesos }}</td>
-            </tr>
-            <tr>
-                <td>
-                    Consumo de agua
-                    <small class="form-help">
-                        Lectura actual: {{ boleta.lectura_actual }} m3
-                        {% if boleta.lectura_anterior %}
-                        | Anterior: {{ boleta.lectura_anterior }} m3
-                        {% endif %}
-                    </small>
-                </td>
-                <td>{{ boleta.consumo_m3 }} m3</td>
-                <td>${{ boleta.precio_m3|formato_pesos }}</td>
-                <td>${{ boleta.subtotal_consumo|formato_pesos }}</td>
-            </tr>
-        </tbody>
-        <tfoot>
-            <tr style="font-weight: bold; font-size: 1.2em;">
-                <td colspan="3" style="text-align: right;">TOTAL:</td>
-                <td>${{ boleta.total|formato_pesos }}</td>
-            </tr>
-        </tfoot>
-    </table>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Datos del Cliente -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Datos del Cliente</h2>
+
+            <!-- Mobile View -->
+            <div class="lg:hidden space-y-3">
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Cliente:</span>
+                    <span>{{ boleta.cliente_nombre }}</span>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Medidor ID:</span>
+                    <span>{{ boleta.medidor_id }}</span>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Periodo:</span>
+                    <span>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
+                </div>
+                <div class="flex justify-between pb-2">
+                    <span class="font-medium text-base-content/70">Fecha Emision:</span>
+                    <span>{{ boleta.fecha_emision }}</span>
+                </div>
+            </div>
+
+            <!-- Desktop View -->
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th class="w-1/3">Cliente:</th>
+                            <td>{{ boleta.cliente_nombre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Medidor ID:</th>
+                            <td>{{ boleta.medidor_id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Periodo:</th>
+                            <td>{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha Emision:</th>
+                            <td>{{ boleta.fecha_emision }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de Pago -->
+    <div class="card bg-base-100 shadow {% if boleta.pagada == 2 %}border-l-4 border-success{% elif boleta.pagada == 1 %}border-l-4 border-warning{% else %}border-l-4 border-error{% endif %}">
+        <div class="card-body">
+            <h2 class="card-title">Estado de Pago</h2>
+            {% if boleta.pagada == 2 %}
+            <div class="space-y-3">
+                <span class="badge badge-success badge-lg">PAGADA</span>
+                <div class="text-sm space-y-1">
+                    <p><strong>Fecha de pago:</strong> {{ boleta.fecha_pago }}</p>
+                    <p><strong>Metodo:</strong> {{ boleta.metodo_pago|capitalize if boleta.metodo_pago else '-' }}</p>
+                </div>
+                {% if boleta.comprobante_path %}
+                <a href="/{{ boleta.comprobante_path }}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-paperclip"></i> Ver comprobante</a>
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Sin comprobante adjunto</span>
+                </div>
+                {% endif %}
+            </div>
+            {% elif boleta.pagada == 1 %}
+            <div class="space-y-3">
+                <span class="badge badge-warning badge-lg">EN REVISION</span>
+                <p class="text-sm">Comprobante enviado, pendiente de aprobacion.</p>
+                {% if boleta.comprobante_path %}
+                <a href="/{{ boleta.comprobante_path }}" target="_blank" class="btn btn-primary btn-sm"><i class="fas fa-paperclip"></i> Ver comprobante</a>
+                {% endif %}
+            </div>
+            {% else %}
+            <span class="badge badge-error badge-lg">PENDIENTE</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Detalle de Consumo -->
+<div class="card bg-base-100 shadow mt-6">
+    <div class="card-body">
+        <h2 class="card-title">Detalle de Consumo</h2>
+
+        <!-- Mobile View -->
+        <div class="lg:hidden space-y-4">
+            <div class="border border-base-200 rounded-lg p-3">
+                <div class="font-semibold mb-2">Cargo Fijo</div>
+                <div class="flex justify-between text-sm">
+                    <span>1 x ${{ boleta.cargo_fijo|formato_pesos }}</span>
+                    <span class="font-medium">${{ boleta.cargo_fijo|formato_pesos }}</span>
+                </div>
+            </div>
+            <div class="border border-base-200 rounded-lg p-3">
+                <div class="font-semibold mb-2">Consumo de agua</div>
+                <div class="text-xs text-base-content/70 mb-2">
+                    Lectura actual: {{ boleta.lectura_actual }} m3
+                    {% if boleta.lectura_anterior %}| Anterior: {{ boleta.lectura_anterior }} m3{% endif %}
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span>{{ boleta.consumo_m3 }} m3 x ${{ boleta.precio_m3|formato_pesos }}</span>
+                    <span class="font-medium">${{ boleta.subtotal_consumo|formato_pesos }}</span>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <div class="flex justify-between text-lg font-bold">
+                <span>TOTAL:</span>
+                <span class="text-primary">${{ boleta.total|formato_pesos }}</span>
+            </div>
+        </div>
+
+        <!-- Desktop View -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Concepto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Cargo Fijo</td>
+                        <td>1</td>
+                        <td>${{ boleta.cargo_fijo|formato_pesos }}</td>
+                        <td>${{ boleta.cargo_fijo|formato_pesos }}</td>
+                    </tr>
+                    <tr>
+                        <td>
+                            Consumo de agua
+                            <br><span class="text-xs text-base-content/70">
+                                Lectura actual: {{ boleta.lectura_actual }} m3
+                                {% if boleta.lectura_anterior %}| Anterior: {{ boleta.lectura_anterior }} m3{% endif %}
+                            </span>
+                        </td>
+                        <td>{{ boleta.consumo_m3 }} m3</td>
+                        <td>${{ boleta.precio_m3|formato_pesos }}</td>
+                        <td>${{ boleta.subtotal_consumo|formato_pesos }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="text-lg">
+                        <td colspan="3" class="text-right font-bold">TOTAL:</td>
+                        <td class="font-bold text-primary">${{ boleta.total|formato_pesos }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
 </div>
 
 {% if pagos %}
-<div class="detail-section" style="margin-top: var(--spacing-lg);">
-    <h3>Pagos Asociados</h3>
-    <table class="data-table data-table--striped data-table--hover">
-        <thead>
-            <tr>
-                <th>N Pago</th>
-                <th>Fecha Envio</th>
-                <th>Monto Aplicado</th>
-                <th>Estado</th>
-                <th>Fecha Proceso</th>
-                <th>Detalle</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
+<!-- Pagos Asociados -->
+<div class="card bg-base-100 shadow mt-6">
+    <div class="card-body">
+        <h2 class="card-title">Pagos Asociados</h2>
+
+        <!-- Mobile View -->
+        <div class="lg:hidden space-y-3">
             {% for pago in pagos %}
-            <tr>
-                <td>{{ pago.numero_pago }}</td>
-                <td>{{ pago.fecha_envio }}</td>
-                <td>${{ pago.monto_aplicado|formato_pesos }}</td>
-                <td>
-                    {% if pago.estado == 'aprobado' %}
-                        <span class="badge badge--success">Aprobado</span>
-                    {% elif pago.estado == 'rechazado' %}
-                        <span class="badge badge--danger">Rechazado</span>
-                    {% elif pago.estado == 'en_revision' %}
-                        <span class="badge badge--warning">En Revision</span>
-                    {% else %}
-                        <span class="badge badge--secondary">{{ pago.estado }}</span>
-                    {% endif %}
-                </td>
-                <td>{{ pago.fecha_procesamiento or '-' }}</td>
-                <td>
-                    {% if pago.estado == 'rechazado' %}
-                        {{ pago.motivo_rechazo }}
-                    {% elif pago.estado == 'aprobado' %}
-                        {{ pago.metodo_pago|capitalize if pago.metodo_pago else '-' }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </td>
-                <td>
-                    <div class="action-btn-group">
-                        <a href="{{ url_for('boletas.pago_detalle', pago_id=pago.id) }}" class="action-btn" title="Ver pago">
+            <div class="border border-base-200 rounded-lg p-3">
+                <div class="flex justify-between items-start mb-2">
+                    <span class="font-semibold">{{ pago.numero_pago }}</span>
+                    <div class="flex gap-1">
+                        <a href="{{ url_for('boletas.pago_detalle', pago_id=pago.id) }}" class="btn btn-ghost btn-xs" title="Ver pago">
                             <i class="fas fa-eye"></i>
                         </a>
                         {% if pago.comprobante_path %}
-                        <a href="/{{ pago.comprobante_path }}" target="_blank" class="action-btn" title="Ver comprobante">
+                        <a href="/{{ pago.comprobante_path }}" target="_blank" class="btn btn-ghost btn-xs" title="Ver comprobante">
                             <i class="fas fa-paperclip"></i>
                         </a>
                         {% endif %}
                     </div>
-                </td>
-            </tr>
+                </div>
+                <div class="text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-base-content/70">Fecha Envio:</span>
+                        <span>{{ pago.fecha_envio }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-base-content/70">Monto:</span>
+                        <span class="font-medium">${{ pago.monto_aplicado|formato_pesos }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-base-content/70">Estado:</span>
+                        {% if pago.estado == 'aprobado' %}
+                        <span class="badge badge-success badge-sm">Aprobado</span>
+                        {% elif pago.estado == 'rechazado' %}
+                        <span class="badge badge-error badge-sm">Rechazado</span>
+                        {% elif pago.estado == 'en_revision' %}
+                        <span class="badge badge-warning badge-sm">En Revision</span>
+                        {% else %}
+                        <span class="badge badge-ghost badge-sm">{{ pago.estado }}</span>
+                        {% endif %}
+                    </div>
+                    {% if pago.fecha_procesamiento %}
+                    <div class="flex justify-between">
+                        <span class="text-base-content/70">Procesado:</span>
+                        <span>{{ pago.fecha_procesamiento }}</span>
+                    </div>
+                    {% endif %}
+                    {% if pago.estado == 'rechazado' and pago.motivo_rechazo %}
+                    <div class="text-error text-xs mt-2">{{ pago.motivo_rechazo }}</div>
+                    {% endif %}
+                </div>
+            </div>
             {% endfor %}
-        </tbody>
-    </table>
+        </div>
+
+        <!-- Desktop View -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>N Pago</th>
+                        <th>Fecha Envio</th>
+                        <th>Monto Aplicado</th>
+                        <th>Estado</th>
+                        <th>Fecha Proceso</th>
+                        <th>Detalle</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in pagos %}
+                    <tr>
+                        <td>{{ pago.numero_pago }}</td>
+                        <td>{{ pago.fecha_envio }}</td>
+                        <td>${{ pago.monto_aplicado|formato_pesos }}</td>
+                        <td>
+                            {% if pago.estado == 'aprobado' %}
+                            <span class="badge badge-success">Aprobado</span>
+                            {% elif pago.estado == 'rechazado' %}
+                            <span class="badge badge-error">Rechazado</span>
+                            {% elif pago.estado == 'en_revision' %}
+                            <span class="badge badge-warning">En Revision</span>
+                            {% else %}
+                            <span class="badge badge-ghost">{{ pago.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ pago.fecha_procesamiento or '-' }}</td>
+                        <td>
+                            {% if pago.estado == 'rechazado' %}
+                            {{ pago.motivo_rechazo }}
+                            {% elif pago.estado == 'aprobado' %}
+                            {{ pago.metodo_pago|capitalize if pago.metodo_pago else '-' }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="flex gap-1">
+                                <a href="{{ url_for('boletas.pago_detalle', pago_id=pago.id) }}" class="btn btn-ghost btn-xs" title="Ver pago">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if pago.comprobante_path %}
+                                <a href="/{{ pago.comprobante_path }}" target="_blank" class="btn btn-ghost btn-xs" title="Ver comprobante">
+                                    <i class="fas fa-paperclip"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endif %}
 
-<div class="actions-section">
-    <h3>Acciones</h3>
+<!-- Acciones -->
+<div class="card bg-base-100 shadow mt-6">
+    <div class="card-body">
+        <h2 class="card-title">Acciones</h2>
 
-    {% if not boleta.pagada %}
-    <div style="margin-bottom: var(--spacing-lg);">
-        <h4>Marcar como pagada</h4>
-        <form method="POST" action="{{ url_for('boletas.marcar_pagada', boleta_id=boleta.id) }}" style="display: flex; gap: var(--spacing-sm); align-items: end;">
-            <div class="form-group" style="margin: 0;">
-                <label for="metodo_pago">Metodo de pago:</label>
-                <select name="metodo_pago" id="metodo_pago" required>
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                </select>
-            </div>
-            <button type="submit" class="btn btn--success">Marcar Pagada</button>
-        </form>
-    </div>
-    {% else %}
-    <div style="margin-bottom: var(--spacing-lg);">
-        <button type="button" class="btn btn--warning" onclick="desmarcarPagada()">Desmarcar Pagada</button>
-    </div>
-    {% endif %}
+        {% if not boleta.pagada %}
+        <div class="mb-6">
+            <h3 class="font-semibold mb-3">Marcar como pagada</h3>
+            <form method="POST" action="{{ url_for('boletas.marcar_pagada', boleta_id=boleta.id) }}" class="flex flex-wrap gap-3 items-end">
+                <div class="form-control">
+                    <label class="label" for="metodo_pago">
+                        <span class="label-text">Metodo de pago:</span>
+                    </label>
+                    <select name="metodo_pago" id="metodo_pago" class="select select-bordered select-sm" required>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success btn-sm">Marcar Pagada</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="mb-6">
+            <button type="button" class="btn btn-warning btn-sm" onclick="desmarcarPagada()">Desmarcar Pagada</button>
+        </div>
+        {% endif %}
 
-    {% if boleta.pagada %}
-    <div style="margin-bottom: var(--spacing-lg);">
-        <h4>Subir Comprobante</h4>
-        <form method="POST" action="{{ url_for('boletas.subir_comprobante', boleta_id=boleta.id) }}"
-              enctype="multipart/form-data" style="display: flex; gap: var(--spacing-sm); align-items: end;">
-            <div class="form-group" style="margin: 0;">
-                <label for="comprobante">Archivo (imagen o PDF):</label>
-                <input type="file" name="comprobante" id="comprobante" accept=".jpg,.jpeg,.png,.gif,.pdf" required>
-            </div>
-            <button type="submit" class="btn btn--primary"><i class="fas fa-upload"></i> Subir</button>
-        </form>
-    </div>
-    {% endif %}
+        {% if boleta.pagada %}
+        <div class="mb-6">
+            <h3 class="font-semibold mb-3">Subir Comprobante</h3>
+            <form method="POST" action="{{ url_for('boletas.subir_comprobante', boleta_id=boleta.id) }}"
+                  enctype="multipart/form-data" class="flex flex-wrap gap-3 items-end">
+                <div class="form-control">
+                    <label class="label" for="comprobante">
+                        <span class="label-text">Archivo (imagen o PDF):</span>
+                    </label>
+                    <input type="file" name="comprobante" id="comprobante" class="file-input file-input-bordered file-input-sm" accept=".jpg,.jpeg,.png,.gif,.pdf" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-upload"></i> Subir</button>
+            </form>
+        </div>
+        {% endif %}
 
-    <div style="border-top: 1px solid var(--color-border); padding-top: var(--spacing-lg); margin-top: var(--spacing-lg);">
-        <button type="button" class="btn btn--danger" onclick="eliminarBoleta()"><i class="fas fa-trash"></i> Eliminar Boleta</button>
+        <div class="divider"></div>
+
+        <div>
+            <button type="button" class="btn btn-error btn-sm" onclick="eliminarBoleta()"><i class="fas fa-trash"></i> Eliminar Boleta</button>
+        </div>
     </div>
 </div>
 
@@ -211,7 +375,7 @@ function desmarcarPagada() {
         message: 'Se desmarcara esta boleta como pagada y volvera a estado pendiente.',
         icon: 'warning',
         confirmText: 'Desmarcar',
-        confirmClass: 'btn--warning'
+        confirmClass: 'btn-warning'
     }).then(function(ok) {
         if (ok) {
             var form = document.createElement('form');
@@ -229,7 +393,7 @@ function eliminarBoleta() {
         message: 'Esta accion no se puede deshacer. Se eliminara permanentemente la boleta.',
         icon: 'danger',
         confirmText: 'Eliminar',
-        confirmClass: 'btn--danger'
+        confirmClass: 'btn-error'
     }).then(function(ok) {
         if (ok) {
             var form = document.createElement('form');

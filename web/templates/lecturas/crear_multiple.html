@@ -3,101 +3,134 @@
 {% block title %}Nueva Lectura Multiple - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Nueva Lectura Multiple</h1>
-    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Cancelar</a>
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Nueva Lectura Multiple</h1>
+    <a href="{{ url_for('lecturas.listar') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Cancelar</span>
+    </a>
 </div>
 
-<form method="POST" class="form" id="form-multiple">
-    <div class="form-group">
-        <label for="medidor_id">Medidor *</label>
-        <select name="medidor_id" id="medidor_id" required>
-            <option value="">Seleccione un medidor</option>
-            {% for m in medidores %}
-            <option value="{{ m.id }}">{{ m.cliente_nombre }} - Medidor #{{ m.id }}</option>
-            {% endfor %}
-        </select>
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <form method="POST" id="form-multiple">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Medidor *</span>
+                    </label>
+                    <select name="medidor_id" id="medidor_id" required class="select select-bordered">
+                        <option value="">Seleccione un medidor</option>
+                        {% for m in medidores %}
+                        <option value="{{ m.id }}">{{ m.cliente_nombre }} - Medidor #{{ m.id }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Lectura (m3) *</span>
+                    </label>
+                    <input type="number" name="lectura_m3" id="lectura_m3" min="0" required
+                           class="input input-bordered">
+                    <label class="label">
+                        <span class="label-text-alt text-base-content/70">Este valor se aplicara a todas las lecturas creadas.</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card bg-base-200 mb-4">
+                <div class="card-body">
+                    <h3 class="card-title text-base">Rango de Periodos</h3>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Desde - Ano</span>
+                            </label>
+                            <select id="año_desde" required class="select select-bordered select-sm">
+                                {% for a in años %}
+                                <option value="{{ a }}">{{ a }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Desde - Mes</span>
+                            </label>
+                            <select id="mes_desde" required class="select select-bordered select-sm">
+                                {% for m in range(1, 13) %}
+                                <option value="{{ m }}">{{ m|mes_nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Hasta - Ano</span>
+                            </label>
+                            <select id="año_hasta" required class="select select-bordered select-sm">
+                                {% for a in años %}
+                                <option value="{{ a }}">{{ a }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-control">
+                            <label class="label">
+                                <span class="label-text">Hasta - Mes</span>
+                            </label>
+                            <select id="mes_hasta" required class="select select-bordered select-sm">
+                                {% for m in range(1, 13) %}
+                                <option value="{{ m }}">{{ m|mes_nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="button" id="btn-calcular" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-calculator"></i> Calcular Periodos
+                    </button>
+                </div>
+            </div>
+
+            <div class="card bg-base-200 mb-4" id="fieldset-fechas" style="display: none;">
+                <div class="card-body">
+                    <h3 class="card-title text-base">Fechas de Lectura</h3>
+
+                    <div id="fechas-status" class="alert alert-info mb-4"></div>
+
+                    <div id="fechas-manuales" style="display: none;">
+                        <div class="alert alert-warning mb-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>No se encontraron todas las fechas. Ingrese el dia para cada periodo faltante:</span>
+                        </div>
+                        <div id="inputs-dias" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                    </div>
+
+                    <div id="tabla-periodos-container" class="overflow-x-auto">
+                        <table class="table table-zebra" id="tabla-periodos">
+                            <thead>
+                                <tr>
+                                    <th>Periodo</th>
+                                    <th>Fecha de Lectura</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <input type="hidden" name="periodos_data" id="periodos_data">
+
+            <div class="card-actions justify-end">
+                <button type="submit" class="btn btn-primary" id="btn-submit" disabled>
+                    <i class="fas fa-plus"></i> Crear Lecturas
+                </button>
+            </div>
+        </form>
     </div>
-
-    <div class="form-group">
-        <label for="lectura_m3">Lectura (m3) *</label>
-        <input type="number" name="lectura_m3" id="lectura_m3" min="0" required>
-        <small>Este valor se aplicara a todas las lecturas creadas.</small>
-    </div>
-
-    <fieldset class="form-fieldset">
-        <legend>Rango de Periodos</legend>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="año_desde">Desde - Año</label>
-                <select id="año_desde" required>
-                    {% for a in años %}
-                    <option value="{{ a }}">{{ a }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="mes_desde">Desde - Mes</label>
-                <select id="mes_desde" required>
-                    {% for m in range(1, 13) %}
-                    <option value="{{ m }}">{{ m|mes_nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="año_hasta">Hasta - Año</label>
-                <select id="año_hasta" required>
-                    {% for a in años %}
-                    <option value="{{ a }}">{{ a }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="mes_hasta">Hasta - Mes</label>
-                <select id="mes_hasta" required>
-                    {% for m in range(1, 13) %}
-                    <option value="{{ m }}">{{ m|mes_nombre }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-
-        <button type="button" id="btn-calcular" class="btn btn--secondary">Calcular Periodos</button>
-    </fieldset>
-
-    <fieldset class="form-fieldset" id="fieldset-fechas" style="display: none;">
-        <legend>Fechas de Lectura</legend>
-
-        <div id="fechas-status" class="info-box"></div>
-
-        <div id="fechas-manuales" style="display: none;">
-            <p class="warning-text">No se encontraron todas las fechas. Ingrese el dia para cada periodo faltante:</p>
-            <div id="inputs-dias"></div>
-        </div>
-
-        <div id="tabla-periodos-container">
-            <table class="data-table" id="tabla-periodos">
-                <thead>
-                    <tr>
-                        <th>Periodo</th>
-                        <th>Fecha de Lectura</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </fieldset>
-
-    <input type="hidden" name="periodos_data" id="periodos_data">
-
-    <div class="form-actions">
-        <button type="submit" class="btn btn--primary" id="btn-submit" disabled>Crear Lecturas</button>
-    </div>
-</form>
+</div>
 
 
 <script>
@@ -189,14 +222,14 @@ function mostrarInputsManuales(periodosFaltantes) {
 
     periodosFaltantes.forEach(p => {
         const div = document.createElement('div');
-        div.className = 'dia-input';
+        div.className = 'flex items-center gap-2 p-2 bg-base-100 rounded';
         div.innerHTML = `
-            <label>${MESES[p.mes]} ${p.anio}:</label>
+            <label class="flex-1">${MESES[p.mes]} ${p.anio}:</label>
             <input type="number" min="1" max="31"
                    data-anio="${p.anio}" data-mes="${p.mes}"
                    data-mes-lectura="${p.mes_lectura}" data-anio-lectura="${p.anio_lectura}"
-                   class="input-dia" placeholder="Dia">
-            <span>(Lectura en ${MESES[p.mes_lectura]} ${p.anio_lectura})</span>
+                   class="input input-bordered input-sm w-20 input-dia" placeholder="Dia">
+            <span class="text-sm text-base-content/70">(Lectura en ${MESES[p.mes_lectura]} ${p.anio_lectura})</span>
         `;
         container.appendChild(div);
     });
@@ -300,7 +333,7 @@ document.getElementById('form-multiple').addEventListener('submit', function(e) 
         message: `Se crearan ${periodosData.length} lecturas. ¿Continuar?`,
         icon: 'warning',
         confirmText: 'Crear Lecturas',
-        confirmClass: 'btn--primary'
+        confirmClass: 'btn-primary'
     }).then(function(ok) {
         if (ok) form.submit();
     });

@@ -1,194 +1,194 @@
 {% extends "base.html" %}
 
-{% block title %}Gestion de Usuarios{% endblock %}
+{% block title %}Gestion de Usuarios - Sistema de Cobro de Agua{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Gestion de Usuarios</h1>
-    <div>
-        <a href="{{ url_for('usuarios.crear') }}" class="btn btn--primary hide-mobile"><i class="fas fa-plus"></i> Nuevo Usuario</a>
-        <a href="{{ url_for('usuarios.crear') }}" class="btn btn--primary hide-desktop"><i class="fas fa-plus"></i> Nuevo</a>
-    </div>
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Gestion de Usuarios</h1>
+    <a href="{{ url_for('usuarios.crear') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i>
+        <span class="hidden sm:inline">Nuevo Usuario</span>
+        <span class="sm:hidden">Nuevo</span>
+    </a>
 </div>
 
-<!-- Stats Section -->
-<div class="stats-toggle--enhanced hide-mobile" onclick="toggleStats()">
-    <span><i class="fas fa-chart-bar"></i> Estadisticas</span>
-    <i class="fas fa-chevron-down" id="statsChevron"></i>
-</div>
-<div class="stats-collapsible hide-mobile" id="statsSection">
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-card__value">{{ stats.total }}</div>
-            <div class="stat-card__label">Total</div>
-        </div>
-        <div class="stat-card stat-card--success">
-            <div class="stat-card__value">{{ stats.activos }}</div>
-            <div class="stat-card__label">Activos</div>
-        </div>
-        <div class="stat-card stat-card--secondary">
-            <div class="stat-card__value">{{ stats.inactivos }}</div>
-            <div class="stat-card__label">Inactivos</div>
+<!-- STATS - colapsable -->
+{% if stats %}
+<div class="collapse collapse-arrow bg-base-100 shadow mb-4 hidden lg:block">
+    <input type="checkbox" id="stats-toggle" />
+    <div class="collapse-title font-medium flex items-center gap-2">
+        <i class="fas fa-chart-bar text-primary"></i>
+        Resumen
+    </div>
+    <div class="collapse-content">
+        <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+            <div class="stat">
+                <div class="stat-title">Total</div>
+                <div class="stat-value text-lg">{{ stats.total or 0 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Activos</div>
+                <div class="stat-value text-lg text-success">{{ stats.activos or 0 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Inactivos</div>
+                <div class="stat-value text-lg text-base-content/50">{{ stats.inactivos or 0 }}</div>
+            </div>
         </div>
     </div>
 </div>
+{% endif %}
 
 {% if usuarios %}
-<!-- Desktop Table -->
-<table class="data-table data-table--striped data-table--hover hide-mobile">
-    <thead>
-        <tr>
-            <th>Usuario</th>
-            <th>Nombre Completo</th>
-            <th>Rol</th>
-            <th>Estado</th>
-            <th>Creado</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for usuario in usuarios %}
-        <tr{% if not usuario.activo %} class="row--inactive"{% endif %}>
-            <td>{{ usuario.username }}</td>
-            <td>{{ usuario.nombre_completo }}</td>
-            <td>
-                <span class="badge {% if usuario.rol == 'administrador' %}badge--info{% else %}badge--secondary{% endif %}">
-                    {{ usuario.rol|capitalize }}
-                </span>
-            </td>
-            <td>
-                <span class="badge {% if usuario.activo %}badge--success{% else %}badge--secondary{% endif %}">
-                    {{ 'Activo' if usuario.activo else 'Inactivo' }}
-                </span>
-            </td>
-            <td>{{ usuario.created_at|fecha_formato }}</td>
-            <td>
-                <div class="action-btn-group">
-                    <a href="{{ url_for('usuarios.editar', usuario_id=usuario.id) }}" class="action-btn" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                    <a href="{{ url_for('usuarios.cambiar_pass', usuario_id=usuario.id) }}" class="action-btn" title="Cambiar password">
-                        <i class="fas fa-key"></i>
-                    </a>
-                    {% if usuario.activo %}
-                    <button class="action-btn action-btn--danger" title="Desactivar" onclick="desactivarUsuario({{ usuario.id }}, '{{ usuario.username }}')">
-                        <i class="fas fa-user-slash"></i>
-                    </button>
-                    {% endif %}
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<!-- Mobile Card View -->
-<div class="hide-desktop">
+<!-- CARDS - solo mobile -->
+<div class="lg:hidden space-y-2" id="cardsContainer">
     {% for usuario in usuarios %}
-    <div class="usuario-card {% if usuario.activo %}usuario-card--active{% else %}usuario-card--inactive{% endif %}" data-expanded="false" onclick="toggleCard(this)">
-        <div class="usuario-card__summary">
-            <div class="usuario-card__left">
-                <div class="usuario-card__username">{{ usuario.username }}</div>
-                <div class="usuario-card__name">{{ usuario.nombre_completo }}</div>
-            </div>
-            <div class="usuario-card__right">
-                <span class="badge {% if usuario.rol == 'administrador' %}badge--info{% else %}badge--secondary{% endif %}">
-                    {{ usuario.rol|capitalize }}
-                </span>
-                <div class="usuario-card__chevron"><i class="fas fa-chevron-down"></i></div>
+    <div class="collapse collapse-arrow bg-base-100 shadow {% if usuario.activo %}border-l-4 border-l-success{% else %}border-l-4 border-l-base-300{% endif %}">
+        <input type="checkbox" class="peer" />
+        <div class="collapse-title pr-12">
+            <div class="flex justify-between items-center">
+                <div class="min-w-0">
+                    <div class="font-semibold">{{ usuario.username }}</div>
+                    <div class="text-sm text-base-content/70 truncate">{{ usuario.nombre_completo }}</div>
+                </div>
+                <div class="flex items-center gap-2 ml-4">
+                    <span class="badge {% if usuario.rol == 'administrador' %}badge-info{% else %}badge-neutral{% endif %} badge-sm">
+                        {{ usuario.rol|capitalize }}
+                    </span>
+                </div>
             </div>
         </div>
-        <div class="usuario-card__details">
-            <div class="usuario-card__details-inner">
-                <div class="usuario-card__info">
-                    <div class="usuario-card__info-item">
-                        Estado
-                        <span>
-                            <span class="badge {% if usuario.activo %}badge--success{% else %}badge--secondary{% endif %}">
-                                {{ 'Activo' if usuario.activo else 'Inactivo' }}
-                            </span>
+        <div class="collapse-content bg-base-200/50">
+            <div class="grid grid-cols-2 gap-2 py-2 text-sm">
+                <div class="text-base-content/70">
+                    Estado
+                    <span class="block">
+                        <span class="badge {% if usuario.activo %}badge-success{% else %}badge-neutral{% endif %} badge-sm">
+                            {{ 'Activo' if usuario.activo else 'Inactivo' }}
                         </span>
-                    </div>
-                    <div class="usuario-card__info-item">
-                        Creado
-                        <span>{{ usuario.created_at|fecha_formato }}</span>
-                    </div>
+                    </span>
                 </div>
-                <div class="usuario-card__actions-primary">
-                    <a href="{{ url_for('usuarios.editar', usuario_id=usuario.id) }}" class="btn btn--secondary btn--sm" onclick="event.stopPropagation()">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
-                    <a href="{{ url_for('usuarios.cambiar_pass', usuario_id=usuario.id) }}" class="btn btn--secondary btn--sm" onclick="event.stopPropagation()">
-                        <i class="fas fa-key"></i> Cambiar Password
-                    </a>
-                    {% if usuario.activo %}
-                    <button class="btn btn--danger btn--sm" onclick="event.stopPropagation(); desactivarUsuario({{ usuario.id }}, '{{ usuario.username }}')">
-                        <i class="fas fa-user-slash"></i> Desactivar
-                    </button>
-                    {% endif %}
+                <div class="text-base-content/70">
+                    Creado
+                    <span class="block font-medium text-base-content">{{ usuario.created_at|fecha_formato }}</span>
                 </div>
+            </div>
+            <div class="flex flex-col gap-2 pt-2">
+                <a href="{{ url_for('usuarios.editar', usuario_id=usuario.id) }}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+                <a href="{{ url_for('usuarios.cambiar_pass', usuario_id=usuario.id) }}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-key"></i> Cambiar Password
+                </a>
+                {% if usuario.activo %}
+                <button class="btn btn-error btn-sm" onclick="desactivarUsuario({{ usuario.id }}, '{{ usuario.username }}')">
+                    <i class="fas fa-user-slash"></i> Desactivar
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
-{% else %}
-<!-- Empty States -->
-<div class="empty-state hide-mobile">
-    <div class="empty-state__icon"><i class="fas fa-users-cog"></i></div>
-    <h3 class="empty-state__title">No hay usuarios</h3>
-    <p class="empty-state__description">No se han creado usuarios aun.</p>
-    <a href="{{ url_for('usuarios.crear') }}" class="btn btn--primary">Nuevo Usuario</a>
+
+<!-- TABLE - solo desktop -->
+<div class="overflow-x-auto hidden lg:block">
+    <table class="table table-zebra bg-base-100">
+        <thead>
+            <tr>
+                <th class="sortable">Usuario</th>
+                <th class="sortable">Nombre Completo</th>
+                <th class="sortable">Rol</th>
+                <th class="sortable">Estado</th>
+                <th class="sortable">Creado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios %}
+            <tr class="hover {% if not usuario.activo %}opacity-60{% endif %}">
+                <td>{{ usuario.username }}</td>
+                <td>{{ usuario.nombre_completo }}</td>
+                <td>
+                    <span class="badge {% if usuario.rol == 'administrador' %}badge-info{% else %}badge-neutral{% endif %}">
+                        {{ usuario.rol|capitalize }}
+                    </span>
+                </td>
+                <td>
+                    <span class="badge {% if usuario.activo %}badge-success{% else %}badge-neutral{% endif %}">
+                        {{ 'Activo' if usuario.activo else 'Inactivo' }}
+                    </span>
+                </td>
+                <td>{{ usuario.created_at|fecha_formato }}</td>
+                <td>
+                    <div class="flex gap-1">
+                        <a href="{{ url_for('usuarios.editar', usuario_id=usuario.id) }}" class="btn btn-ghost btn-xs btn-square" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{ url_for('usuarios.cambiar_pass', usuario_id=usuario.id) }}" class="btn btn-ghost btn-xs btn-square" title="Cambiar password">
+                            <i class="fas fa-key"></i>
+                        </a>
+                        {% if usuario.activo %}
+                        <button class="btn btn-ghost btn-xs btn-square text-error" title="Desactivar" onclick="desactivarUsuario({{ usuario.id }}, '{{ usuario.username }}')">
+                            <i class="fas fa-user-slash"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-<div class="empty-state hide-desktop">
-    <div class="empty-state__icon"><i class="fas fa-users"></i></div>
-    <h3 class="empty-state__title">Sin usuarios</h3>
-    <p class="empty-state__description">No hay usuarios registrados.</p>
-    <a href="{{ url_for('usuarios.crear') }}" class="btn btn--primary">Nuevo Usuario</a>
+
+{% else %}
+<!-- Empty state -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body items-center text-center py-12">
+        <i class="fas fa-users-cog text-5xl text-base-content/30 mb-4"></i>
+        <h3 class="card-title">No hay usuarios</h3>
+        <p class="text-base-content/70 mb-4">No se han creado usuarios aun.</p>
+        <a href="{{ url_for('usuarios.crear') }}" class="btn btn-primary">+ Nuevo Usuario</a>
+    </div>
 </div>
 {% endif %}
 
 <script>
-function toggleCard(card) {
-    var expanded = card.getAttribute('data-expanded') === 'true';
-    card.setAttribute('data-expanded', !expanded);
+function desactivarUsuario(usuarioId, username) {
+    if (window.ConfirmModal) {
+        ConfirmModal.show({
+            title: 'Desactivar Usuario',
+            message: 'Se desactivara el usuario <strong>' + username + '</strong>. No podra iniciar sesion.',
+            icon: 'warning',
+            confirmText: 'Desactivar',
+            confirmClass: 'btn-error'
+        }).then(function(ok) {
+            if (ok) submitDesactivar(usuarioId);
+        });
+    } else if (confirm('Desactivar usuario ' + username + '?')) {
+        submitDesactivar(usuarioId);
+    }
 }
 
-function toggleStats() {
-    var section = document.getElementById('statsSection');
-    var chevron = document.getElementById('statsChevron');
-    var isOpen = section.style.display !== 'none';
-    section.style.display = isOpen ? 'none' : 'block';
-    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
-    localStorage.setItem('usuarios-stats-open', !isOpen);
+function submitDesactivar(usuarioId) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/usuarios/' + usuarioId + '/eliminar';
+    document.body.appendChild(form);
+    form.submit();
 }
 
+// Restore stats collapse state
 (function() {
     var saved = localStorage.getItem('usuarios-stats-open');
-    if (saved === 'false') {
-        var section = document.getElementById('statsSection');
-        var chevron = document.getElementById('statsChevron');
-        if (section) { section.style.display = 'none'; }
-        if (chevron) { chevron.style.transform = ''; }
+    if (saved === '1') {
+        var toggle = document.getElementById('stats-toggle');
+        if (toggle) toggle.checked = true;
     }
-})();
-
-function desactivarUsuario(usuarioId, username) {
-    ConfirmModal.show({
-        title: 'Desactivar Usuario',
-        message: 'Se desactivara el usuario <strong>' + username + '</strong>. No podra iniciar sesion.',
-        icon: 'warning',
-        confirmText: 'Desactivar',
-        confirmClass: 'btn--danger'
-    }).then(function(ok) {
-        if (ok) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/usuarios/' + usuarioId + '/eliminar';
-            document.body.appendChild(form);
-            form.submit();
-        }
+    document.getElementById('stats-toggle')?.addEventListener('change', function() {
+        localStorage.setItem('usuarios-stats-open', this.checked ? '1' : '0');
     });
-}
+})();
 </script>
 {% endblock %}

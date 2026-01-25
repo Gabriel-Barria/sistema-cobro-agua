@@ -1,124 +1,125 @@
 {% extends "base.html" %}
 
-{% block title %}Saldos de Clientes - Sistema de Lecturas{% endblock %}
+{% block title %}Saldos de Clientes - Sistema de Cobro de Agua{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Saldos de Clientes</h1>
-    <div>
-        <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary hide-mobile"><i class="fas fa-arrow-left"></i> Volver a Pagos</a>
-        <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary hide-desktop"><i class="fas fa-arrow-left"></i></a>
-    </div>
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Saldos de Clientes</h1>
+    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver a Pagos</span>
+    </a>
 </div>
 
-<!-- Stats Section -->
-<div class="stats-toggle--enhanced hide-mobile" onclick="toggleStats()">
-    <span><i class="fas fa-chart-bar"></i> Estadisticas</span>
-    <i class="fas fa-chevron-down" id="statsChevron"></i>
-</div>
-<div class="stats-collapsible hide-mobile" id="statsSection">
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-card__value">{{ stats.total }}</div>
-            <div class="stat-card__label">Total Clientes</div>
-        </div>
-        <div class="stat-card stat-card--success">
-            <div class="stat-card__value">{{ stats.con_saldo }}</div>
-            <div class="stat-card__label">Con Saldo</div>
-        </div>
-        <div class="stat-card stat-card--info">
-            <div class="stat-card__value">${{ stats.total_saldo|formato_pesos }}</div>
-            <div class="stat-card__label">Total Saldo</div>
+<!-- STATS - colapsable -->
+{% if stats %}
+<div class="collapse collapse-arrow bg-base-100 shadow mb-4 hidden lg:block">
+    <input type="checkbox" id="stats-toggle" />
+    <div class="collapse-title font-medium flex items-center gap-2">
+        <i class="fas fa-chart-bar text-primary"></i>
+        Resumen
+    </div>
+    <div class="collapse-content">
+        <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+            <div class="stat">
+                <div class="stat-title">Total Clientes</div>
+                <div class="stat-value text-lg">{{ stats.total or 0 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Con Saldo</div>
+                <div class="stat-value text-lg text-success">{{ stats.con_saldo or 0 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Total Saldo</div>
+                <div class="stat-value text-lg text-info">${{ (stats.total_saldo or 0)|formato_pesos }}</div>
+            </div>
         </div>
     </div>
 </div>
+{% endif %}
 
-<p class="form-help mb-md hide-mobile">Lista de clientes con su saldo a favor disponible.</p>
+<p class="text-base-content/70 mb-4 hidden lg:block">Lista de clientes con su saldo a favor disponible.</p>
 
 {% if saldos %}
-<!-- Desktop Table -->
-<table class="data-table data-table--striped data-table--hover hide-mobile">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Cliente</th>
-            <th>Nombre Completo</th>
-            <th>Saldo Disponible</th>
-            <th>Ultima Actualizacion</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for s in saldos %}
-        <tr>
-            <td>{{ s.id }}</td>
-            <td>{{ s.nombre }}</td>
-            <td>{{ s.nombre_completo or '-' }}</td>
-            <td>
-                <span class="{% if s.saldo_disponible > 0 %}text-success text-bold{% endif %}">
+<!-- CARDS - solo mobile -->
+<div class="lg:hidden space-y-2" id="cardsContainer">
+    {% for s in saldos %}
+    <a href="{{ url_for('boletas.saldo_detalle', cliente_id=s.id) }}" class="card bg-base-100 shadow {% if s.saldo_disponible > 0 %}border-l-4 border-l-success{% endif %}">
+        <div class="card-body py-4 px-4 flex-row items-center justify-between">
+            <div class="min-w-0">
+                <div class="font-semibold">{{ s.nombre }}</div>
+                <div class="text-sm text-base-content/70 truncate">{{ s.nombre_completo or '-' }}</div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="font-bold {% if s.saldo_disponible > 0 %}text-success{% endif %}">
                     ${{ s.saldo_disponible|formato_pesos }}
                 </span>
-            </td>
-            <td>{{ s.ultima_actualizacion.strftime('%d/%m/%Y %H:%M') if s.ultima_actualizacion else '-' }}</td>
-            <td>
-                <a href="{{ url_for('boletas.saldo_detalle', cliente_id=s.id) }}" class="action-btn" title="Ver detalle">
-                    <i class="fas fa-eye"></i>
-                </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<!-- Mobile Card View -->
-<div class="hide-desktop">
-    {% for s in saldos %}
-    <div class="saldo-card {% if s.saldo_disponible > 0 %}saldo-card--positive{% endif %}">
-        <div class="saldo-card__left">
-            <div class="saldo-card__name">{{ s.nombre }}</div>
-            <div class="saldo-card__fullname">{{ s.nombre_completo or '-' }}</div>
+                <i class="fas fa-chevron-right text-base-content/30"></i>
+            </div>
         </div>
-        <div class="saldo-card__right">
-            <div class="saldo-card__amount">${{ s.saldo_disponible|formato_pesos }}</div>
-            <a href="{{ url_for('boletas.saldo_detalle', cliente_id=s.id) }}" class="action-btn saldo-card__action" title="Ver detalle">
-                <i class="fas fa-chevron-right"></i>
-            </a>
-        </div>
-    </div>
+    </a>
     {% endfor %}
 </div>
-{% else %}
-<!-- Empty States -->
-<div class="empty-state hide-mobile">
-    <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
-    <h3 class="empty-state__title">No hay saldos</h3>
-    <p class="empty-state__description">No hay clientes con saldo registrado.</p>
+
+<!-- TABLE - solo desktop -->
+<div class="overflow-x-auto hidden lg:block">
+    <table class="table table-zebra bg-base-100">
+        <thead>
+            <tr>
+                <th class="sortable">ID</th>
+                <th class="sortable">Cliente</th>
+                <th class="sortable">Nombre Completo</th>
+                <th class="sortable">Saldo Disponible</th>
+                <th class="sortable">Ultima Actualizacion</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in saldos %}
+            <tr class="hover">
+                <td>{{ s.id }}</td>
+                <td>{{ s.nombre }}</td>
+                <td>{{ s.nombre_completo or '-' }}</td>
+                <td>
+                    <span class="{% if s.saldo_disponible > 0 %}text-success font-bold{% endif %}">
+                        ${{ s.saldo_disponible|formato_pesos }}
+                    </span>
+                </td>
+                <td>{{ s.ultima_actualizacion.strftime('%d/%m/%Y %H:%M') if s.ultima_actualizacion else '-' }}</td>
+                <td>
+                    <a href="{{ url_for('boletas.saldo_detalle', cliente_id=s.id) }}" class="btn btn-ghost btn-xs btn-square" title="Ver detalle">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-<div class="empty-state hide-desktop">
-    <div class="empty-state__icon"><i class="fas fa-wallet"></i></div>
-    <h3 class="empty-state__title">Sin saldos</h3>
-    <p class="empty-state__description">No hay clientes con saldo.</p>
+
+{% else %}
+<!-- Empty state -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body items-center text-center py-12">
+        <i class="fas fa-wallet text-5xl text-base-content/30 mb-4"></i>
+        <h3 class="card-title">No hay saldos</h3>
+        <p class="text-base-content/70 mb-4">No hay clientes con saldo registrado.</p>
+    </div>
 </div>
 {% endif %}
 
 <script>
-function toggleStats() {
-    var section = document.getElementById('statsSection');
-    var chevron = document.getElementById('statsChevron');
-    var isOpen = section.style.display !== 'none';
-    section.style.display = isOpen ? 'none' : 'block';
-    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
-    localStorage.setItem('saldos-stats-open', !isOpen);
-}
-
+// Restore stats collapse state
 (function() {
     var saved = localStorage.getItem('saldos-stats-open');
-    if (saved === 'false') {
-        var section = document.getElementById('statsSection');
-        var chevron = document.getElementById('statsChevron');
-        if (section) { section.style.display = 'none'; }
-        if (chevron) { chevron.style.transform = ''; }
+    if (saved === '1') {
+        var toggle = document.getElementById('stats-toggle');
+        if (toggle) toggle.checked = true;
     }
+    document.getElementById('stats-toggle')?.addEventListener('change', function() {
+        localStorage.setItem('saldos-stats-open', this.checked ? '1' : '0');
+    });
 })();
 </script>
 {% endblock %}

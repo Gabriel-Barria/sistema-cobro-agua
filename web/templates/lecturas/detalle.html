@@ -3,61 +3,123 @@
 {% block title %}Lectura #{{ lectura.id }} - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Lectura #{{ lectura.id }}</h1>
-    <div>
-        <a href="{{ url_for('lecturas.editar', lectura_id=lectura.id) }}" class="btn btn--primary"><i class="fas fa-edit"></i> Editar</a>
-        <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Volver</a>
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Lectura #{{ lectura.id }}</h1>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('lecturas.editar', lectura_id=lectura.id) }}" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar</a>
+        <a href="{{ url_for('lecturas.listar') }}" class="btn btn-secondary btn-sm">Volver</a>
     </div>
 </div>
 
-<div class="detail-grid">
-    <div class="detail-section">
-        <h3>Informacion</h3>
-        <table class="detail-table">
-            <tr>
-                <th>Cliente:</th>
-                <td><a href="{{ url_for('clientes.detalle', cliente_id=lectura.cliente_id) }}">{{ lectura.cliente_nombre }}</a></td>
-            </tr>
-            <tr>
-                <th>Medidor:</th>
-                <td><a href="{{ url_for('medidores.detalle', medidor_id=lectura.medidor_id) }}">Medidor #{{ lectura.medidor_id }}</a></td>
-            </tr>
-            <tr>
-                <th>Periodo:</th>
-                <td>{{ lectura.mes|mes_nombre }} {{ lectura.año }}</td>
-            </tr>
-            <tr>
-                <th>Lectura:</th>
-                <td><strong>{{ lectura.lectura_m3 }} m3</strong></td>
-            </tr>
-            <tr>
-                <th>Fecha de Lectura:</th>
-                <td>{{ lectura.fecha_lectura|fecha_formato }}</td>
-            </tr>
-            <tr>
-                <th>Archivo Original:</th>
-                <td>{{ lectura.foto_nombre or '-' }}</td>
-            </tr>
-        </table>
+<!-- Stats Section -->
+<div class="stats stats-vertical lg:stats-horizontal shadow mb-6 w-full">
+    <div class="stat">
+        <div class="stat-title">Periodo</div>
+        <div class="stat-value text-lg">{{ lectura.mes|mes_nombre }} {{ lectura.año }}</div>
     </div>
+    <div class="stat">
+        <div class="stat-title">Lectura</div>
+        <div class="stat-value text-lg text-primary">{{ lectura.lectura_m3 }} m3</div>
+    </div>
+    <div class="stat">
+        <div class="stat-title">Fecha</div>
+        <div class="stat-value text-lg">{{ lectura.fecha_lectura|fecha_formato }}</div>
+    </div>
+</div>
 
-    <div class="detail-section">
-        <h3>Foto</h3>
-        {% if lectura.foto_path %}
-        <img src="/foto/{{ lectura.foto_path }}" alt="Foto de lectura" class="lectura-foto">
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-state__icon"><i class="fas fa-image"></i></div>
-            <p class="empty-state__description">Sin foto</p>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Informacion -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Informacion</h2>
+
+            <!-- Mobile View -->
+            <div class="lg:hidden space-y-3">
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Cliente:</span>
+                    <a href="{{ url_for('clientes.detalle', cliente_id=lectura.cliente_id) }}" class="link link-primary">{{ lectura.cliente_nombre }}</a>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Medidor:</span>
+                    <a href="{{ url_for('medidores.detalle', medidor_id=lectura.medidor_id) }}" class="link link-primary">Medidor #{{ lectura.medidor_id }}</a>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Periodo:</span>
+                    <span>{{ lectura.mes|mes_nombre }} {{ lectura.año }}</span>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Lectura:</span>
+                    <span class="font-bold text-primary">{{ lectura.lectura_m3 }} m3</span>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Fecha:</span>
+                    <span>{{ lectura.fecha_lectura|fecha_formato }}</span>
+                </div>
+                <div class="flex justify-between pb-2">
+                    <span class="font-medium text-base-content/70">Archivo:</span>
+                    <span>{{ lectura.foto_nombre or '-' }}</span>
+                </div>
+            </div>
+
+            <!-- Desktop View -->
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th class="w-1/3">Cliente:</th>
+                            <td><a href="{{ url_for('clientes.detalle', cliente_id=lectura.cliente_id) }}" class="link link-primary">{{ lectura.cliente_nombre }}</a></td>
+                        </tr>
+                        <tr>
+                            <th>Medidor:</th>
+                            <td><a href="{{ url_for('medidores.detalle', medidor_id=lectura.medidor_id) }}" class="link link-primary">Medidor #{{ lectura.medidor_id }}</a></td>
+                        </tr>
+                        <tr>
+                            <th>Periodo:</th>
+                            <td>{{ lectura.mes|mes_nombre }} {{ lectura.año }}</td>
+                        </tr>
+                        <tr>
+                            <th>Lectura:</th>
+                            <td><strong class="text-primary">{{ lectura.lectura_m3 }} m3</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Fecha de Lectura:</th>
+                            <td>{{ lectura.fecha_lectura|fecha_formato }}</td>
+                        </tr>
+                        <tr>
+                            <th>Archivo Original:</th>
+                            <td>{{ lectura.foto_nombre or '-' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        {% endif %}
+    </div>
+
+    <!-- Foto -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Foto</h2>
+            {% if lectura.foto_path %}
+            <figure>
+                <img src="/foto/{{ lectura.foto_path }}" alt="Foto de lectura" class="rounded-lg max-h-96 object-contain">
+            </figure>
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-8 text-base-content/60">
+                <i class="fas fa-image text-4xl mb-3"></i>
+                <p class="text-sm">Sin foto</p>
+            </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<div class="actions-section actions-section--danger">
-    <h3>Zona de Peligro</h3>
-    <button type="button" class="btn btn--danger" onclick="eliminarLectura()"><i class="fas fa-trash"></i> Eliminar Lectura</button>
+<!-- Zona de Peligro -->
+<div class="card bg-error/10 border border-error/30 shadow mt-6">
+    <div class="card-body">
+        <h2 class="card-title text-error">Zona de Peligro</h2>
+        <button type="button" class="btn btn-error btn-sm w-fit" onclick="eliminarLectura()"><i class="fas fa-trash"></i> Eliminar Lectura</button>
+    </div>
 </div>
 
 <script>
@@ -67,7 +129,7 @@ function eliminarLectura() {
         message: 'Esta accion no se puede deshacer. Se eliminara permanentemente esta lectura.',
         icon: 'danger',
         confirmText: 'Eliminar',
-        confirmClass: 'btn--danger'
+        confirmClass: 'btn-error'
     }).then(function(ok) {
         if (ok) {
             var form = document.createElement('form');
