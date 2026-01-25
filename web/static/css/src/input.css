@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+/* Excluir archivos de build del scan */
+@source not "../build/tailwindcss";
+@source not "../build/daisyui{,*}.mjs";
+
+/* Cargar DaisyUI como plugin */
+@plugin "../build/daisyui.mjs";
+
+/* Configurar temas */
+@plugin "../build/daisyui-theme.mjs" {
+  themes: light --default, dark --prefersdark, corporate, nord;
+}
+
+/* Scan de templates para PurgeCSS */
+@source "../../../templates/**/*.html";
+
+/* Custom utilities - legacy bridge */
+@layer utilities {
+  .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

@@ -3,39 +3,51 @@
 {% block title %}Nuevo Medidor - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Nuevo Medidor</h1>
-    <a href="{{ url_for('medidores.listar') }}" class="btn btn--secondary">Cancelar</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Nuevo Medidor</h1>
+    <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary">Cancelar</a>
 </div>
 
-<form method="POST" class="form">
-    <div class="form-group">
-        <label for="cliente_id">Cliente *</label>
-        <select name="cliente_id" id="cliente_id" required>
-            <option value="">Seleccione un cliente</option>
-            {% for c in clientes %}
-            <option value="{{ c.id }}">{{ c.nombre }}</option>
-            {% endfor %}
-        </select>
-    </div>
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <form method="POST">
+            <div class="form-control mb-3">
+                <label class="label" for="cliente_id">
+                    <span class="label-text">Cliente *</span>
+                </label>
+                <select name="cliente_id" id="cliente_id" class="select select-bordered w-full" required>
+                    <option value="">Seleccione un cliente</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}">{{ c.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <div class="form-group">
-        <label for="numero_medidor">Numero de Medidor</label>
-        <input type="text" name="numero_medidor" id="numero_medidor" placeholder="Ej: 12345">
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="numero_medidor">
+                    <span class="label-text">Numero de Medidor</span>
+                </label>
+                <input type="text" name="numero_medidor" id="numero_medidor" class="input input-bordered w-full" placeholder="Ej: 12345">
+            </div>
 
-    <div class="form-group">
-        <label for="direccion">Direccion</label>
-        <input type="text" name="direccion" id="direccion" placeholder="Direccion del medidor">
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="direccion">
+                    <span class="label-text">Direccion</span>
+                </label>
+                <input type="text" name="direccion" id="direccion" class="input input-bordered w-full" placeholder="Direccion del medidor">
+            </div>
 
-    <div class="form-group">
-        <label for="fecha_inicio">Fecha de Inicio</label>
-        <input type="date" name="fecha_inicio" id="fecha_inicio">
-    </div>
+            <div class="form-control mb-3">
+                <label class="label" for="fecha_inicio">
+                    <span class="label-text">Fecha de Inicio</span>
+                </label>
+                <input type="date" name="fecha_inicio" id="fecha_inicio" class="input input-bordered w-full">
+            </div>
 
-    <div class="form-actions">
-        <button type="submit" class="btn btn--primary">Crear Medidor</button>
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">Crear Medidor</button>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 {% endblock %}

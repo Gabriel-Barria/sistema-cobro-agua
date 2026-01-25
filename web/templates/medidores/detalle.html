@@ -3,171 +3,284 @@
 {% block title %}Medidor #{{ medidor.id }} - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Medidor #{{ medidor.id }}</h1>
-    <div>
-        <a href="{{ url_for('medidores.editar', medidor_id=medidor.id) }}" class="btn btn--primary"><i class="fas fa-edit"></i> Editar</a>
-        <button type="button" class="btn btn--danger" onclick="eliminarMedidor()"><i class="fas fa-trash"></i> Eliminar</button>
-        <a href="{{ url_for('medidores.listar') }}" class="btn btn--secondary">Volver</a>
+<!-- Page Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Medidor #{{ medidor.id }}</h1>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('medidores.editar', medidor_id=medidor.id) }}" class="btn btn-primary btn-sm"><i class="fas fa-edit"></i> Editar</a>
+        <button type="button" class="btn btn-error btn-sm" onclick="eliminarMedidor()"><i class="fas fa-trash"></i> Eliminar</button>
+        <a href="{{ url_for('medidores.listar') }}" class="btn btn-secondary btn-sm">Volver</a>
     </div>
 </div>
 
-<div class="detail-grid">
-    <div class="detail-section">
-        <h3>Informacion del Medidor</h3>
-        <table class="detail-table">
-            <tr>
-                <th>Cliente:</th>
-                <td><a href="{{ url_for('clientes.detalle', cliente_id=medidor.cliente_id) }}">{{ medidor.cliente_nombre }}</a></td>
-            </tr>
-            <tr>
-                <th>Numero de Medidor:</th>
-                <td>{{ medidor.numero_medidor or 'No registrado' }}</td>
-            </tr>
-            <tr>
-                <th>Direccion:</th>
-                <td>{{ medidor.direccion or 'No registrada' }}</td>
-            </tr>
-            <tr>
-                <th>Estado:</th>
-                <td>
-                    {% if medidor.activo %}
-                    <span class="badge badge--success">Activo</span>
-                    {% else %}
-                    <span class="badge badge--secondary">Inactivo</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% if medidor.fecha_inicio %}
-            <tr>
-                <th>Fecha de Inicio:</th>
-                <td>{{ medidor.fecha_inicio|fecha_formato }}</td>
-            </tr>
-            {% endif %}
-            {% if medidor.fecha_baja %}
-            <tr>
-                <th>Fecha de Baja:</th>
-                <td>{{ medidor.fecha_baja|fecha_formato }}</td>
-            </tr>
-            {% endif %}
-            {% if medidor.motivo_baja %}
-            <tr>
-                <th>Motivo de Baja:</th>
-                <td>{{ medidor.motivo_baja }}</td>
-            </tr>
-            {% endif %}
-        </table>
-
-        <div style="margin-top: var(--spacing-lg);">
+<!-- Stats Section -->
+<div class="stats stats-vertical lg:stats-horizontal shadow mb-6 w-full">
+    <div class="stat">
+        <div class="stat-title">Estado</div>
+        <div class="stat-value text-lg">
             {% if medidor.activo %}
-            <button type="button" class="btn btn--warning" onclick="mostrarModalDesactivar()"><i class="fas fa-power-off"></i> Desactivar Medidor</button>
+            <span class="badge badge-success">Activo</span>
             {% else %}
-            <button type="button" class="btn btn--success" onclick="mostrarModalReactivar()"><i class="fas fa-redo"></i> Reactivar Medidor</button>
+            <span class="badge badge-ghost">Inactivo</span>
             {% endif %}
         </div>
     </div>
+    <div class="stat">
+        <div class="stat-title">Cliente</div>
+        <div class="stat-value text-lg">
+            <a href="{{ url_for('clientes.detalle', cliente_id=medidor.cliente_id) }}" class="link link-primary">{{ medidor.cliente_nombre }}</a>
+        </div>
+    </div>
+    <div class="stat">
+        <div class="stat-title">Numero</div>
+        <div class="stat-value text-lg">{{ medidor.numero_medidor or '-' }}</div>
+    </div>
+</div>
 
-    <div class="detail-section">
-        <h3>Historial de Lecturas</h3>
-        {% if lecturas %}
-        <table class="data-table data-table--striped data-table--hover">
-            <thead>
-                <tr>
-                    <th>Periodo</th>
-                    <th>Lectura (m3)</th>
-                    <th>Fecha</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Informacion del Medidor -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Informacion del Medidor</h2>
+
+            <!-- Mobile View -->
+            <div class="lg:hidden space-y-3">
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Cliente:</span>
+                    <a href="{{ url_for('clientes.detalle', cliente_id=medidor.cliente_id) }}" class="link link-primary">{{ medidor.cliente_nombre }}</a>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Numero:</span>
+                    <span>{{ medidor.numero_medidor or 'No registrado' }}</span>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Direccion:</span>
+                    <span>{{ medidor.direccion or 'No registrada' }}</span>
+                </div>
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Estado:</span>
+                    <span>
+                        {% if medidor.activo %}
+                        <span class="badge badge-success">Activo</span>
+                        {% else %}
+                        <span class="badge badge-ghost">Inactivo</span>
+                        {% endif %}
+                    </span>
+                </div>
+                {% if medidor.fecha_inicio %}
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Fecha Inicio:</span>
+                    <span>{{ medidor.fecha_inicio|fecha_formato }}</span>
+                </div>
+                {% endif %}
+                {% if medidor.fecha_baja %}
+                <div class="flex justify-between border-b border-base-200 pb-2">
+                    <span class="font-medium text-base-content/70">Fecha Baja:</span>
+                    <span>{{ medidor.fecha_baja|fecha_formato }}</span>
+                </div>
+                {% endif %}
+                {% if medidor.motivo_baja %}
+                <div class="flex justify-between pb-2">
+                    <span class="font-medium text-base-content/70">Motivo Baja:</span>
+                    <span>{{ medidor.motivo_baja }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Desktop View -->
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <th class="w-1/3">Cliente:</th>
+                            <td><a href="{{ url_for('clientes.detalle', cliente_id=medidor.cliente_id) }}" class="link link-primary">{{ medidor.cliente_nombre }}</a></td>
+                        </tr>
+                        <tr>
+                            <th>Numero de Medidor:</th>
+                            <td>{{ medidor.numero_medidor or 'No registrado' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Direccion:</th>
+                            <td>{{ medidor.direccion or 'No registrada' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Estado:</th>
+                            <td>
+                                {% if medidor.activo %}
+                                <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                <span class="badge badge-ghost">Inactivo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% if medidor.fecha_inicio %}
+                        <tr>
+                            <th>Fecha de Inicio:</th>
+                            <td>{{ medidor.fecha_inicio|fecha_formato }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if medidor.fecha_baja %}
+                        <tr>
+                            <th>Fecha de Baja:</th>
+                            <td>{{ medidor.fecha_baja|fecha_formato }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if medidor.motivo_baja %}
+                        <tr>
+                            <th>Motivo de Baja:</th>
+                            <td>{{ medidor.motivo_baja }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card-actions mt-4">
+                {% if medidor.activo %}
+                <button type="button" class="btn btn-warning btn-sm" onclick="mostrarModalDesactivar()"><i class="fas fa-power-off"></i> Desactivar Medidor</button>
+                {% else %}
+                <button type="button" class="btn btn-success btn-sm" onclick="mostrarModalReactivar()"><i class="fas fa-redo"></i> Reactivar Medidor</button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de Lecturas -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h2 class="card-title">Historial de Lecturas</h2>
+            {% if lecturas %}
+
+            <!-- Mobile View -->
+            <div class="lg:hidden space-y-3">
                 {% for l in lecturas %}
-                <tr>
-                    <td>{{ l.mes|mes_nombre }} {{ l.año }}</td>
-                    <td>{{ l.lectura_m3 }}</td>
-                    <td>{{ l.fecha_lectura|fecha_formato }}</td>
-                    <td>
-                        <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="action-btn" title="Ver detalle">
+                <div class="border border-base-200 rounded-lg p-3">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-semibold">{{ l.mes|mes_nombre }} {{ l.año }}</span>
+                        <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-ghost btn-xs">
                             <i class="fas fa-eye"></i>
                         </a>
-                    </td>
-                </tr>
+                    </div>
+                    <div class="text-sm space-y-1">
+                        <div class="flex justify-between">
+                            <span class="text-base-content/70">Lectura:</span>
+                            <span class="font-medium">{{ l.lectura_m3 }} m3</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-base-content/70">Fecha:</span>
+                            <span>{{ l.fecha_lectura|fecha_formato }}</span>
+                        </div>
+                    </div>
+                </div>
                 {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-state__icon"><i class="fas fa-tachometer-alt"></i></div>
-            <h3 class="empty-state__title">Sin lecturas</h3>
-            <p class="empty-state__description">No hay lecturas registradas para este medidor.</p>
+            </div>
+
+            <!-- Desktop View -->
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Periodo</th>
+                            <th>Lectura (m3)</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in lecturas %}
+                        <tr>
+                            <td>{{ l.mes|mes_nombre }} {{ l.año }}</td>
+                            <td>{{ l.lectura_m3 }}</td>
+                            <td>{{ l.fecha_lectura|fecha_formato }}</td>
+                            <td>
+                                <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-ghost btn-xs" title="Ver detalle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center py-8 text-base-content/60">
+                <i class="fas fa-tachometer-alt text-4xl mb-3"></i>
+                <h3 class="font-semibold">Sin lecturas</h3>
+                <p class="text-sm">No hay lecturas registradas para este medidor.</p>
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>
 
 <!-- Modal Desactivar -->
-<div id="modalDesactivar" class="modal">
-    <div class="modal__content">
-        <div class="modal__header">
-            <h3>Desactivar Medidor</h3>
-            <button class="modal__close" onclick="cerrarModalDesactivar()">&times;</button>
-        </div>
-        <div class="modal__body">
-            <form method="POST" action="{{ url_for('medidores.desactivar', medidor_id=medidor.id) }}">
-                <div class="form-group">
-                    <label for="fecha_baja">Fecha de Baja *</label>
-                    <input type="date" id="fecha_baja" name="fecha_baja" required>
-                </div>
-                <div class="form-group">
-                    <label for="motivo_baja">Motivo de Baja</label>
-                    <textarea id="motivo_baja" name="motivo_baja" rows="3" placeholder="Ingrese el motivo de la desactivacion"></textarea>
-                </div>
-                <div class="modal__actions">
-                    <button type="button" class="btn btn--secondary" onclick="cerrarModalDesactivar()">Cancelar</button>
-                    <button type="submit" class="btn btn--warning">Confirmar Desactivacion</button>
-                </div>
-            </form>
-        </div>
+<dialog id="modalDesactivar" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Desactivar Medidor</h3>
+        <form method="POST" action="{{ url_for('medidores.desactivar', medidor_id=medidor.id) }}">
+            <div class="form-control mt-4">
+                <label class="label" for="fecha_baja">
+                    <span class="label-text">Fecha de Baja *</span>
+                </label>
+                <input type="date" id="fecha_baja" name="fecha_baja" class="input input-bordered" required>
+            </div>
+            <div class="form-control mt-4">
+                <label class="label" for="motivo_baja">
+                    <span class="label-text">Motivo de Baja</span>
+                </label>
+                <textarea id="motivo_baja" name="motivo_baja" rows="3" class="textarea textarea-bordered" placeholder="Ingrese el motivo de la desactivacion"></textarea>
+            </div>
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" onclick="cerrarModalDesactivar()">Cancelar</button>
+                <button type="submit" class="btn btn-warning">Confirmar Desactivacion</button>
+            </div>
+        </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <!-- Modal Reactivar -->
-<div id="modalReactivar" class="modal">
-    <div class="modal__content">
-        <div class="modal__header">
-            <h3>Reactivar Medidor</h3>
-            <button class="modal__close" onclick="cerrarModalReactivar()">&times;</button>
-        </div>
-        <div class="modal__body">
-            <form method="POST" action="{{ url_for('medidores.reactivar', medidor_id=medidor.id) }}">
-                <div class="form-group">
-                    <label for="fecha_inicio_reactivar">Fecha de Inicio (opcional)</label>
-                    <input type="date" id="fecha_inicio_reactivar" name="fecha_inicio">
-                    <small class="form-help">Si no especifica una fecha, se mantendra la fecha de inicio original</small>
-                </div>
-                <div class="modal__actions">
-                    <button type="button" class="btn btn--secondary" onclick="cerrarModalReactivar()">Cancelar</button>
-                    <button type="submit" class="btn btn--success">Confirmar Reactivacion</button>
-                </div>
-            </form>
-        </div>
+<dialog id="modalReactivar" class="modal">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg">Reactivar Medidor</h3>
+        <form method="POST" action="{{ url_for('medidores.reactivar', medidor_id=medidor.id) }}">
+            <div class="form-control mt-4">
+                <label class="label" for="fecha_inicio_reactivar">
+                    <span class="label-text">Fecha de Inicio (opcional)</span>
+                </label>
+                <input type="date" id="fecha_inicio_reactivar" name="fecha_inicio" class="input input-bordered">
+                <label class="label">
+                    <span class="label-text-alt">Si no especifica una fecha, se mantendra la fecha de inicio original</span>
+                </label>
+            </div>
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" onclick="cerrarModalReactivar()">Cancelar</button>
+                <button type="submit" class="btn btn-success">Confirmar Reactivacion</button>
+            </div>
+        </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <script>
 function mostrarModalDesactivar() {
-    document.getElementById('modalDesactivar').classList.add('active');
+    document.getElementById('modalDesactivar').showModal();
 }
 
 function cerrarModalDesactivar() {
-    document.getElementById('modalDesactivar').classList.remove('active');
+    document.getElementById('modalDesactivar').close();
 }
 
 function mostrarModalReactivar() {
-    document.getElementById('modalReactivar').classList.add('active');
+    document.getElementById('modalReactivar').showModal();
 }
 
 function cerrarModalReactivar() {
-    document.getElementById('modalReactivar').classList.remove('active');
+    document.getElementById('modalReactivar').close();
 }
 
 function eliminarMedidor() {
@@ -176,7 +289,7 @@ function eliminarMedidor() {
         message: 'Esta a punto de eliminar el medidor <strong>#{{ medidor.id }}</strong> del cliente <strong>{{ medidor.cliente_nombre }}</strong>. Esta accion no se puede deshacer.',
         icon: 'danger',
         confirmText: 'Eliminar',
-        confirmClass: 'btn--danger'
+        confirmClass: 'btn-error'
     }).then(function(ok) {
         if (ok) {
             var form = document.createElement('form');
@@ -187,14 +300,5 @@ function eliminarMedidor() {
         }
     });
 }
-
-// Close modals when clicking outside
-document.querySelectorAll('.modal').forEach(function(modal) {
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-            modal.classList.remove('active');
-        }
-    });
-});
 </script>
 {% endblock %}

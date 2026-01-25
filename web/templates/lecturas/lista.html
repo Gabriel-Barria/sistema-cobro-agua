@@ -1,43 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}Lecturas - Sistema de Lecturas{% endblock %}
+{% block title %}Lecturas - Sistema de Cobro de Agua{% endblock %}
 
 {% block content %}
 <!-- HEADER -->
-<div class="page-header">
-    <h1>Lecturas</h1>
-    <div class="hide-mobile">
-        <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary">Nueva Lectura</a>
-        <a href="{{ url_for('lecturas.crear_multiple') }}" class="btn btn--secondary">Lectura Multiple</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Lecturas</h1>
+    <div class="flex gap-2">
+        <a href="{{ url_for('lecturas.crear') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            <span class="hidden sm:inline">Nueva Lectura</span>
+            <span class="sm:hidden">Nueva</span>
+        </a>
+        <a href="{{ url_for('lecturas.crear_multiple') }}" class="btn btn-secondary hidden sm:inline-flex">
+            <i class="fas fa-layer-group"></i> Lectura Multiple
+        </a>
     </div>
-    <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary hide-desktop">+ Nueva</a>
 </div>
 
-<!-- STATS - solo desktop, colapsable -->
+<!-- STATS - colapsable -->
 {% if stats %}
-<div class="hide-mobile">
-    <button class="stats-toggle stats-toggle--enhanced" id="statsToggle" aria-expanded="false" onclick="toggleStats()">
-        <span class="stats-toggle__icon"><i class="fas fa-chart-bar"></i></span>
+<div class="collapse collapse-arrow bg-base-100 shadow mb-4 hidden lg:block">
+    <input type="checkbox" id="stats-toggle" />
+    <div class="collapse-title font-medium flex items-center gap-2">
+        <i class="fas fa-chart-bar text-primary"></i>
         Resumen
-        <span class="stats-toggle__arrow"><i class="fas fa-chevron-right"></i></span>
-    </button>
-    <div class="stats-collapsible" id="statsContent">
-        <div class="stats-grid">
-            <div class="stat-card stat-card--default">
-                <div class="stat-card__value">{{ stats.total or 0 }}</div>
-                <div class="stat-card__label">Total Lecturas</div>
+    </div>
+    <div class="collapse-content">
+        <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+            <div class="stat">
+                <div class="stat-title">Total Lecturas</div>
+                <div class="stat-value text-lg">{{ stats.total or 0 }}</div>
             </div>
-            <div class="stat-card stat-card--info">
-                <div class="stat-card__value">{{ stats.promedio_m3 or 0 }} m3</div>
-                <div class="stat-card__label">Promedio</div>
+            <div class="stat">
+                <div class="stat-title">Promedio</div>
+                <div class="stat-value text-lg text-info">{{ stats.promedio_m3 or 0 }} m3</div>
             </div>
-            <div class="stat-card stat-card--success">
-                <div class="stat-card__value">{{ stats.con_foto or 0 }}</div>
-                <div class="stat-card__label">Con Foto</div>
+            <div class="stat">
+                <div class="stat-title">Con Foto</div>
+                <div class="stat-value text-lg text-success">{{ stats.con_foto or 0 }}</div>
             </div>
-            <div class="stat-card stat-card--warning">
-                <div class="stat-card__value">{{ stats.sin_foto or 0 }}</div>
-                <div class="stat-card__label">Sin Foto</div>
+            <div class="stat">
+                <div class="stat-title">Sin Foto</div>
+                <div class="stat-value text-lg text-warning">{{ stats.sin_foto or 0 }}</div>
             </div>
         </div>
     </div>
@@ -45,120 +50,129 @@
 {% endif %}
 
 <!-- FILTER CHIPS - solo mobile -->
-<div class="filter-chips hide-desktop">
+<div class="flex items-center gap-2 overflow-x-auto pb-4 lg:hidden">
     <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '') }}"
-       class="chip {% if filtros.con_foto is none %}chip--active{% endif %}">
+       class="btn btn-sm {% if filtros.con_foto is none %}btn-primary{% else %}btn-ghost{% endif %}">
         Todas
-        {% if stats %}<span class="chip__count">{{ stats.total or 0 }}</span>{% endif %}
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.total or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=1) }}"
-       class="chip {% if filtros.con_foto == 1 %}chip--active{% endif %}">
+       class="btn btn-sm {% if filtros.con_foto == 1 %}btn-primary{% else %}btn-ghost{% endif %}">
         Con foto
-        {% if stats %}<span class="chip__count">{{ stats.con_foto or 0 }}</span>{% endif %}
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.con_foto or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=0) }}"
-       class="chip {% if filtros.con_foto == 0 %}chip--active{% endif %}">
+       class="btn btn-sm {% if filtros.con_foto == 0 %}btn-primary{% else %}btn-ghost{% endif %}">
         Sin foto
-        {% if stats %}<span class="chip__count">{{ stats.sin_foto or 0 }}</span>{% endif %}
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.sin_foto or 0 }}</span>{% endif %}
     </a>
-    <button class="filter-chips__btn {% if filtros.año or filtros.mes or filtros.cliente_id or filtros.medidor_id or filtros.incompletos %}filter-chips__btn--active{% endif %}"
-            onclick="abrirModal('modalFiltrosLecturas')" title="Filtros avanzados">
+    <button class="btn btn-sm btn-circle btn-ghost {% if filtros.año or filtros.mes or filtros.cliente_id or filtros.medidor_id or filtros.incompletos %}btn-primary{% endif %}"
+            onclick="modalFiltrosLecturas.showModal()" title="Filtros avanzados">
         <i class="fas fa-sliders-h"></i>
     </button>
 </div>
 
 <!-- FILTER FORM - solo desktop -->
-<form method="GET" class="filter-bar hide-mobile" id="filterFormLecturas">
-    <div class="filter-bar__fields">
-        <div class="filter-bar__group">
-            <select name="año">
-                <option value="">Todos los años</option>
-                {% for a in años %}
-                <option value="{{ a }}" {% if a == año_sel %}selected{% endif %}>{{ a }}</option>
-                {% endfor %}
-            </select>
-        </div>
+<form method="GET" class="card bg-base-100 shadow mb-4 hidden lg:block" id="filterFormLecturas">
+    <div class="card-body py-4">
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Año</span></label>
+                <select name="año" class="select select-bordered select-sm">
+                    <option value="">Todos los años</option>
+                    {% for a in años %}
+                    <option value="{{ a }}" {% if a == año_sel %}selected{% endif %}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="filter-bar__group">
-            <select name="mes">
-                <option value="">Todos los meses</option>
-                {% for m in range(1, 13) %}
-                <option value="{{ m }}" {% if m == mes_sel %}selected{% endif %}>{{ m|mes_nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Mes</span></label>
+                <select name="mes" class="select select-bordered select-sm">
+                    <option value="">Todos los meses</option>
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {% if m == mes_sel %}selected{% endif %}>{{ m|mes_nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="filter-bar__group">
-            <select name="cliente_id" id="cliente_id">
-                <option value="">Todos los clientes</option>
-                {% for c in clientes %}
-                {% if not incompletos or c.id in clientes_incompletos %}
-                <option value="{{ c.id }}" {% if c.id == cliente_sel %}selected{% endif %}>{{ c.nombre }}</option>
-                {% endif %}
-                {% endfor %}
-            </select>
-        </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Cliente</span></label>
+                <select name="cliente_id" id="cliente_id" class="select select-bordered select-sm">
+                    <option value="">Todos los clientes</option>
+                    {% for c in clientes %}
+                    {% if not incompletos or c.id in clientes_incompletos %}
+                    <option value="{{ c.id }}" {% if c.id == cliente_sel %}selected{% endif %}>{{ c.nombre }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="filter-bar__group">
-            <select name="medidor_id" id="medidor_id">
-                <option value="">Todos los medidores</option>
-                {% for m in medidores %}
-                <option value="{{ m.id }}" {% if m.id == medidor_sel %}selected{% endif %}>{{ m.cliente_nombre }} - #{{ m.id }}</option>
-                {% endfor %}
-            </select>
-        </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Medidor</span></label>
+                <select name="medidor_id" id="medidor_id" class="select select-bordered select-sm">
+                    <option value="">Todos los medidores</option>
+                    {% for m in medidores %}
+                    <option value="{{ m.id }}" {% if m.id == medidor_sel %}selected{% endif %}>{{ m.cliente_nombre }} - #{{ m.id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="filter-bar__group filter-bar__group--checkbox">
-            <input type="checkbox" name="incompletos" value="1" {% if incompletos %}checked{% endif %}>
-            <label>Solo incompletos</label>
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-2 py-1">
+                    <input type="checkbox" name="incompletos" value="1" {% if incompletos %}checked{% endif %} class="checkbox checkbox-sm checkbox-primary">
+                    <span class="label-text">Solo incompletos</span>
+                </label>
+            </div>
         </div>
-    </div>
-    <div class="filter-bar__actions">
-        <button type="submit" class="btn btn--primary">Filtrar</button>
-        <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Limpiar</a>
+        <div class="flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('lecturas.listar') }}" class="btn btn-ghost btn-sm">Limpiar</a>
+        </div>
     </div>
 </form>
 
 {% if lecturas %}
 <!-- CARDS - solo mobile -->
-<div class="hide-desktop" id="cardsContainer">
+<div class="lg:hidden space-y-2" id="cardsContainer">
     {% for l in lecturas %}
-    <div class="lectura-card {% if l.foto_path and l.foto_path != '' and l.foto_nombre != 'sin_foto' %}lectura-card--success{% else %}lectura-card--warning{% endif %}" data-expanded="false" onclick="toggleCard(this, event)">
-        <div class="lectura-card__summary">
-            <div class="lectura-card__left">
-                <div class="lectura-card__period">{{ l.mes|mes_nombre }} {{ l.año }}</div>
-                <div class="lectura-card__client">{{ l.cliente_nombre }}</div>
-            </div>
-            <div class="lectura-card__right">
-                <div class="lectura-card__value">{{ l.lectura_m3 }} m3</div>
-                {% if l.foto_path and l.foto_path != '' and l.foto_nombre != 'sin_foto' %}
-                    <span class="badge badge--success">Con foto</span>
-                {% else %}
-                    <span class="badge badge--warning">Sin foto</span>
-                {% endif %}
-                <span class="lectura-card__chevron"><i class="fas fa-chevron-down"></i></span>
+    <div class="collapse collapse-arrow bg-base-100 shadow {% if l.foto_path and l.foto_path != '' and l.foto_nombre != 'sin_foto' %}border-l-4 border-l-success{% else %}border-l-4 border-l-warning{% endif %}"
+         data-expandable data-expanded="false">
+        <input type="checkbox" class="peer" />
+        <div class="collapse-title pr-12">
+            <div class="flex justify-between items-center">
+                <div class="min-w-0">
+                    <div class="font-semibold">{{ l.mes|mes_nombre }} {{ l.año }}</div>
+                    <div class="text-sm text-base-content/70 truncate">{{ l.cliente_nombre }}</div>
+                </div>
+                <div class="flex flex-col items-end gap-1 ml-4">
+                    <div class="font-bold">{{ l.lectura_m3 }} m3</div>
+                    {% if l.foto_path and l.foto_path != '' and l.foto_nombre != 'sin_foto' %}
+                        <span class="badge badge-success badge-sm">Con foto</span>
+                    {% else %}
+                        <span class="badge badge-warning badge-sm">Sin foto</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
-        <div class="lectura-card__details">
-            <div class="lectura-card__details-inner">
-                <div class="lectura-card__info">
-                    <div class="lectura-card__info-item">
-                        Fecha
-                        <span>{{ l.fecha_lectura|fecha_formato }}</span>
-                    </div>
-                    <div class="lectura-card__info-item">
-                        Medidor
-                        <span>{{ l.numero_medidor or ('#' ~ l.medidor_id) }}</span>
-                    </div>
+        <div class="collapse-content bg-base-200/50">
+            <div class="grid grid-cols-2 gap-2 py-2 text-sm">
+                <div class="text-base-content/70">
+                    Fecha
+                    <span class="block font-medium text-base-content">{{ l.fecha_lectura|fecha_formato }}</span>
                 </div>
-                <div class="lectura-card__actions-primary">
-                    <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn--primary" onclick="event.stopPropagation()">
-                        <i class="fas fa-eye"></i> Ver Detalle
-                    </a>
-                    <a href="{{ url_for('lecturas.editar', lectura_id=l.id) }}" class="btn btn--secondary" onclick="event.stopPropagation()">
-                        <i class="fas fa-edit"></i> Editar
-                    </a>
+                <div class="text-base-content/70">
+                    Medidor
+                    <span class="block font-medium text-base-content">{{ l.numero_medidor or ('#' ~ l.medidor_id) }}</span>
                 </div>
+            </div>
+            <div class="flex flex-col gap-2 pt-2">
+                <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i> Ver Detalle
+                </a>
+                <a href="{{ url_for('lecturas.editar', lectura_id=l.id) }}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
             </div>
         </div>
     </div>
@@ -166,204 +180,139 @@
 </div>
 
 <!-- TABLE - solo desktop -->
-<table class="data-table data-table--striped data-table--hover hide-mobile">
-    <thead>
-        <tr>
-            <th class="sortable {% if orden_col == 'id' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='id', dir='desc' if orden_col == 'id' and orden_dir == 'asc' else 'asc') }}">ID</a>
-            </th>
-            <th class="sortable {% if orden_col == 'cliente' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='cliente', dir='desc' if orden_col == 'cliente' and orden_dir == 'asc' else 'asc') }}">Cliente</a>
-            </th>
-            <th class="sortable {% if orden_col == 'periodo' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='periodo', dir='desc' if orden_col == 'periodo' and orden_dir == 'asc' else 'asc') }}">Periodo</a>
-            </th>
-            <th class="sortable {% if orden_col == 'lectura_m3' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='lectura_m3', dir='desc' if orden_col == 'lectura_m3' and orden_dir == 'asc' else 'asc') }}">Lectura (m3)</a>
-            </th>
-            <th class="sortable {% if orden_col == 'fecha_lectura' %}{{ orden_dir }}{% endif %}">
-                <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='fecha_lectura', dir='desc' if orden_col == 'fecha_lectura' and orden_dir == 'asc' else 'asc') }}">Fecha Lectura</a>
-            </th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for l in lecturas %}
-        <tr>
-            <td>{{ l.id }}</td>
-            <td>{{ l.cliente_nombre }}</td>
-            <td data-sort="{{ l.año * 100 + l.mes }}">{{ l.mes|mes_nombre }} {{ l.año }}</td>
-            <td>{{ l.lectura_m3 }}</td>
-            <td>{{ l.fecha_lectura|fecha_formato }}</td>
-            <td>
-                <div class="action-btn-group">
-                    <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="action-btn" title="Ver detalle">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="{{ url_for('lecturas.editar', lectura_id=l.id) }}" class="action-btn" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </a>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="overflow-x-auto hidden lg:block">
+    <table class="table table-zebra bg-base-100">
+        <thead>
+            <tr>
+                <th class="sortable {% if orden_col == 'id' %}{{ orden_dir }}{% endif %}">
+                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='id', dir='desc' if orden_col == 'id' and orden_dir == 'asc' else 'asc') }}">ID</a>
+                </th>
+                <th class="sortable {% if orden_col == 'cliente' %}{{ orden_dir }}{% endif %}">
+                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='cliente', dir='desc' if orden_col == 'cliente' and orden_dir == 'asc' else 'asc') }}">Cliente</a>
+                </th>
+                <th class="sortable {% if orden_col == 'periodo' %}{{ orden_dir }}{% endif %}">
+                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='periodo', dir='desc' if orden_col == 'periodo' and orden_dir == 'asc' else 'asc') }}">Periodo</a>
+                </th>
+                <th class="sortable {% if orden_col == 'lectura_m3' %}{{ orden_dir }}{% endif %}">
+                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='lectura_m3', dir='desc' if orden_col == 'lectura_m3' and orden_dir == 'asc' else 'asc') }}">Lectura (m3)</a>
+                </th>
+                <th class="sortable {% if orden_col == 'fecha_lectura' %}{{ orden_dir }}{% endif %}">
+                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='fecha_lectura', dir='desc' if orden_col == 'fecha_lectura' and orden_dir == 'asc' else 'asc') }}">Fecha Lectura</a>
+                </th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in lecturas %}
+            <tr class="hover">
+                <td>{{ l.id }}</td>
+                <td>{{ l.cliente_nombre }}</td>
+                <td data-sort="{{ l.año * 100 + l.mes }}">{{ l.mes|mes_nombre }} {{ l.año }}</td>
+                <td>{{ l.lectura_m3 }}</td>
+                <td>{{ l.fecha_lectura|fecha_formato }}</td>
+                <td>
+                    <div class="flex gap-1">
+                        <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-ghost btn-xs btn-square" title="Ver detalle">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('lecturas.editar', lectura_id=l.id) }}" class="btn btn-ghost btn-xs btn-square" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% include 'partials/pagination.html' %}
 
 {% else %}
-<div class="empty-state hide-mobile">
-    <div class="empty-state__icon"><i class="fas fa-tachometer-alt"></i></div>
-    <h3 class="empty-state__title">No hay lecturas</h3>
-    <p class="empty-state__description">No se encontraron lecturas con los filtros seleccionados.</p>
-    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
-</div>
-<div class="empty-state hide-desktop">
-    <div class="empty-state__icon"><i class="fas fa-search"></i></div>
-    <h3 class="empty-state__title">Sin resultados</h3>
-    <p class="empty-state__description">Intenta cambiar los filtros o crea una nueva lectura.</p>
-    <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary">+ Nueva Lectura</a>
+<!-- Empty state -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body items-center text-center py-12">
+        <i class="fas fa-tachometer-alt text-5xl text-base-content/30 mb-4"></i>
+        <h3 class="card-title">No hay lecturas</h3>
+        <p class="text-base-content/70 mb-4">No se encontraron lecturas con los filtros seleccionados.</p>
+        <div class="card-actions">
+            <a href="{{ url_for('lecturas.listar') }}" class="btn btn-ghost">Limpiar Filtros</a>
+            <a href="{{ url_for('lecturas.crear') }}" class="btn btn-primary">+ Nueva Lectura</a>
+        </div>
+    </div>
 </div>
 {% endif %}
 
 <!-- Modal filtros avanzados (mobile) -->
-<div id="modalFiltrosLecturas" class="modal">
-    <div class="modal__content">
-        <div class="modal__drag-indicator"></div>
-        <div class="modal__header">
-            <h3>Filtros</h3>
-            <button class="modal__close" onclick="cerrarModal('modalFiltrosLecturas')">&times;</button>
-        </div>
-        <div class="modal__body">
-            <form method="GET" id="formFiltrosMobile">
-                {% if filtros.con_foto is not none %}
-                <input type="hidden" name="con_foto" value="{{ filtros.con_foto }}">
-                {% endif %}
+<dialog id="modalFiltrosLecturas" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Filtros</h3>
+        <form method="GET" id="formFiltrosMobile">
+            {% if filtros.con_foto is not none %}
+            <input type="hidden" name="con_foto" value="{{ filtros.con_foto }}">
+            {% endif %}
 
-                <div class="form-group">
-                    <label for="mobile_año">Año</label>
-                    <select name="año" id="mobile_año">
-                        <option value="">Todos</option>
-                        {% for a in años %}
-                        <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Año</span></label>
+                <select name="año" class="select select-bordered">
+                    <option value="">Todos</option>
+                    {% for a in años %}
+                    <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label for="mobile_mes">Mes</label>
-                    <select name="mes" id="mobile_mes">
-                        <option value="">Todos</option>
-                        {% for m in range(1, 13) %}
-                        <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Mes</span></label>
+                <select name="mes" class="select select-bordered">
+                    <option value="">Todos</option>
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label for="mobile_cliente">Cliente</label>
-                    <select name="cliente_id" id="mobile_cliente">
-                        <option value="">Todos</option>
-                        {% for c in clientes %}
-                        <option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>
-                            {{ c.nombre }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Cliente</span></label>
+                <select name="cliente_id" class="select select-bordered">
+                    <option value="">Todos</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>{{ c.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label for="mobile_medidor">Medidor</label>
-                    <select name="medidor_id" id="mobile_medidor">
-                        <option value="">Todos</option>
-                        {% for m in medidores %}
-                        <option value="{{ m.id }}" {{ 'selected' if filtros.medidor_id == m.id }}>
-                            {{ m.cliente_nombre }} - #{{ m.id }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Medidor</span></label>
+                <select name="medidor_id" class="select select-bordered">
+                    <option value="">Todos</option>
+                    {% for m in medidores %}
+                    <option value="{{ m.id }}" {{ 'selected' if filtros.medidor_id == m.id }}>{{ m.cliente_nombre }} - #{{ m.id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" name="incompletos" value="1"
-                               {{ 'checked' if filtros.incompletos }}
-                               style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;">
-                        Solo incompletos
-                    </label>
-                </div>
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" name="incompletos" value="1" {{ 'checked' if filtros.incompletos }} class="checkbox checkbox-primary">
+                    <span class="label-text">Solo incompletos</span>
+                </label>
+            </div>
 
-                <div class="modal__actions">
-                    <a href="{{ url_for('lecturas.listar') }}" class="btn btn--secondary">Limpiar</a>
-                    <button type="submit" class="btn btn--primary">Aplicar</button>
-                </div>
-            </form>
-        </div>
+            <div class="modal-action">
+                <a href="{{ url_for('lecturas.listar') }}" class="btn btn-ghost">Limpiar</a>
+                <button type="submit" class="btn btn-primary">Aplicar</button>
+            </div>
+        </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <script>
-// === Card expansion (mobile) ===
-function toggleCard(card, event) {
-    if (event.target.closest('.lectura-card__actions-primary')) return;
-    var isExpanded = card.dataset.expanded === 'true';
-    document.querySelectorAll('.lectura-card[data-expanded="true"]').forEach(function(c) {
-        if (c !== card) c.dataset.expanded = 'false';
-    });
-    card.dataset.expanded = isExpanded ? 'false' : 'true';
-}
-
-// === Stats collapsible (desktop) ===
-function toggleStats() {
-    var toggle = document.getElementById('statsToggle');
-    var content = document.getElementById('statsContent');
-    var isOpen = toggle.getAttribute('aria-expanded') === 'true';
-    toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-    if (isOpen) {
-        content.classList.remove('stats-collapsible--open');
-    } else {
-        content.classList.add('stats-collapsible--open');
-    }
-    localStorage.setItem('lecturas-stats-open', isOpen ? '0' : '1');
-}
-(function() {
-    var saved = localStorage.getItem('lecturas-stats-open');
-    if (saved === '1') {
-        var toggle = document.getElementById('statsToggle');
-        var content = document.getElementById('statsContent');
-        if (toggle && content) {
-            toggle.setAttribute('aria-expanded', 'true');
-            content.classList.add('stats-collapsible--open');
-        }
-    }
-})();
-
-// === Filter auto-submit (desktop) ===
-if (window.FilterBar) {
-    FilterBar.init('#filterFormLecturas', { debounceMs: 400, containerSelector: '.data-table' });
-}
-
-// === Loading on chip click (mobile) ===
-document.querySelectorAll('.filter-chips .chip').forEach(function(chip) {
-    chip.addEventListener('click', function() {
-        var container = document.getElementById('cardsContainer');
-        if (container && window.Loading) {
-            Loading.show(container);
-        }
-    });
-});
-
-// === Modal utilities ===
-function abrirModal(id) {
-    document.getElementById(id).classList.add('active');
-}
-function cerrarModal(id) {
-    document.getElementById(id).classList.remove('active');
-}
-
 // === Dynamic medidor loading by client ===
-document.getElementById('cliente_id').addEventListener('change', function() {
+document.getElementById('cliente_id')?.addEventListener('change', function() {
     var clienteId = this.value;
     var medidorSelect = document.getElementById('medidor_id');
     medidorSelect.value = '';
@@ -385,5 +334,17 @@ document.getElementById('cliente_id').addEventListener('change', function() {
             });
         });
 });
+
+// Restore stats collapse state
+(function() {
+    var saved = localStorage.getItem('lecturas-stats-open');
+    if (saved === '1') {
+        var toggle = document.getElementById('stats-toggle');
+        if (toggle) toggle.checked = true;
+    }
+    document.getElementById('stats-toggle')?.addEventListener('change', function() {
+        localStorage.setItem('lecturas-stats-open', this.checked ? '1' : '0');
+    });
+})();
 </script>
 {% endblock %}

@@ -1,31 +1,119 @@
 {% extends "base.html" %}
 
-{% block title %}Inicio - Sistema de Lecturas{% endblock %}
+{% block title %}Dashboard - Sistema de Cobro de Agua{% endblock %}
 
 {% block content %}
-<h1>Sistema de Lecturas de Medidores</h1>
+<!-- HEADER -->
+<div class="mb-6">
+    <h1 class="text-2xl font-bold">Sistema de Cobro de Agua</h1>
+    <p class="text-base-content/70">Panel de Control</p>
+</div>
 
-<div class="stats-grid">
-    <div class="stat-card">
-        <h3>{{ stats.clientes }}</h3>
-        <p>Clientes</p>
-        <a href="{{ url_for('clientes.listar') }}">Ver todos</a>
+<!-- STATS -->
+<div class="stats stats-vertical lg:stats-horizontal shadow w-full mb-6 bg-base-100">
+    <div class="stat">
+        <div class="stat-figure text-primary">
+            <i class="fas fa-users text-3xl"></i>
+        </div>
+        <div class="stat-title">Clientes</div>
+        <div class="stat-value text-primary">{{ stats.clientes }}</div>
+        <div class="stat-actions">
+            <a href="{{ url_for('clientes.listar') }}" class="btn btn-sm btn-ghost">Ver todos</a>
+        </div>
     </div>
-    <div class="stat-card">
-        <h3>{{ stats.medidores }}</h3>
-        <p>Medidores</p>
-        <a href="{{ url_for('medidores.listar') }}">Ver todos</a>
+
+    <div class="stat">
+        <div class="stat-figure text-secondary">
+            <i class="fas fa-gauge-high text-3xl"></i>
+        </div>
+        <div class="stat-title">Medidores</div>
+        <div class="stat-value text-secondary">{{ stats.medidores }}</div>
+        <div class="stat-actions">
+            <a href="{{ url_for('medidores.listar') }}" class="btn btn-sm btn-ghost">Ver todos</a>
+        </div>
     </div>
-    <div class="stat-card">
-        <h3>{{ stats.lecturas }}</h3>
-        <p>Lecturas</p>
-        <a href="{{ url_for('lecturas.listar') }}">Ver todas</a>
+
+    <div class="stat">
+        <div class="stat-figure text-accent">
+            <i class="fas fa-clipboard-list text-3xl"></i>
+        </div>
+        <div class="stat-title">Lecturas</div>
+        <div class="stat-value text-accent">{{ stats.lecturas }}</div>
+        <div class="stat-actions">
+            <a href="{{ url_for('lecturas.listar') }}" class="btn btn-sm btn-ghost">Ver todas</a>
+        </div>
+    </div>
+
+    <div class="stat">
+        <div class="stat-figure text-info">
+            <i class="fas fa-file-invoice-dollar text-3xl"></i>
+        </div>
+        <div class="stat-title">Boletas</div>
+        <div class="stat-value text-info">{{ stats.boletas or 0 }}</div>
+        <div class="stat-actions">
+            <a href="{{ url_for('boletas.listar') }}" class="btn btn-sm btn-ghost">Ver todas</a>
+        </div>
     </div>
 </div>
 
-<div class="quick-actions">
-    <h2>Acciones Rapidas</h2>
-    <a href="{{ url_for('lecturas.crear') }}" class="btn btn--primary">Nueva Lectura</a>
-    <a href="{{ url_for('lecturas.listar') }}" class="btn">Ver Lecturas</a>
+<!-- QUICK ACTIONS -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h2 class="card-title">
+            <i class="fas fa-bolt text-warning"></i>
+            Acciones Rapidas
+        </h2>
+        <div class="flex flex-wrap gap-2 mt-4">
+            <a href="{{ url_for('lecturas.crear') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nueva Lectura
+            </a>
+            <a href="{{ url_for('lecturas.crear_multiple') }}" class="btn btn-secondary">
+                <i class="fas fa-layer-group"></i> Lectura Multiple
+            </a>
+            <a href="{{ url_for('boletas.crear') }}" class="btn btn-info">
+                <i class="fas fa-file-invoice"></i> Nueva Boleta
+            </a>
+            <a href="{{ url_for('boletas.crear_masivo') }}" class="btn btn-ghost">
+                <i class="fas fa-file-import"></i> Boletas Masivas
+            </a>
+        </div>
+    </div>
 </div>
+
+<!-- RECENT ACTIVITY (optional) -->
+{% if lecturas_recientes %}
+<div class="card bg-base-100 shadow mt-6">
+    <div class="card-body">
+        <h2 class="card-title">
+            <i class="fas fa-clock text-info"></i>
+            Lecturas Recientes
+        </h2>
+        <div class="overflow-x-auto mt-4">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Periodo</th>
+                        <th>Lectura</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for l in lecturas_recientes[:5] %}
+                    <tr class="hover">
+                        <td>{{ l.cliente_nombre }}</td>
+                        <td>{{ l.mes|mes_nombre }} {{ l.año }}</td>
+                        <td>{{ l.lectura_m3 }} m3</td>
+                        <td>{{ l.fecha_lectura|fecha_formato }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-actions justify-end mt-2">
+            <a href="{{ url_for('lecturas.listar') }}" class="btn btn-ghost btn-sm">Ver todas</a>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

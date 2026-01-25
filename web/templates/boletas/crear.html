@@ -3,101 +3,123 @@
 {% block title %}Crear Boleta - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Crear Boleta</h1>
-    <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Cancelar</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Crear Boleta</h1>
+    <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary">Cancelar</a>
 </div>
 
-<div class="config-info" style="padding: 15px; background: #e8f4f8; border-radius: 5px; margin-bottom: 20px;">
-    <strong>Tarifas actuales:</strong>
-    Cargo fijo: ${{ config.cargo_fijo|formato_pesos }} |
-    Precio por m3: ${{ config.precio_m3|formato_pesos }}
-    <a href="{{ url_for('boletas.configuracion') }}" style="margin-left: 10px;">Cambiar</a>
-</div>
-
-<form method="GET" class="filter-form" style="margin-bottom: 20px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
-    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: end;">
-        <div class="form-group" style="margin: 0;">
-            <label for="cliente_id">Filtrar por cliente</label>
-            <select name="cliente_id" id="cliente_id">
-                <option value="">Todos</option>
-                {% for cliente in clientes %}
-                <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>
-                    {{ cliente.nombre }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group" style="margin: 0;">
-            <label for="año">Año</label>
-            <select name="año" id="año">
-                <option value="">Todos</option>
-                {% for a in años %}
-                <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="form-group" style="margin: 0;">
-            <label for="mes">Mes</label>
-            <select name="mes" id="mes">
-                <option value="">Todos</option>
-                {% for m in range(1, 13) %}
-                <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <button type="submit" class="btn btn--secondary">Filtrar</button>
+<div class="alert alert-info mb-6">
+    <div>
+        <strong>Tarifas actuales:</strong>
+        Cargo fijo: ${{ config.cargo_fijo|formato_pesos }} |
+        Precio por m3: ${{ config.precio_m3|formato_pesos }}
+        <a href="{{ url_for('boletas.configuracion') }}" class="link link-primary ml-2">Cambiar</a>
     </div>
-</form>
+</div>
+
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <form method="GET">
+            <div class="flex flex-wrap gap-4 items-end">
+                <div class="form-control">
+                    <label class="label" for="cliente_id">
+                        <span class="label-text">Filtrar por cliente</span>
+                    </label>
+                    <select name="cliente_id" id="cliente_id" class="select select-bordered">
+                        <option value="">Todos</option>
+                        {% for cliente in clientes %}
+                        <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>
+                            {{ cliente.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label" for="año">
+                        <span class="label-text">Ano</span>
+                    </label>
+                    <select name="año" id="año" class="select select-bordered">
+                        <option value="">Todos</option>
+                        {% for a in años %}
+                        <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label" for="mes">
+                        <span class="label-text">Mes</span>
+                    </label>
+                    <select name="mes" id="mes" class="select select-bordered">
+                        <option value="">Todos</option>
+                        {% for m in range(1, 13) %}
+                        <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-secondary">Filtrar</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 {% if lecturas %}
-<form method="POST">
-    <div class="form-group">
-        <label>Seleccionar lectura para crear boleta:</label>
-    </div>
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <form method="POST">
+            <div class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text font-semibold">Seleccionar lectura para crear boleta:</span>
+                </label>
+            </div>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Seleccionar</th>
-                <th>Cliente</th>
-                <th>Medidor</th>
-                <th>Periodo</th>
-                <th>Lectura (m3)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for lectura in lecturas %}
-            <tr>
-                <td>
-                    <input type="radio" name="lectura_id" value="{{ lectura.id }}" required>
-                </td>
-                <td>{{ lectura.cliente_nombre }}</td>
-                <td>{{ lectura.numero_medidor or 'Medidor ' ~ lectura.medidor_id }}</td>
-                <td>{{ lectura.mes }}/{{ lectura.año }}</td>
-                <td>{{ lectura.lectura_m3 }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                        <tr>
+                            <th>Seleccionar</th>
+                            <th>Cliente</th>
+                            <th>Medidor</th>
+                            <th>Periodo</th>
+                            <th>Lectura (m3)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lectura in lecturas %}
+                        <tr>
+                            <td>
+                                <input type="radio" name="lectura_id" value="{{ lectura.id }}" class="radio radio-primary" required>
+                            </td>
+                            <td>{{ lectura.cliente_nombre }}</td>
+                            <td>{{ lectura.numero_medidor or 'Medidor ' ~ lectura.medidor_id }}</td>
+                            <td>{{ lectura.mes }}/{{ lectura.año }}</td>
+                            <td>{{ lectura.lectura_m3 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
-    <div class="form-actions" style="margin-top: 20px;">
-        <button type="submit" class="btn btn--primary">Crear Boleta</button>
+            <div class="flex gap-2 mt-6">
+                <button type="submit" class="btn btn-primary">Crear Boleta</button>
+            </div>
+        </form>
     </div>
-</form>
+</div>
 {% else %}
 <div class="alert alert-info">
-    No hay lecturas disponibles sin boleta para los filtros seleccionados.
-    <br><br>
-    Posibles razones:
-    <ul>
-        <li>Todas las lecturas ya tienen boleta asociada</li>
-        <li>No hay lecturas registradas</li>
-        <li>Los filtros no coinciden con ninguna lectura</li>
-    </ul>
+    <div>
+        <p>No hay lecturas disponibles sin boleta para los filtros seleccionados.</p>
+        <br>
+        <p>Posibles razones:</p>
+        <ul class="list-disc list-inside mt-2">
+            <li>Todas las lecturas ya tienen boleta asociada</li>
+            <li>No hay lecturas registradas</li>
+            <li>Los filtros no coinciden con ninguna lectura</li>
+        </ul>
+    </div>
 </div>
 {% endif %}
 {% endblock %}

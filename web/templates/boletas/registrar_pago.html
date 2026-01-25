@@ -3,104 +3,132 @@
 {% block title %}Registrar Pago - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Registrar Pago</h1>
-    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary">Cancelar</a>
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Registrar Pago</h1>
+    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Cancelar</span>
+    </a>
 </div>
 
-<div class="form-container">
-    <form method="POST" id="formPago" enctype="multipart/form-data">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="cliente_id">Cliente *</label>
-                <select name="cliente_id" id="cliente_id" required onchange="cargarBoletas()">
-                    <option value="">Seleccionar cliente...</option>
-                    {% for c in clientes %}
-                    <option value="{{ c.id }}" {{ 'selected' if cliente_id == c.id }}>{{ c.nombre }}</option>
-                    {% endfor %}
-                </select>
+<div class="card bg-base-100 shadow max-w-3xl mx-auto">
+    <div class="card-body">
+        <form method="POST" id="formPago" enctype="multipart/form-data">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Cliente *</span>
+                    </label>
+                    <select name="cliente_id" id="cliente_id" required onchange="cargarBoletas()" class="select select-bordered">
+                        <option value="">Seleccionar cliente...</option>
+                        {% for c in clientes %}
+                        <option value="{{ c.id }}" {{ 'selected' if cliente_id == c.id }}>{{ c.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Monto del Pago *</span>
+                    </label>
+                    <input type="number" name="monto" id="monto" required step="1" min="1" placeholder="Ej: 25000"
+                           class="input input-bordered">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="monto">Monto del Pago *</label>
-                <input type="number" name="monto" id="monto" required step="1" min="1" placeholder="Ej: 25000">
-            </div>
-        </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Metodo de Pago</span>
+                    </label>
+                    <select name="metodo_pago" id="metodo_pago" onchange="toggleComprobante()" class="select select-bordered">
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="deposito">Deposito</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div>
 
-        <div class="form-row">
-            <div class="form-group">
-                <label for="metodo_pago">Metodo de Pago</label>
-                <select name="metodo_pago" id="metodo_pago" onchange="toggleComprobante()">
-                    <option value="efectivo">Efectivo</option>
-                    <option value="transferencia">Transferencia</option>
-                    <option value="deposito">Deposito</option>
-                    <option value="cheque">Cheque</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="fecha_pago">Fecha del Pago</label>
-                <input type="date" name="fecha_pago" id="fecha_pago" value="{{ today }}">
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label for="notas">Notas (opcional)</label>
-                <textarea name="notas" id="notas" rows="2" placeholder="Observaciones adicionales..."></textarea>
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Fecha del Pago</span>
+                    </label>
+                    <input type="date" name="fecha_pago" id="fecha_pago" value="{{ today }}"
+                           class="input input-bordered">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="comprobante">Comprobante <span id="comprobanteReq">*</span></label>
-                <input type="file" name="comprobante" id="comprobante" accept=".jpg,.jpeg,.png,.gif,.pdf">
-                <small id="comprobanteHelp" style="color: #666;">Requerido para transferencia</small>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Notas (opcional)</span>
+                    </label>
+                    <textarea name="notas" id="notas" rows="2" placeholder="Observaciones adicionales..."
+                              class="textarea textarea-bordered"></textarea>
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Comprobante <span id="comprobanteReq">*</span></span>
+                    </label>
+                    <input type="file" name="comprobante" id="comprobante" accept=".jpg,.jpeg,.png,.gif,.pdf"
+                           class="file-input file-input-bordered">
+                    <label class="label">
+                        <span class="label-text-alt text-base-content/70" id="comprobanteHelp">Requerido para transferencia</span>
+                    </label>
+                </div>
             </div>
-        </div>
 
-        <div class="boletas-section" id="boletasSection" style="display: {% if boletas_pendientes %}block{% else %}none{% endif %};">
-            <h3>Boletas Pendientes</h3>
-            <p class="help-text">Selecciona las boletas a las que aplicar este pago:</p>
+            <div class="card bg-base-200 mb-4" id="boletasSection" style="display: {% if boletas_pendientes %}block{% else %}none{% endif %};">
+                <div class="card-body">
+                    <h3 class="card-title text-base">Boletas Pendientes</h3>
+                    <p class="text-sm text-base-content/70 mb-4">Selecciona las boletas a las que aplicar este pago:</p>
 
-            <div class="boletas-list" id="boletasList">
-                {% if boletas_pendientes %}
-                {% for b in boletas_pendientes %}
-                <label class="boleta-item">
-                    <input type="checkbox" name="boletas" value="{{ b.id }}" onchange="actualizarTotal()">
-                    <div class="boleta-info">
-                        <span class="boleta-numero">{{ b.numero_boleta }}</span>
-                        <span class="boleta-periodo">{{ b.periodo_mes }}/{{ b.periodo_año }}</span>
-                        <span class="boleta-monto">${{ b.total|formato_pesos }}</span>
+                    <div class="max-h-64 overflow-y-auto border border-base-300 rounded-lg bg-base-100" id="boletasList">
+                        {% if boletas_pendientes %}
+                        {% for b in boletas_pendientes %}
+                        <label class="flex items-center p-3 border-b border-base-200 cursor-pointer hover:bg-base-200">
+                            <input type="checkbox" name="boletas" value="{{ b.id }}" onchange="actualizarTotal()" class="checkbox checkbox-sm mr-3">
+                            <div class="flex-1 flex justify-between items-center">
+                                <span class="font-medium">{{ b.numero_boleta }}</span>
+                                <span class="text-base-content/70">{{ b.periodo_mes }}/{{ b.periodo_año }}</span>
+                                <span class="font-bold">${{ b.total|formato_pesos }}</span>
+                            </div>
+                        </label>
+                        {% endfor %}
+                        {% endif %}
                     </div>
-                </label>
-                {% endfor %}
-                {% endif %}
+
+                    <div class="mt-4 p-4 bg-base-100 rounded-lg border border-base-300">
+                        <div class="flex justify-between py-1">
+                            <span>Total seleccionado:</span>
+                            <span id="totalSeleccionado">$0</span>
+                        </div>
+                        <div class="flex justify-between py-1">
+                            <span>Monto del pago:</span>
+                            <span id="montoPago">$0</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-t border-base-300 mt-2 font-bold" id="diferenciaRow">
+                            <span>Diferencia:</span>
+                            <span id="diferencia">$0</span>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 mt-4">
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="seleccionarTodas()">Seleccionar todas</button>
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="deseleccionarTodas()">Deseleccionar todas</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="totales">
-                <div class="total-item">
-                    <span>Total seleccionado:</span>
-                    <span id="totalSeleccionado">$0</span>
-                </div>
-                <div class="total-item">
-                    <span>Monto del pago:</span>
-                    <span id="montoPago">$0</span>
-                </div>
-                <div class="total-item diferencia" id="diferenciaRow">
-                    <span>Diferencia:</span>
-                    <span id="diferencia">$0</span>
-                </div>
+            <div class="card-actions justify-center">
+                <button type="submit" class="btn btn-primary btn-lg" id="btnSubmit" disabled>
+                    <i class="fas fa-check"></i> Registrar Pago
+                </button>
             </div>
-
-            <div class="select-actions">
-                <button type="button" class="btn btn--sm" onclick="seleccionarTodas()">Seleccionar todas</button>
-                <button type="button" class="btn btn--sm" onclick="deseleccionarTodas()">Deseleccionar todas</button>
-            </div>
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn--primary" id="btnSubmit" disabled>Registrar Pago</button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 
 <script>
@@ -128,7 +156,7 @@ function cargarBoletas() {
             boletasData = {};
 
             if (boletas.length === 0) {
-                lista.innerHTML = '<p style="color: #666; text-align: center;">Este cliente no tiene boletas pendientes.</p>';
+                lista.innerHTML = '<p class="p-4 text-center text-base-content/70">Este cliente no tiene boletas pendientes.</p>';
                 document.getElementById('boletasSection').style.display = 'block';
                 actualizarTotal();
                 return;
@@ -137,13 +165,13 @@ function cargarBoletas() {
             boletas.forEach(b => {
                 boletasData[b.id] = b.saldo_pendiente;
                 const label = document.createElement('label');
-                label.className = 'boleta-item';
+                label.className = 'flex items-center p-3 border-b border-base-200 cursor-pointer hover:bg-base-200';
                 label.innerHTML = `
-                    <input type="checkbox" name="boletas" value="${b.id}" onchange="actualizarTotal()">
-                    <div class="boleta-info">
-                        <span class="boleta-numero">${b.numero_boleta}</span>
-                        <span class="boleta-periodo">${b.periodo}</span>
-                        <span class="boleta-monto">$${b.saldo_pendiente.toLocaleString('es-CL')}</span>
+                    <input type="checkbox" name="boletas" value="${b.id}" onchange="actualizarTotal()" class="checkbox checkbox-sm mr-3">
+                    <div class="flex-1 flex justify-between items-center">
+                        <span class="font-medium">${b.numero_boleta}</span>
+                        <span class="text-base-content/70">${b.periodo}</span>
+                        <span class="font-bold">$${b.saldo_pendiente.toLocaleString('es-CL')}</span>
                     </div>
                 `;
                 lista.appendChild(label);
@@ -174,13 +202,13 @@ function actualizarTotal() {
 
     const diferenciaEl = document.getElementById('diferencia');
     if (diferencia > 0) {
-        diferenciaEl.style.color = '#28a745';
+        diferenciaEl.className = 'text-success';
         diferenciaEl.textContent = '+$' + diferencia.toLocaleString('es-CL') + ' (saldo a favor)';
     } else if (diferencia < 0) {
-        diferenciaEl.style.color = '#dc3545';
+        diferenciaEl.className = 'text-error';
         diferenciaEl.textContent = '-$' + Math.abs(diferencia).toLocaleString('es-CL') + ' (faltante)';
     } else {
-        diferenciaEl.style.color = '#333';
+        diferenciaEl.className = '';
     }
 
     // Habilitar/deshabilitar boton submit
@@ -226,143 +254,4 @@ toggleComprobante();
 actualizarTotal();
 {% endif %}
 </script>
-
-<style>
-.form-container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-.form-group {
-    margin-bottom: 20px;
-}
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-.form-group input,
-.form-group select,
-.form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-.form-group textarea {
-    resize: vertical;
-}
-
-.boletas-section {
-    background: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    margin: 20px 0;
-}
-.boletas-section h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-}
-.help-text {
-    color: #666;
-    margin-bottom: 15px;
-}
-
-.boletas-list {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background: white;
-}
-.boleta-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 15px;
-    border-bottom: 1px solid #eee;
-    cursor: pointer;
-}
-.boleta-item:last-child {
-    border-bottom: none;
-}
-.boleta-item:hover {
-    background: #f5f5f5;
-}
-.boleta-item input[type="checkbox"] {
-    width: auto;
-    margin-right: 15px;
-}
-.boleta-info {
-    display: flex;
-    justify-content: space-between;
-    flex: 1;
-}
-.boleta-numero {
-    font-weight: 500;
-}
-.boleta-periodo {
-    color: #666;
-}
-.boleta-monto {
-    font-weight: bold;
-    color: #333;
-}
-
-.totales {
-    margin-top: 15px;
-    padding: 15px;
-    background: white;
-    border-radius: 4px;
-    border: 1px solid #ddd;
-}
-.total-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 0;
-}
-.total-item.diferencia {
-    border-top: 1px solid #ddd;
-    margin-top: 10px;
-    padding-top: 10px;
-    font-weight: bold;
-}
-
-.select-actions {
-    margin-top: 15px;
-    display: flex;
-    gap: 10px;
-}
-.btn-small {
-    padding: 5px 10px;
-    font-size: 12px;
-}
-
-.form-actions {
-    margin-top: 30px;
-    text-align: center;
-}
-.form-actions .btn {
-    padding: 12px 30px;
-    font-size: 16px;
-}
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-    .boleta-info {
-        flex-direction: column;
-        gap: 5px;
-    }
-}
-</style>
 {% endblock %}

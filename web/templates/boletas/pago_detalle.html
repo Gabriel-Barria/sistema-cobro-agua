@@ -3,163 +3,204 @@
 {% block title %}Pago {{ pago.numero_pago }} - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Pago {{ pago.numero_pago }}</h1>
-    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary">Volver a Pagos</a>
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Pago {{ pago.numero_pago }}</h1>
+    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver a Pagos</span>
+    </a>
 </div>
 
-<div class="detail-grid">
-    <div class="detail-section">
-        <h3>Informacion del Pago</h3>
-        <table class="detail-table">
-            <tr>
-                <th>Numero:</th>
-                <td>{{ pago.numero_pago }}</td>
-            </tr>
-            <tr>
-                <th>Cliente:</th>
-                <td>{{ pago.cliente_nombre }}</td>
-            </tr>
-            <tr>
-                <th>Metodo:</th>
-                <td>{{ pago.metodo_pago|capitalize if pago.metodo_pago else '-' }}</td>
-            </tr>
-            <tr>
-                <th>Fecha Pago:</th>
-                <td>{{ pago.fecha_pago or '-' }}</td>
-            </tr>
-            <tr>
-                <th>Fecha Envio:</th>
-                <td>{{ pago.fecha_envio }}</td>
-            </tr>
-            {% if pago.notas %}
-            <tr>
-                <th>Notas:</th>
-                <td>{{ pago.notas }}</td>
-            </tr>
-            {% endif %}
-        </table>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+    <!-- Info del Pago -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-base">
+                <i class="fas fa-info-circle text-primary"></i>
+                Informacion del Pago
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th class="w-1/3">Numero:</th>
+                            <td>{{ pago.numero_pago }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cliente:</th>
+                            <td>{{ pago.cliente_nombre }}</td>
+                        </tr>
+                        <tr>
+                            <th>Metodo:</th>
+                            <td>{{ pago.metodo_pago|capitalize if pago.metodo_pago else '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha Pago:</th>
+                            <td>{{ pago.fecha_pago or '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fecha Envio:</th>
+                            <td>{{ pago.fecha_envio }}</td>
+                        </tr>
+                        {% if pago.notas %}
+                        <tr>
+                            <th>Notas:</th>
+                            <td>{{ pago.notas }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div class="detail-section detail-section--{{ 'success' if pago.estado == 'aprobado' else 'danger' if pago.estado == 'rechazado' else 'warning' if pago.estado == 'en_revision' else '' }}">
-        <h3>Estado y Montos</h3>
-        <table class="detail-table">
-            <tr>
-                <th>Estado:</th>
-                <td>
-                    {% if pago.estado == 'aprobado' %}
-                        <span class="badge badge--success">APROBADO</span>
-                    {% elif pago.estado == 'rechazado' %}
-                        <span class="badge badge--danger">RECHAZADO</span>
-                    {% elif pago.estado == 'en_revision' %}
-                        <span class="badge badge--warning">EN REVISION</span>
-                    {% else %}
-                        <span class="badge badge--secondary">{{ pago.estado|upper }}</span>
-                    {% endif %}
-                </td>
-            </tr>
-            <tr>
-                <th>Monto Total:</th>
-                <td style="font-size: 1.3em; font-weight: bold;">${{ pago.monto_total|formato_pesos }}</td>
-            </tr>
-            <tr>
-                <th>Monto Aplicado:</th>
-                <td>${{ pago.monto_aplicado|formato_pesos }}</td>
-            </tr>
-            {% if pago.monto_a_favor > 0 %}
-            <tr>
-                <th>Saldo a Favor:</th>
-                <td class="text-success" style="font-weight: bold;">${{ pago.monto_a_favor|formato_pesos }}</td>
-            </tr>
-            {% endif %}
-            {% if pago.fecha_procesamiento %}
-            <tr>
-                <th>Fecha Proceso:</th>
-                <td>{{ pago.fecha_procesamiento }}</td>
-            </tr>
-            {% endif %}
-            {% if pago.procesado_por_nombre %}
-            <tr>
-                <th>Procesado por:</th>
-                <td>{{ pago.procesado_por_nombre }}</td>
-            </tr>
-            {% endif %}
-            {% if pago.motivo_rechazo %}
-            <tr>
-                <th>Motivo Rechazo:</th>
-                <td class="text-danger">{{ pago.motivo_rechazo }}</td>
-            </tr>
-            {% endif %}
-        </table>
+    <!-- Estado y Montos -->
+    <div class="card bg-base-100 shadow {% if pago.estado == 'aprobado' %}border-l-4 border-l-success{% elif pago.estado == 'rechazado' %}border-l-4 border-l-error{% elif pago.estado == 'en_revision' %}border-l-4 border-l-warning{% endif %}">
+        <div class="card-body">
+            <h3 class="card-title text-base">
+                <i class="fas fa-dollar-sign text-success"></i>
+                Estado y Montos
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th class="w-1/3">Estado:</th>
+                            <td>
+                                {% if pago.estado == 'aprobado' %}
+                                    <span class="badge badge-success">APROBADO</span>
+                                {% elif pago.estado == 'rechazado' %}
+                                    <span class="badge badge-error">RECHAZADO</span>
+                                {% elif pago.estado == 'en_revision' %}
+                                    <span class="badge badge-warning">EN REVISION</span>
+                                {% else %}
+                                    <span class="badge badge-neutral">{{ pago.estado|upper }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Monto Total:</th>
+                            <td class="text-xl font-bold">${{ pago.monto_total|formato_pesos }}</td>
+                        </tr>
+                        <tr>
+                            <th>Monto Aplicado:</th>
+                            <td>${{ pago.monto_aplicado|formato_pesos }}</td>
+                        </tr>
+                        {% if pago.monto_a_favor > 0 %}
+                        <tr>
+                            <th>Saldo a Favor:</th>
+                            <td class="text-success font-bold">${{ pago.monto_a_favor|formato_pesos }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if pago.fecha_procesamiento %}
+                        <tr>
+                            <th>Fecha Proceso:</th>
+                            <td>{{ pago.fecha_procesamiento }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if pago.procesado_por_nombre %}
+                        <tr>
+                            <th>Procesado por:</th>
+                            <td>{{ pago.procesado_por_nombre }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if pago.motivo_rechazo %}
+                        <tr>
+                            <th>Motivo Rechazo:</th>
+                            <td class="text-error">{{ pago.motivo_rechazo }}</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
 
-        {% if pago.comprobante_path %}
-        <div style="margin-top: var(--spacing-md);">
-            <a href="/{{ pago.comprobante_path }}" target="_blank" class="btn btn--primary"><i class="fas fa-paperclip"></i> Ver Comprobante</a>
-        </div>
-        {% endif %}
-
-        {% if pago.estado == 'en_revision' %}
-        <div style="margin-top: var(--spacing-lg); display: flex; gap: var(--spacing-sm);">
-            <button type="button" class="btn btn--success" onclick="aprobarPago()"><i class="fas fa-check"></i> Aprobar Pago</button>
-            <button type="button" class="btn btn--danger" onclick="rechazarPago()"><i class="fas fa-times"></i> Rechazar Pago</button>
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<h3 style="margin-top: var(--spacing-xl);">Boletas Asociadas ({{ pago.boletas|length }})</h3>
-{% if pago.boletas %}
-<table class="data-table data-table--striped data-table--hover">
-    <thead>
-        <tr>
-            <th>Boleta</th>
-            <th>Total Boleta</th>
-            <th>Monto Aplicado</th>
-            <th>Pago Completo</th>
-            <th>Saldo Pendiente</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for b in pago.boletas %}
-        <tr>
-            <td>{{ b.numero_boleta }}</td>
-            <td>${{ b.boleta_total|formato_pesos }}</td>
-            <td>${{ b.monto_aplicado|formato_pesos }}</td>
-            <td>
-                {% if b.es_pago_completo %}
-                <span class="text-success">Si</span>
-                {% else %}
-                <span class="text-warning">Parcial</span>
-                {% endif %}
-            </td>
-            <td>${{ b.saldo_pendiente|formato_pesos }}</td>
-            <td>
-                {% if b.pagada == 2 %}
-                <span class="badge badge--success">Pagada</span>
-                {% elif b.pagada == 1 %}
-                <span class="badge badge--warning">En Revision</span>
-                {% else %}
-                <span class="badge badge--danger">Pendiente</span>
-                {% endif %}
-            </td>
-            <td>
-                <a href="{{ url_for('boletas.detalle', boleta_id=b.boleta_id) }}" class="action-btn" title="Ver boleta">
-                    <i class="fas fa-eye"></i>
+            {% if pago.comprobante_path %}
+            <div class="mt-4">
+                <a href="/{{ pago.comprobante_path }}" target="_blank" class="btn btn-primary btn-sm">
+                    <i class="fas fa-paperclip"></i> Ver Comprobante
                 </a>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<div class="empty-state">
-    <div class="empty-state__icon"><i class="fas fa-file-invoice"></i></div>
-    <h3 class="empty-state__title">Sin boletas</h3>
-    <p class="empty-state__description">Este pago no tiene boletas asociadas.</p>
+            </div>
+            {% endif %}
+
+            {% if pago.estado == 'en_revision' %}
+            <div class="flex gap-2 mt-4">
+                <button type="button" class="btn btn-success" onclick="aprobarPago()">
+                    <i class="fas fa-check"></i> Aprobar Pago
+                </button>
+                <button type="button" class="btn btn-error" onclick="rechazarPago()">
+                    <i class="fas fa-times"></i> Rechazar Pago
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
-{% endif %}
+
+<!-- Boletas Asociadas -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h3 class="card-title text-base">
+            <i class="fas fa-file-invoice text-info"></i>
+            Boletas Asociadas ({{ pago.boletas|length }})
+        </h3>
+
+        {% if pago.boletas %}
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Boleta</th>
+                        <th>Total Boleta</th>
+                        <th>Monto Aplicado</th>
+                        <th>Pago Completo</th>
+                        <th>Saldo Pendiente</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in pago.boletas %}
+                    <tr class="hover">
+                        <td>{{ b.numero_boleta }}</td>
+                        <td>${{ b.boleta_total|formato_pesos }}</td>
+                        <td>${{ b.monto_aplicado|formato_pesos }}</td>
+                        <td>
+                            {% if b.es_pago_completo %}
+                            <span class="text-success">Si</span>
+                            {% else %}
+                            <span class="text-warning">Parcial</span>
+                            {% endif %}
+                        </td>
+                        <td>${{ b.saldo_pendiente|formato_pesos }}</td>
+                        <td>
+                            {% if b.pagada == 2 %}
+                            <span class="badge badge-success">Pagada</span>
+                            {% elif b.pagada == 1 %}
+                            <span class="badge badge-warning">En Revision</span>
+                            {% else %}
+                            <span class="badge badge-error">Pendiente</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('boletas.detalle', boleta_id=b.boleta_id) }}" class="btn btn-ghost btn-xs btn-square" title="Ver boleta">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-8">
+            <i class="fas fa-file-invoice text-5xl text-base-content/30 mb-4"></i>
+            <h4 class="font-semibold">Sin boletas</h4>
+            <p class="text-base-content/70">Este pago no tiene boletas asociadas.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
 
 <script>
 function aprobarPago() {
@@ -168,7 +209,7 @@ function aprobarPago() {
         message: 'Se aprobara este pago y se aplicara a las boletas correspondientes.',
         icon: 'success',
         confirmText: 'Aprobar',
-        confirmClass: 'btn--success'
+        confirmClass: 'btn-success'
     }).then(function(ok) {
         if (ok) {
             var form = document.createElement('form');
@@ -186,7 +227,7 @@ function rechazarPago() {
         message: 'El pago sera rechazado y las boletas volveran a estado pendiente.',
         icon: 'danger',
         confirmText: 'Rechazar',
-        confirmClass: 'btn--danger',
+        confirmClass: 'btn-error',
         showInput: true,
         inputLabel: 'Motivo del rechazo:',
         inputPlaceholder: 'Ingrese el motivo...',

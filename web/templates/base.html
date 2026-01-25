@@ -1,272 +1,347 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Sistema de Lecturas{% endblock %}</title>
+    <title>{% block title %}Sistema de Cobro de Agua{% endblock %}</title>
 
-    <!-- Estilos -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+    <!-- CSS Compilado (DaisyUI + Tailwind) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dist/styles.css') }}">
+
+    <!-- Font Awesome (iconos) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fontawesome/css/all.min.css') }}">
+
+    <!-- Overrides custom -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+
+    <!-- Theme initialization (antes del render) -->
+    <script>
+        (function() {
+            const saved = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const theme = saved || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
 </head>
-<body>
-    <!-- Overlay para mobile -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+<body class="min-h-screen bg-base-200">
+    <div class="drawer lg:drawer-open">
+        <input id="sidebar-toggle" type="checkbox" class="drawer-toggle" />
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <!-- Header del sidebar -->
-        <div class="sidebar-header">
-            <div class="sidebar-brand">
-                <i class="fas fa-tint"></i>
-                <span class="sidebar-text">Sistema de Lecturas</span>
-            </div>
-            <button class="sidebar-toggle" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-
-        <!-- Navegación -->
-        <nav class="sidebar-nav">
-            <ul class="sidebar-menu">
-                <!-- Dashboard -->
-                <li class="menu-item">
-                    <a href="{{ url_for('index') }}" class="menu-link {% if request.endpoint == 'index' %}active{% endif %}">
-                        <i class="fas fa-home"></i>
-                        <span class="menu-text">Dashboard</span>
-                    </a>
-                </li>
-
-                <!-- Lecturas -->
-                <li class="menu-item">
-                    <a href="{{ url_for('lecturas.listar') }}" class="menu-link {% if request.endpoint and 'lecturas' in request.endpoint %}active{% endif %}">
-                        <i class="fas fa-clipboard-list"></i>
-                        <span class="menu-text">Lecturas</span>
-                    </a>
-                </li>
-
-                <!-- Boletas -->
-                <li class="menu-item has-submenu">
-                    <a href="{{ url_for('boletas.listar') }}" class="menu-link {% if request.endpoint and 'boletas' in request.endpoint %}active{% endif %}">
-                        <i class="fas fa-file-invoice-dollar"></i>
-                        <span class="menu-text">Boletas</span>
-                    </a>
-                </li>
-
-                {% if session.get('rol') == 'administrador' %}
-                <!-- Pagos (solo admin) -->
-                <li class="menu-item menu-item-indent">
-                    <a href="{{ url_for('boletas.pagos_lista') }}" class="menu-link {% if request.endpoint in ['boletas.pagos_lista', 'boletas.pago_detalle'] %}active{% endif %}">
-                        <i class="fas fa-money-bill-wave"></i>
-                        <span class="menu-text">Pagos</span>
-                    </a>
-                </li>
-                <li class="menu-item menu-item-indent">
-                    <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="menu-link {% if request.endpoint == 'boletas.registrar_pago_admin' %}active{% endif %}">
-                        <i class="fas fa-plus-circle"></i>
-                        <span class="menu-text">Registrar Pago</span>
-                    </a>
-                </li>
-                <li class="menu-item menu-item-indent">
-                    <a href="{{ url_for('boletas.saldos_lista') }}" class="menu-link {% if request.endpoint in ['boletas.saldos_lista', 'boletas.saldo_detalle'] %}active{% endif %}">
-                        <i class="fas fa-wallet"></i>
-                        <span class="menu-text">Saldos</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                <!-- Clientes -->
-                <li class="menu-item">
-                    <a href="{{ url_for('clientes.listar') }}" class="menu-link {% if request.endpoint and 'clientes' in request.endpoint %}active{% endif %}">
-                        <i class="fas fa-users"></i>
-                        <span class="menu-text">Clientes</span>
-                    </a>
-                </li>
-
-                <!-- Medidores -->
-                <li class="menu-item">
-                    <a href="{{ url_for('medidores.listar') }}" class="menu-link {% if request.endpoint and 'medidores' in request.endpoint %}active{% endif %}">
-                        <i class="fas fa-gauge-high"></i>
-                        <span class="menu-text">Medidores</span>
-                    </a>
-                </li>
-
-                {% if session.get('rol') == 'administrador' %}
-                <!-- Usuarios (solo admin) -->
-                <li class="menu-item">
-                    <a href="{{ url_for('usuarios.lista') }}" class="menu-link {% if request.endpoint and 'usuarios' in request.endpoint %}active{% endif %}">
-                        <i class="fas fa-user-shield"></i>
-                        <span class="menu-text">Usuarios</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                <!-- Separador -->
-                <li class="menu-separator"></li>
-
-                <!-- Interfaz Mobile -->
-                {% if session.get('rol') == 'administrador' %}
-                <li class="menu-item">
-                    <a href="/mobile/lecturas" class="menu-link">
-                        <i class="fas fa-mobile-alt"></i>
-                        <span class="menu-text">Vista Mobile</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                <!-- Portal Público -->
-                <li class="menu-item">
-                    <a href="/portal/" class="menu-link" target="_blank">
-                        <i class="fas fa-globe"></i>
-                        <span class="menu-text">Portal Público</span>
-                        <i class="fas fa-external-link-alt" style="margin-left: auto; font-size: 0.75rem;"></i>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Footer del sidebar (Usuario) -->
-        {% if session.get('usuario_id') %}
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user-circle"></i>
+        <!-- Contenido principal -->
+        <div class="drawer-content flex flex-col">
+            <!-- Navbar mobile -->
+            <div class="navbar bg-base-100 lg:hidden sticky top-0 z-30 shadow-sm">
+                <div class="flex-none">
+                    <label for="sidebar-toggle" class="btn btn-square btn-ghost">
+                        <i class="fas fa-bars text-xl"></i>
+                    </label>
                 </div>
-                <div class="user-details">
-                    <span class="user-name">{{ session.get('nombre_completo', 'Usuario') }}</span>
-                    <span class="user-role">{{ session.get('rol', '').title() }}</span>
+                <div class="flex-1">
+                    <span class="font-bold text-lg">Sistema de Agua</span>
+                </div>
+                <div class="flex-none">
+                    <button onclick="toggleTheme()" class="btn btn-square btn-ghost">
+                        <i class="fas fa-moon dark:hidden"></i>
+                        <i class="fas fa-sun hidden dark:inline"></i>
+                    </button>
                 </div>
             </div>
-            <a href="{{ url_for('auth.logout') }}" class="logout-btn" title="Cerrar Sesión">
-                <i class="fas fa-sign-out-alt"></i>
-            </a>
-        </div>
-        {% endif %}
-    </aside>
 
-    <!-- Main content -->
-    <main class="main-content" id="mainContent">
-        <!-- Top bar mobile -->
-        <div class="mobile-topbar">
-            <button class="mobile-menu-btn" id="mobileMenuBtn">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1 class="mobile-title">Sistema de Lecturas</h1>
+            <!-- Main content area -->
+            <main class="flex-1 p-4 lg:p-6">
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="mb-4 space-y-2">
+                        {% for category, message in messages %}
+                            {% if category == 'success' %}
+                            <div role="alert" class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            {% elif category == 'error' or category == 'danger' %}
+                            <div role="alert" class="alert alert-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            {% elif category == 'warning' %}
+                            <div role="alert" class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            {% else %}
+                            <div role="alert" class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer footer-center p-4 bg-base-300 text-base-content">
+                <aside>
+                    <p>Sistema de Cobro de Agua</p>
+                </aside>
+            </footer>
         </div>
 
-        <!-- Contenedor del contenido -->
-        <div class="content-wrapper">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
+        <!-- Sidebar -->
+        <div class="drawer-side z-40">
+            <label for="sidebar-toggle" aria-label="close sidebar" class="drawer-overlay"></label>
+            <aside class="bg-base-100 min-h-full w-64 flex flex-col">
+                <!-- Header del sidebar -->
+                <div class="p-4 border-b border-base-300">
+                    <div class="flex items-center gap-3">
+                        <i class="fas fa-tint text-primary text-2xl"></i>
+                        <span class="font-bold text-lg">Sistema de Agua</span>
+                    </div>
+                </div>
+
+                <!-- Navegacion principal -->
+                <ul class="menu p-4 flex-1">
+                    <!-- Dashboard -->
+                    <li>
+                        <a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">
+                            <i class="fas fa-home w-5"></i>
+                            Dashboard
+                        </a>
+                    </li>
+
+                    <!-- Lecturas -->
+                    <li>
+                        <a href="{{ url_for('lecturas.listar') }}" class="{% if request.endpoint and 'lecturas' in request.endpoint %}active{% endif %}">
+                            <i class="fas fa-clipboard-list w-5"></i>
+                            Lecturas
+                        </a>
+                    </li>
+
+                    <!-- Boletas -->
+                    <li>
+                        <a href="{{ url_for('boletas.listar') }}" class="{% if request.endpoint and 'boletas' in request.endpoint and request.endpoint not in ['boletas.pagos_lista', 'boletas.pago_detalle', 'boletas.registrar_pago_admin', 'boletas.saldos_lista', 'boletas.saldo_detalle'] %}active{% endif %}">
+                            <i class="fas fa-file-invoice-dollar w-5"></i>
+                            Boletas
+                        </a>
+                    </li>
+
+                    {% if session.get('rol') == 'administrador' %}
+                    <!-- Submenu Pagos (solo admin) -->
+                    <li>
+                        <details {% if request.endpoint in ['boletas.pagos_lista', 'boletas.pago_detalle', 'boletas.registrar_pago_admin', 'boletas.saldos_lista', 'boletas.saldo_detalle'] %}open{% endif %}>
+                            <summary>
+                                <i class="fas fa-money-bill-wave w-5"></i>
+                                Pagos
+                            </summary>
+                            <ul>
+                                <li>
+                                    <a href="{{ url_for('boletas.pagos_lista') }}" class="{% if request.endpoint in ['boletas.pagos_lista', 'boletas.pago_detalle'] %}active{% endif %}">
+                                        <i class="fas fa-list w-4"></i>
+                                        Lista de Pagos
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="{% if request.endpoint == 'boletas.registrar_pago_admin' %}active{% endif %}">
+                                        <i class="fas fa-plus-circle w-4"></i>
+                                        Registrar Pago
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('boletas.saldos_lista') }}" class="{% if request.endpoint in ['boletas.saldos_lista', 'boletas.saldo_detalle'] %}active{% endif %}">
+                                        <i class="fas fa-wallet w-4"></i>
+                                        Saldos
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
+                    </li>
+                    {% endif %}
+
+                    <!-- Clientes -->
+                    <li>
+                        <a href="{{ url_for('clientes.listar') }}" class="{% if request.endpoint and 'clientes' in request.endpoint %}active{% endif %}">
+                            <i class="fas fa-users w-5"></i>
+                            Clientes
+                        </a>
+                    </li>
+
+                    <!-- Medidores -->
+                    <li>
+                        <a href="{{ url_for('medidores.listar') }}" class="{% if request.endpoint and 'medidores' in request.endpoint %}active{% endif %}">
+                            <i class="fas fa-gauge-high w-5"></i>
+                            Medidores
+                        </a>
+                    </li>
+
+                    {% if session.get('rol') == 'administrador' %}
+                    <!-- Usuarios (solo admin) -->
+                    <li>
+                        <a href="{{ url_for('usuarios.lista') }}" class="{% if request.endpoint and 'usuarios' in request.endpoint %}active{% endif %}">
+                            <i class="fas fa-user-shield w-5"></i>
+                            Usuarios
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <div class="divider my-2"></div>
+
+                    <!-- Interfaz Mobile -->
+                    {% if session.get('rol') == 'administrador' %}
+                    <li>
+                        <a href="/mobile/lecturas">
+                            <i class="fas fa-mobile-alt w-5"></i>
+                            Vista Mobile
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Portal Publico -->
+                    <li>
+                        <a href="/portal/" target="_blank">
+                            <i class="fas fa-globe w-5"></i>
+                            Portal Publico
+                            <i class="fas fa-external-link-alt text-xs opacity-50"></i>
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Footer del sidebar (Usuario) -->
+                {% if session.get('usuario_id') %}
+                <div class="border-t border-base-300 p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="avatar placeholder">
+                            <div class="bg-primary text-primary-content rounded-full w-10">
+                                <span class="text-sm">{{ session.get('nombre_completo', 'U')[0] }}</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="font-medium truncate">{{ session.get('nombre_completo', 'Usuario') }}</div>
+                            <div class="text-xs opacity-60">{{ session.get('rol', '').title() }}</div>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="toggleTheme()" class="btn btn-ghost btn-sm btn-square hidden lg:flex" title="Cambiar tema">
+                                <i class="fas fa-moon dark:hidden"></i>
+                                <i class="fas fa-sun hidden dark:inline"></i>
+                            </button>
+                            <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm btn-square text-error" title="Cerrar Sesion">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 {% endif %}
-            {% endwith %}
-
-            {% block content %}{% endblock %}
+            </aside>
         </div>
+    </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <p>Sistema de Lecturas de Medidores</p>
-        </footer>
-    </main>
+    <!-- Toast container -->
+    <div id="toast-container" class="toast-container"></div>
 
-    <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/components.js') }}"></script>
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Flash messages → Toast bridge
-        var alerts = document.querySelectorAll('.alert');
-        alerts.forEach(function(alert) {
-            var text = alert.textContent.trim();
-            var type = 'info';
-            if (alert.classList.contains('alert-success')) type = 'success';
-            else if (alert.classList.contains('alert-danger') || alert.classList.contains('alert-error')) type = 'error';
-            else if (alert.classList.contains('alert-warning')) type = 'warning';
-            if (text && window.Toast) {
-                window.Toast.show(text, type);
-            }
-            alert.style.display = 'none';
-        });
+        // Theme toggle function
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+        }
 
-        // Función para ordenar tabla
-        function sortTable(th, updateUrl = true) {
-            const table = th.closest('table');
-            const tbody = table.querySelector('tbody');
-            const rows = Array.from(tbody.querySelectorAll('tr'));
-            const colIndex = Array.from(th.parentNode.children).indexOf(th);
-            const isAsc = th.classList.contains('asc');
-            const newOrder = isAsc ? 'desc' : 'asc';
-
-            // Limpiar clases de ordenamiento
-            th.parentNode.querySelectorAll('th').forEach(h => {
-                h.classList.remove('asc', 'desc');
-            });
-
-            // Ordenar filas
-            rows.sort(function(a, b) {
-                const aCell = a.children[colIndex];
-                const bCell = b.children[colIndex];
-
-                // Usar data-sort si existe, sino usar el texto
-                const aVal = aCell.dataset.sort || aCell.textContent.trim();
-                const bVal = bCell.dataset.sort || bCell.textContent.trim();
-
-                // Intentar ordenar como número
-                const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
-                const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
-
-                if (!isNaN(aNum) && !isNaN(bNum)) {
-                    return isAsc ? bNum - aNum : aNum - bNum;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Flash messages to Toast bridge
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert, index) {
+                var text = alert.querySelector('span')?.textContent.trim();
+                var type = 'info';
+                if (alert.classList.contains('alert-success')) type = 'success';
+                else if (alert.classList.contains('alert-error')) type = 'error';
+                else if (alert.classList.contains('alert-warning')) type = 'warning';
+                if (text && window.Toast) {
+                    setTimeout(function() {
+                        window.Toast.show(text, type);
+                    }, index * 100);
                 }
-
-                // Ordenar como texto
-                return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+                alert.style.display = 'none';
             });
 
-            // Aplicar nueva clase
-            th.classList.add(newOrder);
+            // Table sorting
+            function sortTable(th, updateUrl = true) {
+                const table = th.closest('table');
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const colIndex = Array.from(th.parentNode.children).indexOf(th);
+                const isAsc = th.classList.contains('asc');
+                const newOrder = isAsc ? 'desc' : 'asc';
 
-            // Reinsertar filas ordenadas
-            rows.forEach(row => tbody.appendChild(row));
+                th.parentNode.querySelectorAll('th').forEach(h => {
+                    h.classList.remove('asc', 'desc');
+                });
 
-            // Actualizar URL con parámetros de ordenamiento
-            if (updateUrl) {
-                const url = new URL(window.location);
-                url.searchParams.set('sort_by', colIndex);
-                url.searchParams.set('sort_order', newOrder);
-                window.history.replaceState({}, '', url);
+                rows.sort(function(a, b) {
+                    const aCell = a.children[colIndex];
+                    const bCell = b.children[colIndex];
+                    const aVal = aCell?.dataset.sort || aCell?.textContent.trim() || '';
+                    const bVal = bCell?.dataset.sort || bCell?.textContent.trim() || '';
+                    const aNum = parseFloat(aVal.replace(/[^\d.-]/g, ''));
+                    const bNum = parseFloat(bVal.replace(/[^\d.-]/g, ''));
+
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return isAsc ? bNum - aNum : aNum - bNum;
+                    }
+                    return isAsc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+                });
+
+                th.classList.add(newOrder);
+                rows.forEach(row => tbody.appendChild(row));
+
+                if (updateUrl) {
+                    const url = new URL(window.location);
+                    url.searchParams.set('sort_by', colIndex);
+                    url.searchParams.set('sort_order', newOrder);
+                    window.history.replaceState({}, '', url);
+                }
             }
-        }
 
-        // Agregar event listeners a columnas sortable
-        document.querySelectorAll('th.sortable').forEach(function(th) {
-            th.addEventListener('click', function() {
-                sortTable(th, true);
+            document.querySelectorAll('th.sortable').forEach(function(th) {
+                th.addEventListener('click', function() {
+                    sortTable(th, true);
+                });
+            });
+
+            // Apply initial sort from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const sortBy = urlParams.get('sort_by');
+            const sortOrder = urlParams.get('sort_order');
+
+            if (sortBy !== null && sortOrder !== null) {
+                const headers = document.querySelectorAll('th.sortable');
+                const targetHeader = headers[parseInt(sortBy)];
+                if (targetHeader) {
+                    const oppositeOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+                    targetHeader.classList.add(oppositeOrder);
+                    sortTable(targetHeader, false);
+                }
+            }
+
+            // Expandable cards toggle
+            document.querySelectorAll('[data-expandable]').forEach(function(card) {
+                const summary = card.querySelector('[data-expand-trigger]');
+                if (summary) {
+                    summary.addEventListener('click', function(e) {
+                        if (e.target.closest('a, button')) return;
+                        const isExpanded = card.getAttribute('data-expanded') === 'true';
+                        card.setAttribute('data-expanded', !isExpanded);
+                    });
+                }
             });
         });
-
-        // Aplicar ordenamiento inicial desde URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const sortBy = urlParams.get('sort_by');
-        const sortOrder = urlParams.get('sort_order');
-
-        if (sortBy !== null && sortOrder !== null) {
-            const headers = document.querySelectorAll('th.sortable');
-            const targetHeader = headers[parseInt(sortBy)];
-
-            if (targetHeader) {
-                // Aplicar clase opuesta para que sortTable la invierta correctamente
-                const oppositeOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-                targetHeader.classList.add(oppositeOrder);
-                sortTable(targetHeader, false);
-            }
-        }
-    });
     </script>
+    {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,36 +1,68 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Portal de Pagos{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dist/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fonts/fontawesome/css/all.min.css') }}">
 </head>
-<body>
-    <div class="portal-container">
-        <header class="portal-header">
-            <h1>Portal de Pagos</h1>
+<body class="min-h-screen bg-base-200">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <header class="navbar bg-primary text-primary-content rounded-box shadow-lg mb-6">
+            <div class="flex-1">
+                <h1 class="text-xl font-bold px-4">
+                    <i class="fas fa-water mr-2"></i>
+                    Portal de Pagos
+                </h1>
+            </div>
             {% if session.get('cliente_id') %}
-            <a href="{{ url_for('portal.salir') }}" class="btn-salir" title="Salir">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                    <polyline points="16 17 21 12 16 7"/>
-                    <line x1="21" y1="12" x2="9" y2="12"/>
-                </svg>
-            </a>
+            <div class="flex-none">
+                <a href="{{ url_for('portal.salir') }}" class="btn btn-ghost btn-circle" title="Salir">
+                    <i class="fas fa-sign-out-alt text-lg"></i>
+                </a>
+            </div>
             {% endif %}
         </header>
-        <main class="portal-content">
+
+        <main>
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                        {% if category == 'success' %}
+                        <div class="alert alert-success mb-4">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        {% elif category == 'error' or category == 'danger' %}
+                        <div class="alert alert-error mb-4">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        {% elif category == 'warning' %}
+                        <div class="alert alert-warning mb-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info mb-4">
+                            <i class="fas fa-info-circle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        {% endif %}
                     {% endfor %}
                 {% endif %}
             {% endwith %}
 
             {% block content %}{% endblock %}
         </main>
+
+        <footer class="footer footer-center p-4 text-base-content mt-8">
+            <div>
+                <p class="text-sm opacity-70">Sistema de Cobro de Agua - Portal de Pagos</p>
+            </div>
+        </footer>
     </div>
 </body>
 </html>

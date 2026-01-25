@@ -3,105 +3,139 @@
 {% block title %}Saldo de {{ cliente.nombre }} - Sistema de Lecturas{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Saldo de {{ cliente.nombre }}</h1>
-    <a href="{{ url_for('boletas.saldos_lista') }}" class="btn btn--secondary">Volver a Saldos</a>
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Saldo de {{ cliente.nombre }}</h1>
+    <a href="{{ url_for('boletas.saldos_lista') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver a Saldos</span>
+    </a>
 </div>
 
-<div class="resumen-grid">
-    <div class="resumen-card resumen-card--success">
-        <h3>Saldo a Favor</h3>
-        <div class="resumen-card__valor">${{ resumen.saldo_favor|formato_pesos }}</div>
+<!-- STATS -->
+<div class="stats stats-vertical sm:stats-horizontal shadow w-full mb-6 bg-base-100">
+    <div class="stat">
+        <div class="stat-title">Saldo a Favor</div>
+        <div class="stat-value text-success text-lg">${{ resumen.saldo_favor|formato_pesos }}</div>
     </div>
-    <div class="resumen-card resumen-card--danger">
-        <h3>Total Deuda</h3>
-        <div class="resumen-card__valor">${{ resumen.total_deuda|formato_pesos }}</div>
+    <div class="stat">
+        <div class="stat-title">Total Deuda</div>
+        <div class="stat-value text-error text-lg">${{ resumen.total_deuda|formato_pesos }}</div>
     </div>
-    <div class="resumen-card">
-        <h3>Boletas Pendientes</h3>
-        <div class="resumen-card__valor">{{ resumen.boletas_pendientes }}</div>
+    <div class="stat">
+        <div class="stat-title">Boletas Pendientes</div>
+        <div class="stat-value text-lg">{{ resumen.boletas_pendientes }}</div>
     </div>
-    <div class="resumen-card">
-        <h3>Pagos en Revision</h3>
-        <div class="resumen-card__valor">{{ resumen.pagos_en_revision }}</div>
+    <div class="stat">
+        <div class="stat-title">Pagos en Revision</div>
+        <div class="stat-value text-lg">{{ resumen.pagos_en_revision }}</div>
     </div>
 </div>
 
-<div class="actions-section">
-    <h3>Ajustar Saldo</h3>
-    <form method="POST" action="{{ url_for('boletas.ajustar_saldo', cliente_id=cliente.id) }}" class="ajuste-form" id="formAjuste">
-        <div class="ajuste-form__row">
-            <div class="form-group">
-                <label for="monto">Monto del ajuste *</label>
-                <input type="number" name="monto" id="monto" required step="1" placeholder="Positivo para agregar, negativo para descontar">
-                <small class="form-help">Ingrese un monto positivo para aumentar el saldo o negativo para disminuirlo.</small>
+<!-- AJUSTAR SALDO -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h3 class="card-title text-base">
+            <i class="fas fa-sliders-h text-primary"></i>
+            Ajustar Saldo
+        </h3>
+        <form method="POST" action="{{ url_for('boletas.ajustar_saldo', cliente_id=cliente.id) }}" id="formAjuste">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Monto del ajuste *</span>
+                    </label>
+                    <input type="number" name="monto" id="monto" required step="1"
+                           placeholder="Positivo para agregar, negativo para descontar"
+                           class="input input-bordered">
+                    <label class="label">
+                        <span class="label-text-alt text-base-content/70">Ingrese un monto positivo para aumentar el saldo o negativo para disminuirlo.</span>
+                    </label>
+                </div>
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Descripcion *</span>
+                    </label>
+                    <input type="text" name="descripcion" id="descripcion" required
+                           placeholder="Motivo del ajuste"
+                           class="input input-bordered">
+                </div>
+                <div class="form-control">
+                    <button type="button" class="btn btn-primary" onclick="confirmarAjuste()">
+                        <i class="fas fa-check"></i> Aplicar Ajuste
+                    </button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="descripcion">Descripcion *</label>
-                <input type="text" name="descripcion" id="descripcion" required placeholder="Motivo del ajuste">
-            </div>
-            <div class="form-group" style="align-self: end;">
-                <button type="button" class="btn btn--primary" onclick="confirmarAjuste()">Aplicar Ajuste</button>
-            </div>
+        </form>
+    </div>
+</div>
+
+<!-- HISTORIAL DE MOVIMIENTOS -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h3 class="card-title text-base">
+            <i class="fas fa-history text-info"></i>
+            Historial de Movimientos
+        </h3>
+
+        {% if movimientos %}
+        <div class="overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Origen</th>
+                        <th>Monto</th>
+                        <th>Saldo Anterior</th>
+                        <th>Saldo Nuevo</th>
+                        <th>Descripcion</th>
+                        <th>Referencia</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in movimientos %}
+                    <tr class="hover">
+                        <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            {% if m.tipo == 'ingreso' %}
+                            <span class="badge badge-success">Ingreso</span>
+                            {% elif m.tipo == 'egreso' %}
+                            <span class="badge badge-error">Egreso</span>
+                            {% else %}
+                            <span class="badge badge-warning">Ajuste</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ m.origen|replace('_', ' ')|capitalize }}</td>
+                        <td class="{% if m.monto > 0 %}text-success{% else %}text-error{% endif %} font-medium">
+                            {% if m.monto > 0 %}+{% endif %}${{ m.monto|formato_pesos }}
+                        </td>
+                        <td>${{ m.saldo_anterior|formato_pesos }}</td>
+                        <td>${{ m.saldo_nuevo|formato_pesos }}</td>
+                        <td>{{ m.descripcion or '-' }}</td>
+                        <td>
+                            {% if m.numero_pago %}
+                            <a href="{{ url_for('boletas.pago_detalle', pago_id=m.pago_id) }}" class="link link-primary">{{ m.numero_pago }}</a>
+                            {% elif m.numero_boleta %}
+                            <a href="{{ url_for('boletas.detalle', boleta_id=m.boleta_id) }}" class="link link-primary">{{ m.numero_boleta }}</a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </form>
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-exchange-alt text-5xl text-base-content/30 mb-4"></i>
+            <h4 class="font-semibold">Sin movimientos</h4>
+            <p class="text-base-content/70">No hay movimientos registrados para este cliente.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
-
-<h3 style="margin-top: var(--spacing-xl);">Historial de Movimientos</h3>
-{% if movimientos %}
-<table class="data-table data-table--striped data-table--hover">
-    <thead>
-        <tr>
-            <th>Fecha</th>
-            <th>Tipo</th>
-            <th>Origen</th>
-            <th>Monto</th>
-            <th>Saldo Anterior</th>
-            <th>Saldo Nuevo</th>
-            <th>Descripcion</th>
-            <th>Referencia</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for m in movimientos %}
-        <tr>
-            <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-            <td>
-                {% if m.tipo == 'ingreso' %}
-                <span class="badge badge--success">Ingreso</span>
-                {% elif m.tipo == 'egreso' %}
-                <span class="badge badge--danger">Egreso</span>
-                {% else %}
-                <span class="badge badge--warning">Ajuste</span>
-                {% endif %}
-            </td>
-            <td>{{ m.origen|replace('_', ' ')|capitalize }}</td>
-            <td class="{% if m.monto > 0 %}text-success{% else %}text-danger{% endif %}" style="font-weight: 500;">
-                {% if m.monto > 0 %}+{% endif %}${{ m.monto|formato_pesos }}
-            </td>
-            <td>${{ m.saldo_anterior|formato_pesos }}</td>
-            <td>${{ m.saldo_nuevo|formato_pesos }}</td>
-            <td>{{ m.descripcion or '-' }}</td>
-            <td>
-                {% if m.numero_pago %}
-                <a href="{{ url_for('boletas.pago_detalle', pago_id=m.pago_id) }}">{{ m.numero_pago }}</a>
-                {% elif m.numero_boleta %}
-                <a href="{{ url_for('boletas.detalle', boleta_id=m.boleta_id) }}">{{ m.numero_boleta }}</a>
-                {% else %}
-                -
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-{% else %}
-<div class="empty-state">
-    <div class="empty-state__icon"><i class="fas fa-exchange-alt"></i></div>
-    <h3 class="empty-state__title">Sin movimientos</h3>
-    <p class="empty-state__description">No hay movimientos registrados para este cliente.</p>
-</div>
-{% endif %}
 
 <script>
 function confirmarAjuste() {
@@ -116,7 +150,7 @@ function confirmarAjuste() {
         message: 'Se aplicara un ajuste de $' + monto + ' al saldo del cliente.',
         icon: 'warning',
         confirmText: 'Aplicar Ajuste',
-        confirmClass: 'btn--primary'
+        confirmClass: 'btn-primary'
     }).then(function(ok) {
         if (ok) {
             document.getElementById('formAjuste').submit();

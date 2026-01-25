@@ -1,52 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}Boletas - Sistema de Lecturas{% endblock %}
+{% block title %}Boletas - Sistema de Cobro de Agua{% endblock %}
 
 {% block content %}
 <!-- HEADER -->
-<div class="page-header">
-    <h1>Boletas</h1>
-    <div class="hide-mobile">
-        <a href="{{ url_for('boletas.crear') }}" class="btn btn--primary">Nueva Boleta</a>
-        <a href="{{ url_for('boletas.crear_masivo') }}" class="btn btn--secondary">Crear Masivo</a>
-        <a href="{{ url_for('boletas.configuracion') }}" class="btn btn--secondary">Configuracion</a>
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Boletas</h1>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('boletas.crear') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            <span class="hidden sm:inline">Nueva Boleta</span>
+            <span class="sm:hidden">Nueva</span>
+        </a>
+        <a href="{{ url_for('boletas.crear_masivo') }}" class="btn btn-secondary hidden sm:inline-flex">
+            <i class="fas fa-layer-group"></i> Crear Masivo
+        </a>
+        <a href="{{ url_for('boletas.configuracion') }}" class="btn btn-ghost hidden sm:inline-flex">
+            <i class="fas fa-cog"></i> Config
+        </a>
     </div>
-    <a href="{{ url_for('boletas.crear') }}" class="btn btn--primary hide-desktop">+ Nueva</a>
 </div>
 
-<!-- STATS - solo desktop, colapsable -->
+<!-- STATS - colapsable -->
 {% if stats %}
-<div class="hide-mobile">
-    <button class="stats-toggle stats-toggle--enhanced" id="statsToggle" aria-expanded="false" onclick="toggleStats()">
-        <span class="stats-toggle__icon"><i class="fas fa-chart-bar"></i></span>
+<div class="collapse collapse-arrow bg-base-100 shadow mb-4 hidden lg:block">
+    <input type="checkbox" id="stats-toggle" />
+    <div class="collapse-title font-medium flex items-center gap-2">
+        <i class="fas fa-chart-bar text-primary"></i>
         Resumen
-        <span class="stats-toggle__arrow"><i class="fas fa-chevron-right"></i></span>
-    </button>
-    <div class="stats-collapsible" id="statsContent">
-        <div class="stats-grid">
-            <div class="stat-card stat-card--default">
-                <div class="stat-card__value">{{ stats.total or 0 }}</div>
-                <div class="stat-card__label">Total Boletas</div>
+    </div>
+    <div class="collapse-content">
+        <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+            <div class="stat">
+                <div class="stat-title">Total Boletas</div>
+                <div class="stat-value text-lg">{{ stats.total or 0 }}</div>
             </div>
-            <div class="stat-card stat-card--success">
-                <div class="stat-card__value">{{ stats.pagadas or 0 }}</div>
-                <div class="stat-card__label">Pagadas</div>
+            <div class="stat">
+                <div class="stat-title">Pagadas</div>
+                <div class="stat-value text-lg text-success">{{ stats.pagadas or 0 }}</div>
             </div>
-            <div class="stat-card stat-card--info">
-                <div class="stat-card__value">{{ stats.en_revision or 0 }}</div>
-                <div class="stat-card__label">En Revision</div>
+            <div class="stat">
+                <div class="stat-title">En Revision</div>
+                <div class="stat-value text-lg text-info">{{ stats.en_revision or 0 }}</div>
             </div>
-            <div class="stat-card stat-card--warning">
-                <div class="stat-card__value">{{ stats.pendientes or 0 }}</div>
-                <div class="stat-card__label">Pendientes</div>
+            <div class="stat">
+                <div class="stat-title">Pendientes</div>
+                <div class="stat-value text-lg text-warning">{{ stats.pendientes or 0 }}</div>
             </div>
-            <div class="stat-card stat-card--danger">
-                <div class="stat-card__value">{{ stats.sin_comprobante or 0 }}</div>
-                <div class="stat-card__label">Sin Comprobante</div>
+            <div class="stat">
+                <div class="stat-title">Sin Comprobante</div>
+                <div class="stat-value text-lg text-error">{{ stats.sin_comprobante or 0 }}</div>
             </div>
-            <div class="stat-card stat-card--primary">
-                <div class="stat-card__value">${{ (stats.monto_pendiente or 0)|formato_pesos }}</div>
-                <div class="stat-card__label">Por Cobrar</div>
+            <div class="stat">
+                <div class="stat-title">Por Cobrar</div>
+                <div class="stat-value text-lg">${{ (stats.monto_pendiente or 0)|formato_pesos }}</div>
             </div>
         </div>
     </div>
@@ -54,176 +61,174 @@
 {% endif %}
 
 <!-- FILTER CHIPS - solo mobile -->
-<div class="filter-chips hide-desktop">
+<div class="flex items-center gap-2 overflow-x-auto pb-4 lg:hidden">
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '') }}"
-       class="chip {% if filtros.pagada is none %}chip--active{% endif %}">
+       class="btn btn-sm {% if filtros.pagada is none %}btn-primary{% else %}btn-ghost{% endif %}">
         Todos
-        {% if stats %}<span class="chip__count">{{ stats.total or 0 }}</span>{% endif %}
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.total or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=0) }}"
-       class="chip {% if filtros.pagada == 0 %}chip--active{% endif %}">
+       class="btn btn-sm {% if filtros.pagada == 0 %}btn-primary{% else %}btn-ghost{% endif %}">
         Pendientes
-        {% if stats %}<span class="chip__count">{{ stats.pendientes or 0 }}</span>{% endif %}
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.pendientes or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=1) }}"
-       class="chip {% if filtros.pagada == 1 %}chip--active{% endif %}">
+       class="btn btn-sm {% if filtros.pagada == 1 %}btn-primary{% else %}btn-ghost{% endif %}">
         En Revision
-        {% if stats %}<span class="chip__count">{{ stats.en_revision or 0 }}</span>{% endif %}
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.en_revision or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=2) }}"
-       class="chip {% if filtros.pagada == 2 %}chip--active{% endif %}">
+       class="btn btn-sm {% if filtros.pagada == 2 %}btn-primary{% else %}btn-ghost{% endif %}">
         Pagadas
-        {% if stats %}<span class="chip__count">{{ stats.pagadas or 0 }}</span>{% endif %}
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.pagadas or 0 }}</span>{% endif %}
     </a>
-    <button class="filter-chips__btn {% if filtros.cliente_id or filtros.año or filtros.mes or filtros.sin_comprobante %}filter-chips__btn--active{% endif %}"
-            onclick="abrirModal('modalFiltros')" title="Filtros avanzados">
+    <button class="btn btn-sm btn-circle btn-ghost {% if filtros.cliente_id or filtros.año or filtros.mes or filtros.sin_comprobante %}btn-primary{% endif %}"
+            onclick="modalFiltros.showModal()" title="Filtros avanzados">
         <i class="fas fa-sliders-h"></i>
     </button>
 </div>
 
 <!-- FILTER FORM - solo desktop -->
-<form method="GET" class="filter-bar hide-mobile" id="filterFormDesktop">
-    <div class="filter-bar__fields">
-        <div class="filter-bar__group">
-            <label for="cliente_id">Cliente</label>
-            <select name="cliente_id" id="cliente_id">
-                <option value="">Todos</option>
-                {% for cliente in clientes %}
-                <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>
-                    {{ cliente.nombre }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
+<form method="GET" class="card bg-base-100 shadow mb-4 hidden lg:block" id="filterFormDesktop">
+    <div class="card-body py-4">
+        <div class="grid grid-cols-2 lg:grid-cols-6 gap-4 items-end">
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Cliente</span></label>
+                <select name="cliente_id" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>{{ cliente.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        {% if medidores %}
-        <div class="filter-bar__group">
-            <label for="medidor_id">Medidor</label>
-            <select name="medidor_id" id="medidor_id">
-                <option value="">Todos</option>
-                {% for medidor in medidores %}
-                <option value="{{ medidor.id }}" {{ 'selected' if filtros.medidor_id == medidor.id }}>
-                    {{ medidor.numero_medidor or 'Medidor ' ~ medidor.id }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-        {% endif %}
+            {% if medidores %}
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Medidor</span></label>
+                <select name="medidor_id" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    {% for medidor in medidores %}
+                    <option value="{{ medidor.id }}" {{ 'selected' if filtros.medidor_id == medidor.id }}>{{ medidor.numero_medidor or 'Medidor ' ~ medidor.id }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
 
-        <div class="filter-bar__group">
-            <label for="año">Año</label>
-            <select name="año" id="año">
-                <option value="">Todos</option>
-                {% for a in años %}
-                <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
-                {% endfor %}
-            </select>
-        </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Año</span></label>
+                <select name="año" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    {% for a in años %}
+                    <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="filter-bar__group">
-            <label for="mes">Mes</label>
-            <select name="mes" id="mes">
-                <option value="">Todos</option>
-                {% for m in range(1, 13) %}
-                <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Mes</span></label>
+                <select name="mes" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-        <div class="filter-bar__group">
-            <label for="pagada">Estado</label>
-            <select name="pagada" id="pagada">
-                <option value="">Todos</option>
-                <option value="0" {{ 'selected' if filtros.pagada == 0 }}>Pendientes</option>
-                <option value="1" {{ 'selected' if filtros.pagada == 1 }}>En Revision</option>
-                <option value="2" {{ 'selected' if filtros.pagada == 2 }}>Pagadas</option>
-            </select>
-        </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Estado</span></label>
+                <select name="pagada" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    <option value="0" {{ 'selected' if filtros.pagada == 0 }}>Pendientes</option>
+                    <option value="1" {{ 'selected' if filtros.pagada == 1 }}>En Revision</option>
+                    <option value="2" {{ 'selected' if filtros.pagada == 2 }}>Pagadas</option>
+                </select>
+            </div>
 
-        <div class="filter-bar__group filter-bar__group--checkbox">
-            <input type="checkbox" name="sin_comprobante" value="1"
-                   {{ 'checked' if filtros.sin_comprobante }}>
-            <label>Sin comprobante</label>
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-2 py-1">
+                    <input type="checkbox" name="sin_comprobante" value="1" {{ 'checked' if filtros.sin_comprobante }} class="checkbox checkbox-sm checkbox-primary">
+                    <span class="label-text">Sin comprobante</span>
+                </label>
+            </div>
         </div>
-    </div>
-
-    <div class="filter-bar__actions">
-        <button type="submit" class="btn btn--primary">Filtrar</button>
-        <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Limpiar</a>
-        <a href="{{ url_for('boletas.exportar', cliente_id=filtros.cliente_id, medidor_id=filtros.medidor_id, año=filtros.año, mes=filtros.mes, pagada=filtros.pagada, sin_comprobante=filtros.sin_comprobante) }}"
-           class="btn btn--success" title="Exportar a Excel">
-            Exportar
-        </a>
+        <div class="flex gap-2 mt-4">
+            <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+            <a href="{{ url_for('boletas.listar') }}" class="btn btn-ghost btn-sm">Limpiar</a>
+            <a href="{{ url_for('boletas.exportar', cliente_id=filtros.cliente_id, medidor_id=filtros.medidor_id, año=filtros.año, mes=filtros.mes, pagada=filtros.pagada, sin_comprobante=filtros.sin_comprobante) }}"
+               class="btn btn-success btn-sm">
+                <i class="fas fa-file-excel"></i> Exportar
+            </a>
+        </div>
     </div>
 </form>
 
 {% if boletas %}
 <!-- CARDS - solo mobile -->
-<div class="hide-desktop" id="cardsContainer">
+<div class="lg:hidden space-y-2" id="cardsContainer">
     {% for boleta in boletas %}
-    <div class="boleta-card {% if boleta.pagada == 2 %}boleta-card--success{% elif boleta.pagada == 1 %}boleta-card--warning{% else %}boleta-card--danger{% endif %}" data-expanded="false" onclick="toggleCard(this, event)">
-        <div class="boleta-card__summary">
-            <div class="boleta-card__left">
-                <div class="boleta-card__number">{{ boleta.numero_boleta }}</div>
-                <div class="boleta-card__client">{{ boleta.cliente_nombre }}</div>
-                <div class="boleta-card__period">{{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}</div>
-            </div>
-            <div class="boleta-card__right">
-                <div class="boleta-card__amount">${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}</div>
-                {% if boleta.pagada == 2 %}
-                    <span class="badge badge--success badge--lg">Pagada</span>
-                {% elif boleta.pagada == 1 %}
-                    <span class="badge badge--info badge--lg">En Revision</span>
-                {% else %}
-                    <span class="badge badge--danger badge--lg">Pendiente</span>
-                {% endif %}
-                <span class="boleta-card__chevron"><i class="fas fa-chevron-down"></i></span>
-            </div>
-        </div>
-        <div class="boleta-card__details">
-            <div class="boleta-card__details-inner">
-                <div class="boleta-card__info">
-                    <div class="boleta-card__info-item">
-                        Consumo
-                        <span>{{ boleta.consumo_m3 }} m3</span>
-                    </div>
-                    <div class="boleta-card__info-item">
-                        Total
-                        <span>${{ boleta.total|formato_pesos }}</span>
-                    </div>
-                    <div class="boleta-card__info-item">
-                        Pendiente
-                        <span class="{% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente == 0 %}text-success{% elif boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}text-warning{% endif %}">
-                            ${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}
-                        </span>
-                    </div>
+    <div class="collapse collapse-arrow bg-base-100 shadow {% if boleta.pagada == 2 %}border-l-4 border-l-success{% elif boleta.pagada == 1 %}border-l-4 border-l-info{% else %}border-l-4 border-l-error{% endif %}">
+        <input type="checkbox" class="peer" />
+        <div class="collapse-title pr-12">
+            <div class="flex justify-between items-center">
+                <div class="min-w-0">
+                    <div class="font-semibold">{{ boleta.numero_boleta }}</div>
+                    <div class="text-sm text-base-content/70 truncate">{{ boleta.cliente_nombre }}</div>
+                    <div class="text-xs text-base-content/50">{{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}</div>
                 </div>
-                <div class="boleta-card__actions boleta-card__actions-primary">
-                    <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="btn btn--primary" onclick="event.stopPropagation()">
-                        <i class="fas fa-eye"></i> Ver Detalle
-                    </a>
-                    <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn--secondary" onclick="event.stopPropagation()">
-                        <i class="fas fa-download"></i> Descargar
-                    </a>
-                </div>
-                <div class="boleta-card__actions boleta-card__actions-secondary">
-                    {% if boleta.pagada == 0 %}
-                    <button class="btn btn--success" onclick="event.stopPropagation(); abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')">
-                        <i class="fas fa-check"></i> Marcar Pagada
-                    </button>
+                <div class="flex flex-col items-end gap-1 ml-4">
+                    <div class="font-bold">${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}</div>
+                    {% if boleta.pagada == 2 %}
+                        <span class="badge badge-success badge-sm">Pagada</span>
                     {% elif boleta.pagada == 1 %}
-                    <button class="btn btn--success" onclick="event.stopPropagation(); aprobarBoleta({{ boleta.id }})">
-                        <i class="fas fa-check-circle"></i> Aprobar
-                    </button>
-                    <button class="btn btn--danger" onclick="event.stopPropagation(); rechazarBoleta({{ boleta.id }})">
-                        <i class="fas fa-times-circle"></i> Rechazar
-                    </button>
-                    {% elif boleta.pagada == 2 %}
-                    <button class="btn btn--secondary" onclick="event.stopPropagation(); abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')">
-                        <i class="fas fa-undo"></i> Desmarcar
-                    </button>
+                        <span class="badge badge-info badge-sm">En Revision</span>
+                    {% else %}
+                        <span class="badge badge-error badge-sm">Pendiente</span>
                     {% endif %}
                 </div>
+            </div>
+        </div>
+        <div class="collapse-content bg-base-200/50">
+            <div class="grid grid-cols-3 gap-2 py-2 text-sm">
+                <div class="text-base-content/70">
+                    Consumo
+                    <span class="block font-medium text-base-content">{{ boleta.consumo_m3 }} m3</span>
+                </div>
+                <div class="text-base-content/70">
+                    Total
+                    <span class="block font-medium text-base-content">${{ boleta.total|formato_pesos }}</span>
+                </div>
+                <div class="text-base-content/70">
+                    Pendiente
+                    <span class="block font-medium {% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente == 0 %}text-success{% elif boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}text-warning{% else %}text-base-content{% endif %}">
+                        ${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}
+                    </span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-2 pt-2">
+                <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i> Ver Detalle
+                </a>
+                <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-download"></i> Descargar
+                </a>
+                {% if boleta.pagada == 0 %}
+                <button class="btn btn-success btn-sm" onclick="abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')">
+                    <i class="fas fa-check"></i> Marcar Pagada
+                </button>
+                {% elif boleta.pagada == 1 %}
+                <div class="flex gap-2">
+                    <button class="btn btn-success btn-sm flex-1" onclick="aprobarBoleta({{ boleta.id }})">
+                        <i class="fas fa-check-circle"></i> Aprobar
+                    </button>
+                    <button class="btn btn-error btn-sm flex-1" onclick="rechazarBoleta({{ boleta.id }})">
+                        <i class="fas fa-times-circle"></i> Rechazar
+                    </button>
+                </div>
+                {% elif boleta.pagada == 2 %}
+                <button class="btn btn-ghost btn-sm" onclick="abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')">
+                    <i class="fas fa-undo"></i> Desmarcar
+                </button>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -231,394 +236,300 @@
 </div>
 
 <!-- TABLE - solo desktop -->
-<table class="data-table data-table--striped data-table--hover hide-mobile">
-    <thead>
-        <tr>
-            <th class="sortable">N Boleta</th>
-            <th class="sortable">Cliente</th>
-            <th class="sortable">Periodo</th>
-            <th class="sortable">Consumo</th>
-            <th class="sortable">Total</th>
-            <th class="sortable">Pendiente</th>
-            <th class="sortable">Estado</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for boleta in boletas %}
-        <tr>
-            <td>{{ boleta.numero_boleta }}</td>
-            <td>
-                <a href="{{ url_for('boletas.listar', cliente_id=boleta.cliente_id) }}">
-                    {{ boleta.cliente_nombre }}
-                </a>
-            </td>
-            <td data-sort="{{ '%04d%02d'|format(boleta.periodo_año, boleta.periodo_mes) }}">
-                {{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}
-            </td>
-            <td data-sort="{{ boleta.consumo_m3 }}">{{ boleta.consumo_m3 }} m3</td>
-            <td data-sort="{{ boleta.total }}">${{ boleta.total|formato_pesos }}</td>
-            <td data-sort="{{ boleta.saldo_pendiente or 0 }}">
-                {% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}
-                    <span class="{% if boleta.saldo_pendiente == 0 %}text-success{% else %}text-warning{% endif %}">
-                        ${{ boleta.saldo_pendiente|formato_pesos }}
-                    </span>
-                {% else %}
-                    ${{ (boleta.saldo_pendiente or boleta.total)|formato_pesos }}
-                {% endif %}
-            </td>
-            <td class="estado-cell">
-                {% if boleta.pagada == 2 %}
-                    <span class="badge badge--success badge--clickable" role="button"
-                          onclick="abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
-                          title="Click para desmarcar como pagada">
-                        Pagada
-                    </span>
-                    {% if boleta.comprobante_path %}
-                        <button class="action-btn" onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')" title="Ver comprobante">
-                            <i class="fas fa-paperclip"></i>
-                        </button>
-                    {% else %}
-                        <span class="badge badge--warning badge--clickable" role="button"
-                              onclick="abrirModalSubirComprobante({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
-                              title="Click para subir comprobante">
-                            Sin comp.
+<div class="overflow-x-auto hidden lg:block">
+    <table class="table table-zebra bg-base-100">
+        <thead>
+            <tr>
+                <th class="sortable">N Boleta</th>
+                <th class="sortable">Cliente</th>
+                <th class="sortable">Periodo</th>
+                <th class="sortable">Consumo</th>
+                <th class="sortable">Total</th>
+                <th class="sortable">Pendiente</th>
+                <th class="sortable">Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for boleta in boletas %}
+            <tr class="hover">
+                <td>{{ boleta.numero_boleta }}</td>
+                <td>
+                    <a href="{{ url_for('boletas.listar', cliente_id=boleta.cliente_id) }}" class="link link-primary">
+                        {{ boleta.cliente_nombre }}
+                    </a>
+                </td>
+                <td data-sort="{{ '%04d%02d'|format(boleta.periodo_año, boleta.periodo_mes) }}">
+                    {{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}
+                </td>
+                <td data-sort="{{ boleta.consumo_m3 }}">{{ boleta.consumo_m3 }} m3</td>
+                <td data-sort="{{ boleta.total }}">${{ boleta.total|formato_pesos }}</td>
+                <td data-sort="{{ boleta.saldo_pendiente or 0 }}">
+                    {% if boleta.saldo_pendiente is not none and boleta.saldo_pendiente < boleta.total %}
+                        <span class="{% if boleta.saldo_pendiente == 0 %}text-success{% else %}text-warning{% endif %}">
+                            ${{ boleta.saldo_pendiente|formato_pesos }}
                         </span>
+                    {% else %}
+                        ${{ (boleta.saldo_pendiente or boleta.total)|formato_pesos }}
                     {% endif %}
-                {% elif boleta.pagada == 1 %}
-                    <span class="badge badge--info">En Revision</span>
-                    <div class="action-btn-group">
-                        <button class="action-btn action-btn--success" onclick="aprobarBoleta({{ boleta.id }})" title="Aprobar pago">
-                            <i class="fas fa-check"></i>
-                        </button>
-                        <button class="action-btn action-btn--danger" onclick="rechazarBoleta({{ boleta.id }})" title="Rechazar pago">
-                            <i class="fas fa-times"></i>
-                        </button>
-                        {% if boleta.comprobante_path %}
-                        <button class="action-btn" onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')" title="Ver comprobante">
-                            <i class="fas fa-paperclip"></i>
-                        </button>
+                </td>
+                <td>
+                    <div class="flex items-center gap-1 flex-wrap">
+                        {% if boleta.pagada == 2 %}
+                            <span class="badge badge-success cursor-pointer" onclick="abrirModalDesmarcar({{ boleta.id }}, '{{ boleta.numero_boleta }}')" title="Click para desmarcar">
+                                Pagada
+                            </span>
+                            {% if boleta.comprobante_path %}
+                                <button class="btn btn-ghost btn-xs btn-square" onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')" title="Ver comprobante">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                            {% else %}
+                                <span class="badge badge-warning cursor-pointer" onclick="abrirModalSubirComprobante({{ boleta.id }}, '{{ boleta.numero_boleta }}')" title="Click para subir comprobante">
+                                    Sin comp.
+                                </span>
+                            {% endif %}
+                        {% elif boleta.pagada == 1 %}
+                            <span class="badge badge-info">En Revision</span>
+                            <div class="flex gap-1">
+                                <button class="btn btn-success btn-xs btn-square" onclick="aprobarBoleta({{ boleta.id }})" title="Aprobar pago">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-error btn-xs btn-square" onclick="rechazarBoleta({{ boleta.id }})" title="Rechazar pago">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                {% if boleta.comprobante_path %}
+                                <button class="btn btn-ghost btn-xs btn-square" onclick="abrirModalVerComprobante('{{ boleta.comprobante_path }}', '{{ boleta.numero_boleta }}')" title="Ver comprobante">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <span class="badge badge-error cursor-pointer" onclick="abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')" title="Click para marcar como pagada">
+                                Pendiente
+                            </span>
                         {% endif %}
                     </div>
-                {% else %}
-                    <span class="badge badge--danger badge--clickable" role="button"
-                          onclick="abrirModalPago({{ boleta.id }}, '{{ boleta.numero_boleta }}')"
-                          title="Click para marcar como pagada">
-                        Pendiente
-                    </span>
-                {% endif %}
-            </td>
-            <td>
-                <div class="action-btn-group">
-                    <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="action-btn" title="Ver detalle">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="action-btn" title="Descargar boleta">
-                        <i class="fas fa-download"></i>
-                    </a>
-                </div>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                </td>
+                <td>
+                    <div class="flex gap-1">
+                        <a href="{{ url_for('boletas.detalle', boleta_id=boleta.id) }}" class="btn btn-ghost btn-xs btn-square" title="Ver detalle">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn-ghost btn-xs btn-square" title="Descargar boleta">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% include 'partials/pagination.html' %}
+
 {% else %}
 <!-- Empty state -->
-<div class="empty-state hide-mobile">
-    <div class="empty-state__icon"><i class="fas fa-file-invoice"></i></div>
-    <h3 class="empty-state__title">No hay boletas</h3>
-    <p class="empty-state__description">No se encontraron boletas con los filtros seleccionados.</p>
-    <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Limpiar Filtros</a>
-</div>
-<div class="empty-state hide-desktop">
-    <div class="empty-state__icon"><i class="fas fa-search"></i></div>
-    <h3 class="empty-state__title">Sin resultados</h3>
-    <p class="empty-state__description">Intenta cambiar los filtros o crea una nueva boleta.</p>
-    <a href="{{ url_for('boletas.crear') }}" class="btn btn--primary">+ Nueva Boleta</a>
+<div class="card bg-base-100 shadow">
+    <div class="card-body items-center text-center py-12">
+        <i class="fas fa-file-invoice text-5xl text-base-content/30 mb-4"></i>
+        <h3 class="card-title">No hay boletas</h3>
+        <p class="text-base-content/70 mb-4">No se encontraron boletas con los filtros seleccionados.</p>
+        <div class="card-actions">
+            <a href="{{ url_for('boletas.listar') }}" class="btn btn-ghost">Limpiar Filtros</a>
+            <a href="{{ url_for('boletas.crear') }}" class="btn btn-primary">+ Nueva Boleta</a>
+        </div>
+    </div>
 </div>
 {% endif %}
 
 <!-- Modal filtros avanzados (mobile) -->
-<div id="modalFiltros" class="modal">
-    <div class="modal__content">
-        <div class="modal__drag-indicator"></div>
-        <div class="modal__header">
-            <h3>Filtros</h3>
-            <button class="modal__close" onclick="cerrarModal('modalFiltros')">&times;</button>
-        </div>
-        <div class="modal__body">
-            <form method="GET" id="formFiltrosMobile">
-                {% if filtros.pagada is not none %}
-                <input type="hidden" name="pagada" value="{{ filtros.pagada }}">
-                {% endif %}
+<dialog id="modalFiltros" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Filtros</h3>
+        <form method="GET">
+            {% if filtros.pagada is not none %}
+            <input type="hidden" name="pagada" value="{{ filtros.pagada }}">
+            {% endif %}
 
-                <div class="form-group">
-                    <label for="mobile_cliente">Cliente</label>
-                    <select name="cliente_id" id="mobile_cliente">
-                        <option value="">Todos</option>
-                        {% for cliente in clientes %}
-                        <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>
-                            {{ cliente.nombre }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Cliente</span></label>
+                <select name="cliente_id" class="select select-bordered">
+                    <option value="">Todos</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.id }}" {{ 'selected' if filtros.cliente_id == cliente.id }}>{{ cliente.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label for="mobile_año">Año</label>
-                    <select name="año" id="mobile_año">
-                        <option value="">Todos</option>
-                        {% for a in años %}
-                        <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Año</span></label>
+                <select name="año" class="select select-bordered">
+                    <option value="">Todos</option>
+                    {% for a in años %}
+                    <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label for="mobile_mes">Mes</label>
-                    <select name="mes" id="mobile_mes">
-                        <option value="">Todos</option>
-                        {% for m in range(1, 13) %}
-                        <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Mes</span></label>
+                <select name="mes" class="select select-bordered">
+                    <option value="">Todos</option>
+                    {% for m in range(1, 13) %}
+                    <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" name="sin_comprobante" value="1"
-                               {{ 'checked' if filtros.sin_comprobante }}
-                               style="width: 20px; height: 20px; margin-right: 8px; vertical-align: middle;">
-                        Sin comprobante
-                    </label>
-                </div>
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" name="sin_comprobante" value="1" {{ 'checked' if filtros.sin_comprobante }} class="checkbox checkbox-primary">
+                    <span class="label-text">Sin comprobante</span>
+                </label>
+            </div>
 
-                <div class="modal__actions">
-                    <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary">Limpiar</a>
-                    <button type="submit" class="btn btn--primary">Aplicar</button>
-                </div>
-            </form>
-        </div>
+            <div class="modal-action">
+                <a href="{{ url_for('boletas.listar') }}" class="btn btn-ghost">Limpiar</a>
+                <button type="submit" class="btn btn-primary">Aplicar</button>
+            </div>
+        </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <!-- Modal para marcar como pagada -->
-<div id="modalPago" class="modal">
-    <div class="modal__content">
-        <div class="modal__drag-indicator"></div>
-        <div class="modal__header">
-            <h3>Marcar boleta como pagada</h3>
-            <button onclick="cerrarModalPago()" class="modal__close">&times;</button>
-        </div>
-        <div class="modal__body">
-            <p>Boleta: <strong id="modal-numero-boleta"></strong></p>
-            <form id="formPago" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="volver_a_lista" value="1">
-                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
-                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
-                <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
-                <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
-                <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
-                <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
-                <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
-                <input type="hidden" name="sort_order" value="{{ filtros.sort_order or '' }}">
+<dialog id="modalPago" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Marcar boleta como pagada</h3>
+        <p class="mb-4">Boleta: <strong id="modal-numero-boleta"></strong></p>
+        <form id="formPago" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="volver_a_lista" value="1">
+            <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
+            <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
+            <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+            <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
+            <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
+            <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
 
-                <div class="form-group">
-                    <label for="metodo_pago">Metodo de pago:</label>
-                    <select name="metodo_pago" id="metodo_pago" required onchange="toggleComprobante()">
-                        <option value="efectivo">Efectivo</option>
-                        <option value="transferencia">Transferencia</option>
-                    </select>
-                </div>
-                <div id="comprobanteContainer" class="form-group" style="display: none;">
-                    <label for="comprobante">Comprobante de pago:</label>
-                    <input type="file" name="comprobante" id="comprobante" accept=".png,.jpg,.jpeg,.gif,.pdf">
-                    <small class="form-help">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</small>
-                </div>
-                <div class="modal__actions">
-                    <button type="button" onclick="cerrarModalPago()" class="btn btn--secondary">Cancelar</button>
-                    <button type="submit" class="btn btn--success">Confirmar Pago</button>
-                </div>
-            </form>
-        </div>
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Metodo de pago</span></label>
+                <select name="metodo_pago" id="metodo_pago" required class="select select-bordered" onchange="toggleComprobante()">
+                    <option value="efectivo">Efectivo</option>
+                    <option value="transferencia">Transferencia</option>
+                </select>
+            </div>
+            <div id="comprobanteContainer" class="form-control mb-4 hidden">
+                <label class="label"><span class="label-text">Comprobante de pago</span></label>
+                <input type="file" name="comprobante" id="comprobante" accept=".png,.jpg,.jpeg,.gif,.pdf" class="file-input file-input-bordered">
+                <label class="label"><span class="label-text-alt text-base-content/60">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</span></label>
+            </div>
+            <div class="modal-action">
+                <button type="button" onclick="modalPago.close()" class="btn btn-ghost">Cancelar</button>
+                <button type="submit" class="btn btn-success">Confirmar Pago</button>
+            </div>
+        </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <!-- Modal para desmarcar como pagada -->
-<div id="modalDesmarcar" class="modal">
-    <div class="modal__content">
-        <div class="modal__drag-indicator"></div>
-        <div class="modal__header">
-            <h3>Desmarcar como pagada?</h3>
-            <button onclick="cerrarModalDesmarcar()" class="modal__close">&times;</button>
-        </div>
-        <div class="modal__body">
-            <p>Boleta: <strong id="modal-desmarcar-numero"></strong></p>
-            <p>Esto revertira el estado de pago. El comprobante NO sera eliminado.</p>
-            <form id="formDesmarcar" method="POST">
-                <input type="hidden" name="volver_a_lista" value="1">
-                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
-                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
-                <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
-                <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
-                <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
-                <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
-                <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
-                <input type="hidden" name="sort_order" value="{{ filtros.sort_order or '' }}">
+<dialog id="modalDesmarcar" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Desmarcar como pagada?</h3>
+        <p class="mb-2">Boleta: <strong id="modal-desmarcar-numero"></strong></p>
+        <p class="text-base-content/70 mb-4">Esto revertira el estado de pago. El comprobante NO sera eliminado.</p>
+        <form id="formDesmarcar" method="POST">
+            <input type="hidden" name="volver_a_lista" value="1">
+            <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
+            <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
+            <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+            <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
+            <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
+            <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
 
-                <div class="modal__actions">
-                    <button type="button" onclick="cerrarModalDesmarcar()" class="btn btn--secondary">Cancelar</button>
-                    <button type="submit" class="btn btn--primary">Confirmar</button>
-                </div>
-            </form>
-        </div>
+            <div class="modal-action">
+                <button type="button" onclick="modalDesmarcar.close()" class="btn btn-ghost">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Confirmar</button>
+            </div>
+        </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <!-- Modal para subir comprobante -->
-<div id="modalComprobante" class="modal">
-    <div class="modal__content">
-        <div class="modal__drag-indicator"></div>
-        <div class="modal__header">
-            <h3>Subir comprobante de pago</h3>
-            <button onclick="cerrarModalComprobante()" class="modal__close">&times;</button>
-        </div>
-        <div class="modal__body">
-            <p>Boleta: <strong id="modal-comprobante-numero"></strong></p>
-            <form id="formComprobante" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="volver_a_lista" value="1">
-                <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
-                <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
-                <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
-                <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
-                <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
-                <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
-                <input type="hidden" name="sort_by" value="{{ filtros.sort_by or '' }}">
-                <input type="hidden" name="sort_order" value="{{ filtros.sort_order or '' }}">
+<dialog id="modalComprobante" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Subir comprobante de pago</h3>
+        <p class="mb-4">Boleta: <strong id="modal-comprobante-numero"></strong></p>
+        <form id="formComprobante" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="volver_a_lista" value="1">
+            <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
+            <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
+            <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+            <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
+            <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
+            <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
 
-                <div class="form-group">
-                    <label for="comprobante_upload">Seleccionar archivo:</label>
-                    <input type="file" name="comprobante" id="comprobante_upload" accept=".png,.jpg,.jpeg,.gif,.pdf" required>
-                    <small class="form-help">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</small>
-                </div>
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">Seleccionar archivo</span></label>
+                <input type="file" name="comprobante" id="comprobante_upload" accept=".png,.jpg,.jpeg,.gif,.pdf" required class="file-input file-input-bordered">
+                <label class="label"><span class="label-text-alt text-base-content/60">Formatos permitidos: PNG, JPG, JPEG, GIF, PDF</span></label>
+            </div>
 
-                <div class="modal__actions">
-                    <button type="button" onclick="cerrarModalComprobante()" class="btn btn--secondary">Cancelar</button>
-                    <button type="submit" class="btn btn--primary">Subir Comprobante</button>
-                </div>
+            <div class="modal-action">
+                <button type="button" onclick="modalComprobante.close()" class="btn btn-ghost">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Subir Comprobante</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Modal Ver Comprobante -->
+<dialog id="modalVerComprobante" class="modal">
+    <div class="modal-box max-w-3xl">
+        <h3 class="font-bold text-lg mb-4">Comprobante - <span id="modal-ver-comprobante-numero"></span></h3>
+        <div id="comprobante-container" class="text-center"></div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Cerrar</button>
             </form>
         </div>
     </div>
-</div>
-
-<!-- Modal Ver Comprobante -->
-<div id="modalVerComprobante" class="modal">
-    <div class="modal__content modal__content--lg">
-        <div class="modal__drag-indicator"></div>
-        <div class="modal__header">
-            <h3>Comprobante - <span id="modal-ver-comprobante-numero"></span></h3>
-            <button onclick="cerrarModalVerComprobante()" class="modal__close">&times;</button>
-        </div>
-        <div class="modal__body">
-            <div id="comprobante-container" class="comprobante-viewer"></div>
-        </div>
-    </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <script>
-// === Card expansion (mobile) with animation ===
-function toggleCard(card, event) {
-    if (event.target.closest('.boleta-card__actions')) return;
-    var isExpanded = card.dataset.expanded === 'true';
-    // Close other cards
-    document.querySelectorAll('.boleta-card[data-expanded="true"]').forEach(function(c) {
-        if (c !== card) c.dataset.expanded = 'false';
-    });
-    card.dataset.expanded = isExpanded ? 'false' : 'true';
-}
-
-// === Stats collapsible (desktop) ===
-function toggleStats() {
-    var toggle = document.getElementById('statsToggle');
-    var content = document.getElementById('statsContent');
-    var isOpen = toggle.getAttribute('aria-expanded') === 'true';
-    toggle.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
-    if (isOpen) {
-        content.classList.remove('stats-collapsible--open');
-    } else {
-        content.classList.add('stats-collapsible--open');
-    }
-    localStorage.setItem('boletas-stats-open', isOpen ? '0' : '1');
-}
-// Restore stats state from localStorage
-(function() {
-    var saved = localStorage.getItem('boletas-stats-open');
-    if (saved === '1') {
-        var toggle = document.getElementById('statsToggle');
-        var content = document.getElementById('statsContent');
-        if (toggle && content) {
-            toggle.setAttribute('aria-expanded', 'true');
-            content.classList.add('stats-collapsible--open');
-        }
-    }
-})();
-
-// === Filter auto-submit (desktop) ===
-if (window.FilterBar) {
-    FilterBar.init('#filterFormDesktop', { debounceMs: 400, containerSelector: '.data-table' });
-}
-
-// === Loading on chip click (mobile) ===
-document.querySelectorAll('.filter-chips .chip').forEach(function(chip) {
-    chip.addEventListener('click', function() {
-        var container = document.getElementById('cardsContainer');
-        if (container && window.Loading) {
-            Loading.show(container);
-        }
-    });
-});
-
-// === Modal utilities ===
-function abrirModal(id) {
-    document.getElementById(id).classList.add('active');
-}
-function cerrarModal(id) {
-    document.getElementById(id).classList.remove('active');
-}
-
 // === Modal Pago ===
 function abrirModalPago(boletaId, numeroBoleta) {
     document.getElementById('formPago').action = '/boletas/' + boletaId + '/marcar-pagada';
     document.getElementById('modal-numero-boleta').textContent = numeroBoleta;
-    abrirModal('modalPago');
-}
-function cerrarModalPago() {
-    cerrarModal('modalPago');
-    document.getElementById('formPago').reset();
-    document.getElementById('comprobanteContainer').style.display = 'none';
+    modalPago.showModal();
 }
 
 // === Modal Desmarcar ===
 function abrirModalDesmarcar(boletaId, numeroBoleta) {
     document.getElementById('formDesmarcar').action = '/boletas/' + boletaId + '/desmarcar-pagada';
     document.getElementById('modal-desmarcar-numero').textContent = numeroBoleta;
-    abrirModal('modalDesmarcar');
-}
-function cerrarModalDesmarcar() {
-    cerrarModal('modalDesmarcar');
+    modalDesmarcar.showModal();
 }
 
 // === Modal Subir Comprobante ===
 function abrirModalSubirComprobante(boletaId, numeroBoleta) {
     document.getElementById('formComprobante').action = '/boletas/' + boletaId + '/subir-comprobante';
     document.getElementById('modal-comprobante-numero').textContent = numeroBoleta;
-    abrirModal('modalComprobante');
-}
-function cerrarModalComprobante() {
-    cerrarModal('modalComprobante');
-    document.getElementById('formComprobante').reset();
+    modalComprobante.showModal();
 }
 
 // === Toggle comprobante field ===
@@ -627,10 +538,10 @@ function toggleComprobante() {
     var container = document.getElementById('comprobanteContainer');
     var input = document.getElementById('comprobante');
     if (metodo === 'transferencia') {
-        container.style.display = 'block';
+        container.classList.remove('hidden');
         input.required = true;
     } else {
-        container.style.display = 'none';
+        container.classList.add('hidden');
         input.required = false;
         input.value = '';
     }
@@ -643,79 +554,56 @@ function abrirModalVerComprobante(comprobantePath, numeroBoleta) {
     var url = '/' + comprobantePath;
     var ext = comprobantePath.split('.').pop().toLowerCase();
     if (ext === 'pdf') {
-        container.innerHTML = '<iframe src="' + url + '" class="comprobante-viewer__iframe"></iframe>' +
-            '<p class="comprobante-viewer__link"><a href="' + url + '" target="_blank" class="btn btn--primary">Abrir en nueva pestana</a></p>';
+        container.innerHTML = '<iframe src="' + url + '" class="w-full h-[60vh] border-0"></iframe>' +
+            '<p class="mt-4"><a href="' + url + '" target="_blank" class="btn btn-primary">Abrir en nueva pestana</a></p>';
     } else {
-        container.innerHTML = '<img src="' + url + '" alt="Comprobante" class="comprobante-viewer__img">' +
-            '<p class="comprobante-viewer__link"><a href="' + url + '" target="_blank" class="btn btn--primary">Abrir en nueva pestana</a></p>';
+        container.innerHTML = '<img src="' + url + '" alt="Comprobante" class="max-w-full max-h-[60vh] object-contain mx-auto">' +
+            '<p class="mt-4"><a href="' + url + '" target="_blank" class="btn btn-primary">Abrir en nueva pestana</a></p>';
     }
-    abrirModal('modalVerComprobante');
-}
-function cerrarModalVerComprobante() {
-    cerrarModal('modalVerComprobante');
-    document.getElementById('comprobante-container').innerHTML = '';
+    modalVerComprobante.showModal();
 }
 
-// === Close modals on overlay click / Escape ===
-document.querySelectorAll('.modal').forEach(function(modal) {
-    modal.addEventListener('click', function(e) {
-        if (e.target === modal) modal.classList.remove('active');
-    });
-});
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal.active').forEach(function(m) {
-            m.classList.remove('active');
-        });
-    }
-});
-
-// === Aprobar / Rechazar boleta (custom modals) ===
+// === Aprobar / Rechazar boleta ===
 function aprobarBoleta(boletaId) {
-    ConfirmModal.show({
-        title: 'Aprobar Boleta',
-        message: 'Se aprobara el pago y la boleta sera marcada como pagada.',
-        icon: 'success',
-        confirmText: 'Aprobar',
-        confirmClass: 'btn--success'
-    }).then(function(ok) {
-        if (ok) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/boletas/' + boletaId + '/aprobar';
-            agregarFiltrosHidden(form);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
+    if (window.ConfirmModal) {
+        ConfirmModal.show({
+            title: 'Aprobar Boleta',
+            message: 'Se aprobara el pago y la boleta sera marcada como pagada.',
+            icon: 'success',
+            confirmText: 'Aprobar',
+            confirmClass: 'btn-success'
+        }).then(function(ok) {
+            if (ok) submitBoletaAction(boletaId, 'aprobar');
+        });
+    } else if (confirm('Aprobar esta boleta?')) {
+        submitBoletaAction(boletaId, 'aprobar');
+    }
 }
 
 function rechazarBoleta(boletaId) {
-    ConfirmModal.show({
-        title: 'Rechazar Boleta',
-        message: 'El usuario sera notificado del rechazo.',
-        icon: 'danger',
-        confirmText: 'Rechazar',
-        confirmClass: 'btn--danger',
-        showInput: true,
-        inputLabel: 'Motivo del rechazo:',
-        inputPlaceholder: 'Ingrese el motivo...',
-        inputRequired: true
-    }).then(function(motivo) {
-        if (motivo) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/boletas/' + boletaId + '/rechazar';
-            var inputMotivo = document.createElement('input');
-            inputMotivo.type = 'hidden';
-            inputMotivo.name = 'motivo';
-            inputMotivo.value = motivo;
-            form.appendChild(inputMotivo);
-            agregarFiltrosHidden(form);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
+    var motivo = prompt('Motivo del rechazo:');
+    if (motivo) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/boletas/' + boletaId + '/rechazar';
+        var inputMotivo = document.createElement('input');
+        inputMotivo.type = 'hidden';
+        inputMotivo.name = 'motivo';
+        inputMotivo.value = motivo;
+        form.appendChild(inputMotivo);
+        agregarFiltrosHidden(form);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function submitBoletaAction(boletaId, action) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/boletas/' + boletaId + '/' + action;
+    agregarFiltrosHidden(form);
+    document.body.appendChild(form);
+    form.submit();
 }
 
 function agregarFiltrosHidden(form) {
@@ -725,9 +613,7 @@ function agregarFiltrosHidden(form) {
         'año': '{{ filtros.año or "" }}',
         'mes': '{{ filtros.mes or "" }}',
         'pagada': '{{ filtros.pagada if filtros.pagada is not none else "" }}',
-        'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}',
-        'sort_by': '{{ filtros.sort_by or "" }}',
-        'sort_order': '{{ filtros.sort_order or "" }}'
+        'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}'
     };
     for (var key in filtros) {
         if (filtros[key]) {
@@ -739,53 +625,17 @@ function agregarFiltrosHidden(form) {
         }
     }
 }
+
+// Restore stats collapse state
+(function() {
+    var saved = localStorage.getItem('boletas-stats-open');
+    if (saved === '1') {
+        var toggle = document.getElementById('stats-toggle');
+        if (toggle) toggle.checked = true;
+    }
+    document.getElementById('stats-toggle')?.addEventListener('change', function() {
+        localStorage.setItem('boletas-stats-open', this.checked ? '1' : '0');
+    });
+})();
 </script>
-
-<style>
-/* Page-specific styles */
-.estado-cell {
-    white-space: nowrap;
-}
-
-.form-help {
-    display: block;
-    color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
-    margin-top: var(--spacing-xs);
-}
-
-.modal__content--lg {
-    max-height: 90vh;
-}
-
-.comprobante-viewer {
-    text-align: center;
-}
-
-.comprobante-viewer__iframe {
-    width: 100%;
-    height: 60vh;
-    border: none;
-}
-
-.comprobante-viewer__img {
-    max-width: 100%;
-    max-height: 60vh;
-    object-fit: contain;
-}
-
-.comprobante-viewer__link {
-    margin-top: var(--spacing-md);
-}
-
-@media (min-width: 768px) {
-    .comprobante-viewer__iframe {
-        height: 70vh;
-    }
-
-    .comprobante-viewer__img {
-        max-height: 70vh;
-    }
-}
-</style>
 {% endblock %}

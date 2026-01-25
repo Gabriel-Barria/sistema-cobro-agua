@@ -1,169 +1,227 @@
 {% extends "portal/base_portal.html" %}
 
 {% block content %}
-<div class="cliente-info">
-    <p><strong>Cliente:</strong> {{ cliente.nombre }}</p>
-    <p><strong>RUT:</strong> {{ session.get('cliente_rut') }}</p>
+<!-- Info del cliente -->
+<div class="card bg-base-100 shadow mb-4">
+    <div class="card-body py-4">
+        <div class="flex flex-wrap gap-4 items-center">
+            <div class="flex items-center gap-2">
+                <i class="fas fa-user text-primary"></i>
+                <span class="font-medium">{{ cliente.nombre }}</span>
+            </div>
+            <div class="flex items-center gap-2 text-base-content/70">
+                <i class="fas fa-id-card"></i>
+                <span>{{ session.get('cliente_rut') }}</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% if boletas_pendientes %}
 <!-- Sticky Bar de Pago -->
-<div class="pago-sticky-bar">
-    <div class="pago-sticky-info">
-        <span class="pago-sticky-count">{{ boletas_pendientes|length }} boleta{% if boletas_pendientes|length > 1 %}s{% endif %} pendiente{% if boletas_pendientes|length > 1 %}s{% endif %}</span>
-        <span class="pago-sticky-total" id="totalStickyBar">$0</span>
+<div class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 shadow-lg z-50 p-4">
+    <div class="container mx-auto max-w-4xl flex items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+            <span class="text-sm text-base-content/70">
+                {{ boletas_pendientes|length }} boleta{% if boletas_pendientes|length > 1 %}s{% endif %} pendiente{% if boletas_pendientes|length > 1 %}s{% endif %}
+            </span>
+            <span class="text-xl font-bold text-primary" id="totalStickyBar">$0</span>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="abrirModalPago()" id="btnPagar">
+            <i class="fas fa-credit-card mr-2"></i>
+            Pagar
+        </button>
     </div>
-    <button type="button" class="btn btn-primary btn-pagar" onclick="abrirModalPago()">
-        Pagar
-    </button>
 </div>
 
 <!-- Select All -->
-<div class="select-all-bar">
-    <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
-    <label for="selectAll">Seleccionar todas</label>
+<div class="card bg-base-100 shadow mb-4">
+    <div class="card-body py-3">
+        <label class="flex items-center gap-3 cursor-pointer">
+            <input type="checkbox" id="selectAll" class="checkbox checkbox-primary" onclick="toggleAll(this)">
+            <span class="font-medium">Seleccionar todas</span>
+        </label>
+    </div>
 </div>
 
 <!-- Lista de Boletas Pendientes -->
-<div class="boletas-lista-compact">
+<div class="space-y-3 pb-24">
     {% for boleta in boletas_pendientes %}
-    <div class="boleta-item {% if boleta.ultimo_rechazo %}boleta-rechazada{% endif %}" data-total="{{ boleta.total }}">
-        <div class="boleta-row">
-            <input type="checkbox" name="boletas" value="{{ boleta.id }}"
-                   class="boleta-check" onchange="actualizarTotal()">
-            <div class="boleta-info-compact">
-                <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
-                <span class="boleta-periodo">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
-            </div>
-            <div class="boleta-monto">${{ boleta.total|formato_pesos }}</div>
-            <div class="boleta-acciones">
-                <a href="{{ url_for('portal.descargar_boleta', boleta_id=boleta.id) }}"
-                   class="btn-icon" title="Descargar PDF">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                </a>
-                <button type="button" class="btn-icon btn-expandir"
-                        onclick="toggleDetalle({{ boleta.id }})" title="Ver detalle">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
+    <div class="card bg-base-100 shadow {% if boleta.ultimo_rechazo %}border-l-4 border-error{% endif %}" data-total="{{ boleta.total }}">
+        <div class="card-body py-4 px-4">
+            <div class="flex items-center gap-3">
+                <input type="checkbox" name="boletas" value="{{ boleta.id }}"
+                       class="checkbox checkbox-primary boleta-check" onchange="actualizarTotal()">
 
-        <!-- Detalle expandible -->
-        <div class="boleta-detalle" id="detalle-{{ boleta.id }}">
-            <div class="detalle-grid">
-                <div class="detalle-item">
-                    <span class="detalle-label">Consumo</span>
-                    <span class="detalle-value">{{ boleta.consumo_m3 }} m3</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span class="font-semibold">N° {{ boleta.numero_boleta }}</span>
+                        <span class="badge badge-ghost">{{ boleta.periodo_mes|mes_nombre }} {{ boleta.periodo_año }}</span>
+                    </div>
                 </div>
-                <div class="detalle-item">
-                    <span class="detalle-label">Cargo fijo</span>
-                    <span class="detalle-value">${{ boleta.cargo_fijo|formato_pesos }}</span>
+
+                <div class="text-right">
+                    <span class="text-lg font-bold text-primary">${{ boleta.total|formato_pesos }}</span>
                 </div>
-                <div class="detalle-item">
-                    <span class="detalle-label">Precio m3</span>
-                    <span class="detalle-value">${{ boleta.precio_m3|formato_pesos }}</span>
+
+                <div class="flex items-center gap-1">
+                    <a href="{{ url_for('portal.descargar_boleta', boleta_id=boleta.id) }}"
+                       class="btn btn-ghost btn-sm btn-circle" title="Descargar PDF">
+                        <i class="fas fa-download"></i>
+                    </a>
+                    <button type="button" class="btn btn-ghost btn-sm btn-circle btn-expandir"
+                            onclick="toggleDetalle({{ boleta.id }})" title="Ver detalle">
+                        <i class="fas fa-chevron-down transition-transform duration-200"></i>
+                    </button>
                 </div>
             </div>
-            {% if boleta.ultimo_rechazo %}
-            <div class="alerta-rechazo">
-                <strong>Pago rechazado:</strong> {{ boleta.ultimo_rechazo.motivo_rechazo }}
-                <br><a href="/{{ boleta.ultimo_rechazo.comprobante_path }}" target="_blank">Ver comprobante anterior</a>
+
+            <!-- Detalle expandible -->
+            <div class="hidden mt-4 pt-4 border-t border-base-300" id="detalle-{{ boleta.id }}">
+                <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div class="text-center">
+                        <div class="text-base-content/60">Consumo</div>
+                        <div class="font-semibold">{{ boleta.consumo_m3 }} m3</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-base-content/60">Cargo fijo</div>
+                        <div class="font-semibold">${{ boleta.cargo_fijo|formato_pesos }}</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-base-content/60">Precio m3</div>
+                        <div class="font-semibold">${{ boleta.precio_m3|formato_pesos }}</div>
+                    </div>
+                </div>
+                {% if boleta.ultimo_rechazo %}
+                <div class="alert alert-error mt-4">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div>
+                        <div class="font-semibold">Pago rechazado:</div>
+                        <div>{{ boleta.ultimo_rechazo.motivo_rechazo }}</div>
+                        <a href="/{{ boleta.ultimo_rechazo.comprobante_path }}" target="_blank" class="link link-primary">
+                            Ver comprobante anterior
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
     {% endfor %}
 </div>
 
 {% else %}
-<div class="no-boletas">
-    <div class="no-boletas-icon">&#10003;</div>
-    <h3>No tiene boletas pendientes de pago</h3>
-    <p>Todas sus boletas estan al dia.</p>
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body items-center text-center py-12">
+        <div class="text-6xl text-success mb-4">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h3 class="card-title text-2xl">No tiene boletas pendientes de pago</h3>
+        <p class="text-base-content/70">Todas sus boletas estan al dia.</p>
+    </div>
 </div>
 {% endif %}
 
 {% if boletas_en_revision %}
 <!-- Seccion En Revision (colapsada por defecto) -->
-<details class="seccion-revision">
-    <summary>
-        <span class="revision-badge">{{ boletas_en_revision|length }}</span>
+<div class="collapse collapse-arrow bg-base-100 shadow mt-6 {% if boletas_pendientes %}{% endif %}">
+    <input type="checkbox" />
+    <div class="collapse-title font-medium">
+        <span class="badge badge-warning mr-2">{{ boletas_en_revision|length }}</span>
         Boletas en revision
-    </summary>
-    <div class="boletas-lista-compact">
-        {% for boleta in boletas_en_revision %}
-        <div class="boleta-item en-revision">
-            <div class="boleta-row">
-                <div class="boleta-info-compact">
-                    <span class="boleta-numero">N° {{ boleta.numero_boleta }}</span>
-                    <span class="boleta-estado-tag">En revision</span>
-                </div>
-                <div class="boleta-monto">${{ boleta.total|formato_pesos }}</div>
-                <div class="boleta-acciones">
-                    <a href="{{ url_for('portal.descargar_boleta', boleta_id=boleta.id) }}"
-                       class="btn-icon" title="Descargar PDF">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="7 10 12 15 17 10"/>
-                            <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                    </a>
-                </div>
-            </div>
-            <div class="boleta-revision-info">
-                <small>Enviado: {{ boleta.intento_actual.fecha_envio if boleta.intento_actual else '-' }}</small>
-                {% if boleta.comprobante_path %}
-                <a href="/{{ boleta.comprobante_path }}" target="_blank">Ver comprobante</a>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
     </div>
-</details>
+    <div class="collapse-content">
+        <div class="space-y-3 pt-2">
+            {% for boleta in boletas_en_revision %}
+            <div class="card bg-base-200">
+                <div class="card-body py-3 px-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="font-semibold">N° {{ boleta.numero_boleta }}</span>
+                                <span class="badge badge-warning badge-sm">En revision</span>
+                            </div>
+                            <div class="text-sm text-base-content/60 mt-1">
+                                Enviado: {{ boleta.intento_actual.fecha_envio if boleta.intento_actual else '-' }}
+                                {% if boleta.comprobante_path %}
+                                <a href="/{{ boleta.comprobante_path }}" target="_blank" class="link link-primary ml-2">
+                                    Ver comprobante
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-lg font-bold">${{ boleta.total|formato_pesos }}</span>
+                        </div>
+                        <a href="{{ url_for('portal.descargar_boleta', boleta_id=boleta.id) }}"
+                           class="btn btn-ghost btn-sm btn-circle" title="Descargar PDF">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
 {% endif %}
 
-<!-- Modal de Pago -->
-<div class="modal-overlay" id="modalPago">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Confirmar Pago</h3>
-            <button type="button" class="modal-close" onclick="cerrarModalPago()">&times;</button>
-        </div>
+<!-- Modal de Pago usando DaisyUI -->
+<dialog id="modalPago" class="modal">
+    <div class="modal-box">
+        <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+                <i class="fas fa-times"></i>
+            </button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">
+            <i class="fas fa-credit-card text-primary mr-2"></i>
+            Confirmar Pago
+        </h3>
+
         <form method="POST" action="{{ url_for('portal.pagar') }}"
               enctype="multipart/form-data" id="formPago">
-            <div class="modal-body">
-                <div class="pago-resumen-modal">
-                    <p><span id="cantidadSeleccionadas">0</span> boleta(s) seleccionada(s)</p>
-                    <p class="total-grande">Total: <strong id="totalModal">$0</strong></p>
+            <div class="bg-base-200 rounded-lg p-4 mb-4">
+                <div class="text-center">
+                    <p class="text-base-content/70">
+                        <span id="cantidadSeleccionadas">0</span> boleta(s) seleccionada(s)
+                    </p>
+                    <p class="text-2xl font-bold text-primary mt-2">
+                        Total: <span id="totalModal">$0</span>
+                    </p>
                 </div>
-
-                <div class="form-group">
-                    <label for="comprobante" class="form-label">Comprobante de pago:</label>
-                    <input type="file" name="comprobante" id="comprobante"
-                           class="form-file" accept=".png,.jpg,.jpeg,.pdf" required>
-                    <small class="form-hint">PNG, JPG o PDF (max. 5MB)</small>
-                </div>
-
-                <!-- Hidden inputs para boletas seleccionadas -->
-                <div id="boletasHidden"></div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="cerrarModalPago()">
+
+            <div class="form-control w-full mb-4">
+                <label class="label" for="comprobante">
+                    <span class="label-text font-medium">Comprobante de pago:</span>
+                </label>
+                <input type="file" name="comprobante" id="comprobante"
+                       class="file-input file-input-bordered w-full"
+                       accept=".png,.jpg,.jpeg,.pdf" required>
+                <label class="label">
+                    <span class="label-text-alt text-base-content/60">PNG, JPG o PDF (max. 5MB)</span>
+                </label>
+            </div>
+
+            <!-- Hidden inputs para boletas seleccionadas -->
+            <div id="boletasHidden"></div>
+
+            <div class="modal-action">
+                <button type="button" class="btn btn-ghost" onclick="cerrarModalPago()">
                     Cancelar
                 </button>
                 <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane mr-2"></i>
                     Enviar Pago
                 </button>
             </div>
         </form>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <script>
 function toggleAll(checkbox) {
@@ -178,7 +236,7 @@ function actualizarTotal() {
     let count = 0;
 
     checks.forEach(check => {
-        const item = check.closest('.boleta-item');
+        const item = check.closest('.card');
         const totalValue = parseInt(item.dataset.total) || 0;
         total += totalValue;
         count++;
@@ -194,28 +252,30 @@ function actualizarTotal() {
     document.getElementById('cantidadSeleccionadas').textContent = count;
 
     // Actualizar boton pagar
-    const btnPagar = document.querySelector('.btn-pagar');
+    const btnPagar = document.getElementById('btnPagar');
     if (btnPagar) {
         if (count > 0) {
-            btnPagar.textContent = 'Pagar $' + formatted;
+            btnPagar.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Pagar $' + formatted;
             btnPagar.disabled = false;
+            btnPagar.classList.remove('btn-disabled');
         } else {
-            btnPagar.textContent = 'Pagar';
+            btnPagar.innerHTML = '<i class="fas fa-credit-card mr-2"></i>Pagar';
             btnPagar.disabled = true;
+            btnPagar.classList.add('btn-disabled');
         }
     }
 }
 
 function toggleDetalle(boletaId) {
     const detalle = document.getElementById('detalle-' + boletaId);
-    const btn = detalle.previousElementSibling.querySelector('.btn-expandir');
+    const btn = detalle.closest('.card-body').querySelector('.btn-expandir i');
 
-    if (detalle.classList.contains('show')) {
-        detalle.classList.remove('show');
-        btn.classList.remove('rotated');
+    if (detalle.classList.contains('hidden')) {
+        detalle.classList.remove('hidden');
+        btn.classList.add('rotate-180');
     } else {
-        detalle.classList.add('show');
-        btn.classList.add('rotated');
+        detalle.classList.add('hidden');
+        btn.classList.remove('rotate-180');
     }
 }
 
@@ -237,28 +297,12 @@ function abrirModalPago() {
         container.appendChild(hidden);
     });
 
-    document.getElementById('modalPago').classList.add('show');
-    document.body.style.overflow = 'hidden';
+    document.getElementById('modalPago').showModal();
 }
 
 function cerrarModalPago() {
-    document.getElementById('modalPago').classList.remove('show');
-    document.body.style.overflow = '';
+    document.getElementById('modalPago').close();
 }
-
-// Cerrar modal con Escape
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        cerrarModalPago();
-    }
-});
-
-// Cerrar modal al hacer click fuera
-document.getElementById('modalPago').addEventListener('click', function(e) {
-    if (e.target === this) {
-        cerrarModalPago();
-    }
-});
 
 // Validar formulario
 document.getElementById('formPago').addEventListener('submit', function(e) {

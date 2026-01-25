@@ -1,378 +1,363 @@
 {% extends "base.html" %}
 
-{% block title %}Pagos - Sistema de Lecturas{% endblock %}
+{% block title %}Pagos - Sistema de Cobro de Agua{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Historial de Pagos</h1>
-    <div>
-        <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="btn btn--primary hide-mobile"><i class="fas fa-plus"></i> Registrar Pago</a>
-        <a href="{{ url_for('boletas.saldos_lista') }}" class="btn btn--secondary hide-mobile"><i class="fas fa-wallet"></i> Ver Saldos</a>
-        <a href="{{ url_for('boletas.listar') }}" class="btn btn--secondary hide-mobile">Volver a Boletas</a>
-        <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="btn btn--primary hide-desktop"><i class="fas fa-plus"></i> Nuevo</a>
-        <a href="{{ url_for('boletas.saldos_lista') }}" class="btn btn--secondary hide-desktop"><i class="fas fa-wallet"></i></a>
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Historial de Pagos</h1>
+    <div class="flex flex-wrap gap-2">
+        <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            <span class="hidden sm:inline">Registrar Pago</span>
+            <span class="sm:hidden">Nuevo</span>
+        </a>
+        <a href="{{ url_for('boletas.saldos_lista') }}" class="btn btn-secondary">
+            <i class="fas fa-wallet"></i>
+            <span class="hidden sm:inline">Ver Saldos</span>
+        </a>
+        <a href="{{ url_for('boletas.listar') }}" class="btn btn-ghost hidden sm:inline-flex">
+            <i class="fas fa-arrow-left"></i> Boletas
+        </a>
     </div>
 </div>
 
-<!-- Stats Section -->
-<div class="stats-toggle--enhanced hide-mobile" onclick="toggleStats()">
-    <span><i class="fas fa-chart-bar"></i> Estadisticas</span>
-    <i class="fas fa-chevron-down" id="statsChevron"></i>
-</div>
-<div class="stats-collapsible hide-mobile" id="statsSection">
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-card__value">{{ stats.total }}</div>
-            <div class="stat-card__label">Total</div>
-        </div>
-        <div class="stat-card stat-card--success">
-            <div class="stat-card__value">{{ stats.aprobados }}</div>
-            <div class="stat-card__label">Aprobados</div>
-        </div>
-        <div class="stat-card stat-card--warning">
-            <div class="stat-card__value">{{ stats.en_revision }}</div>
-            <div class="stat-card__label">En Revision</div>
-        </div>
-        <div class="stat-card stat-card--danger">
-            <div class="stat-card__value">{{ stats.rechazados }}</div>
-            <div class="stat-card__label">Rechazados</div>
+<!-- STATS - colapsable -->
+{% if stats %}
+<div class="collapse collapse-arrow bg-base-100 shadow mb-4 hidden lg:block">
+    <input type="checkbox" id="stats-toggle" />
+    <div class="collapse-title font-medium flex items-center gap-2">
+        <i class="fas fa-chart-bar text-primary"></i>
+        Resumen
+    </div>
+    <div class="collapse-content">
+        <div class="stats stats-vertical lg:stats-horizontal shadow w-full">
+            <div class="stat">
+                <div class="stat-title">Total</div>
+                <div class="stat-value text-lg">{{ stats.total or 0 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Aprobados</div>
+                <div class="stat-value text-lg text-success">{{ stats.aprobados or 0 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">En Revision</div>
+                <div class="stat-value text-lg text-warning">{{ stats.en_revision or 0 }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Rechazados</div>
+                <div class="stat-value text-lg text-error">{{ stats.rechazados or 0 }}</div>
+            </div>
         </div>
     </div>
 </div>
+{% endif %}
 
-<!-- Filter Chips (Mobile) -->
-<div class="filter-chips hide-desktop">
+<!-- FILTER CHIPS - solo mobile -->
+<div class="flex items-center gap-2 overflow-x-auto pb-4 lg:hidden">
     <a href="{{ url_for('boletas.pagos_lista', cliente_id=filtros.cliente_id or '') }}"
-       class="chip {% if not filtros.estado %}chip--active{% endif %}">
-        Todos <span class="chip__count">{{ stats.total }}</span>
+       class="btn btn-sm {% if not filtros.estado %}btn-primary{% else %}btn-ghost{% endif %}">
+        Todos
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.total or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('boletas.pagos_lista', estado='aprobado', cliente_id=filtros.cliente_id or '') }}"
-       class="chip {% if filtros.estado == 'aprobado' %}chip--active{% endif %}"
-       onclick="Loading.show()">
-        Aprobados <span class="chip__count">{{ stats.aprobados }}</span>
+       class="btn btn-sm {% if filtros.estado == 'aprobado' %}btn-primary{% else %}btn-ghost{% endif %}">
+        Aprobados
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.aprobados or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('boletas.pagos_lista', estado='en_revision', cliente_id=filtros.cliente_id or '') }}"
-       class="chip {% if filtros.estado == 'en_revision' %}chip--active{% endif %}"
-       onclick="Loading.show()">
-        En Revision <span class="chip__count">{{ stats.en_revision }}</span>
+       class="btn btn-sm {% if filtros.estado == 'en_revision' %}btn-primary{% else %}btn-ghost{% endif %}">
+        En Revision
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.en_revision or 0 }}</span>{% endif %}
     </a>
     <a href="{{ url_for('boletas.pagos_lista', estado='rechazado', cliente_id=filtros.cliente_id or '') }}"
-       class="chip {% if filtros.estado == 'rechazado' %}chip--active{% endif %}"
-       onclick="Loading.show()">
-        Rechazados <span class="chip__count">{{ stats.rechazados }}</span>
+       class="btn btn-sm {% if filtros.estado == 'rechazado' %}btn-primary{% else %}btn-ghost{% endif %}">
+        Rechazados
+        {% if stats %}<span class="badge badge-sm ml-1">{{ stats.rechazados or 0 }}</span>{% endif %}
     </a>
-    <button class="chip chip--outline" onclick="abrirModal('modalFiltrosPagos')">
-        <i class="fas fa-filter"></i> Filtros
+    <button class="btn btn-sm btn-circle btn-ghost {% if filtros.cliente_id %}btn-primary{% endif %}"
+            onclick="modalFiltrosPagos.showModal()" title="Filtros">
+        <i class="fas fa-filter"></i>
     </button>
 </div>
 
-<!-- Desktop Filter Bar -->
-<form method="GET" class="filter-bar hide-mobile" id="filterFormPagos">
-    <div class="filter-bar__fields">
-        <div class="filter-bar__group">
-            <label for="estado">Estado</label>
-            <select name="estado" id="estado">
-                <option value="">Todos</option>
-                <option value="en_revision" {{ 'selected' if filtros.estado == 'en_revision' }}>En Revision</option>
-                <option value="aprobado" {{ 'selected' if filtros.estado == 'aprobado' }}>Aprobados</option>
-                <option value="rechazado" {{ 'selected' if filtros.estado == 'rechazado' }}>Rechazados</option>
-            </select>
+<!-- FILTER FORM - solo desktop -->
+<form method="GET" class="card bg-base-100 shadow mb-4 hidden lg:block" id="filterFormPagos">
+    <div class="card-body py-4">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 items-end">
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Estado</span></label>
+                <select name="estado" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    <option value="en_revision" {{ 'selected' if filtros.estado == 'en_revision' }}>En Revision</option>
+                    <option value="aprobado" {{ 'selected' if filtros.estado == 'aprobado' }}>Aprobados</option>
+                    <option value="rechazado" {{ 'selected' if filtros.estado == 'rechazado' }}>Rechazados</option>
+                </select>
+            </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">Cliente</span></label>
+                <select name="cliente_id" class="select select-bordered select-sm">
+                    <option value="">Todos los clientes</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>{{ c.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+                {% if filtros.estado or filtros.cliente_id %}
+                <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn-ghost btn-sm">Limpiar</a>
+                {% endif %}
+            </div>
         </div>
-        <div class="filter-bar__group">
-            <label for="cliente_id">Cliente</label>
-            <select name="cliente_id" id="cliente_id">
-                <option value="">Todos los clientes</option>
-                {% for c in clientes %}
-                <option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>{{ c.nombre }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </div>
-    <div class="filter-bar__actions">
-        <button type="submit" class="btn btn--primary">Filtrar</button>
-        {% if filtros.estado or filtros.cliente_id %}
-        <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary">Limpiar</a>
-        {% endif %}
     </div>
 </form>
 
 {% if pagos %}
-<!-- Desktop Table -->
-<table class="data-table data-table--striped data-table--hover hide-mobile">
-    <thead>
-        <tr>
-            <th>N Pago</th>
-            <th>Cliente</th>
-            <th>Monto</th>
-            <th>Aplicado</th>
-            <th>Saldo Favor</th>
-            <th>Metodo</th>
-            <th>Fecha Envio</th>
-            <th>Estado</th>
-            <th>Boletas</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for p in pagos %}
-        <tr>
-            <td>
-                <a href="{{ url_for('boletas.pago_detalle', pago_id=p.id) }}">{{ p.numero_pago }}</a>
-            </td>
-            <td>{{ p.cliente_nombre }}</td>
-            <td>${{ p.monto_total|formato_pesos }}</td>
-            <td>${{ p.monto_aplicado|formato_pesos }}</td>
-            <td>
-                {% if p.monto_a_favor > 0 %}
-                <span class="text-success">${{ p.monto_a_favor|formato_pesos }}</span>
-                {% else %}-{% endif %}
-            </td>
-            <td>{{ p.metodo_pago|capitalize if p.metodo_pago else '-' }}</td>
-            <td>{{ p.fecha_envio }}</td>
-            <td>
-                {% if p.estado == 'aprobado' %}
-                    <span class="badge badge--success">Aprobado</span>
-                {% elif p.estado == 'rechazado' %}
-                    <span class="badge badge--danger">Rechazado</span>
-                {% elif p.estado == 'en_revision' %}
-                    <span class="badge badge--warning">En Revision</span>
-                {% else %}
-                    <span class="badge badge--secondary">{{ p.estado|capitalize }}</span>
-                {% endif %}
-            </td>
-            <td>{{ p.num_boletas }}</td>
-            <td>
-                <div class="action-btn-group">
-                    <a href="{{ url_for('boletas.pago_detalle', pago_id=p.id) }}" class="action-btn" title="Ver detalle">
-                        <i class="fas fa-eye"></i>
-                    </a>
-                    {% if p.estado == 'en_revision' %}
-                    <button class="action-btn action-btn--success" title="Aprobar" onclick="aprobarPago({{ p.id }})">
-                        <i class="fas fa-check"></i>
-                    </button>
-                    <button class="action-btn action-btn--danger" title="Rechazar" onclick="rechazarPago({{ p.id }})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    {% endif %}
-                    {% if p.comprobante_path %}
-                    <a href="/{{ p.comprobante_path }}" target="_blank" class="action-btn" title="Ver comprobante">
-                        <i class="fas fa-paperclip"></i>
-                    </a>
+<!-- CARDS - solo mobile -->
+<div class="lg:hidden space-y-2" id="cardsContainer">
+    {% for p in pagos %}
+    <div class="collapse collapse-arrow bg-base-100 shadow {% if p.estado == 'aprobado' %}border-l-4 border-l-success{% elif p.estado == 'en_revision' %}border-l-4 border-l-warning{% elif p.estado == 'rechazado' %}border-l-4 border-l-error{% endif %}">
+        <input type="checkbox" class="peer" />
+        <div class="collapse-title pr-12">
+            <div class="flex justify-between items-center">
+                <div class="min-w-0">
+                    <div class="font-semibold">{{ p.numero_pago }}</div>
+                    <div class="text-sm text-base-content/70 truncate">{{ p.cliente_nombre }}</div>
+                </div>
+                <div class="flex flex-col items-end gap-1 ml-4">
+                    <div class="font-bold">${{ p.monto_total|formato_pesos }}</div>
+                    {% if p.estado == 'aprobado' %}
+                        <span class="badge badge-success badge-sm">Aprobado</span>
+                    {% elif p.estado == 'en_revision' %}
+                        <span class="badge badge-warning badge-sm">En Revision</span>
+                    {% elif p.estado == 'rechazado' %}
+                        <span class="badge badge-error badge-sm">Rechazado</span>
+                    {% else %}
+                        <span class="badge badge-neutral badge-sm">{{ p.estado|capitalize }}</span>
                     {% endif %}
                 </div>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<!-- Mobile Card View -->
-<div class="hide-desktop">
-    {% for p in pagos %}
-    <div class="pago-card {% if p.estado == 'aprobado' %}pago-card--success{% elif p.estado == 'en_revision' %}pago-card--warning{% elif p.estado == 'rechazado' %}pago-card--danger{% endif %}" data-expanded="false" onclick="toggleCard(this)">
-        <div class="pago-card__summary">
-            <div class="pago-card__left">
-                <div class="pago-card__number">{{ p.numero_pago }}</div>
-                <div class="pago-card__client">{{ p.cliente_nombre }}</div>
-            </div>
-            <div class="pago-card__right">
-                <div class="pago-card__amount">${{ p.monto_total|formato_pesos }}</div>
-                {% if p.estado == 'aprobado' %}
-                    <span class="badge badge--success">Aprobado</span>
-                {% elif p.estado == 'en_revision' %}
-                    <span class="badge badge--warning">En Revision</span>
-                {% elif p.estado == 'rechazado' %}
-                    <span class="badge badge--danger">Rechazado</span>
-                {% else %}
-                    <span class="badge badge--secondary">{{ p.estado|capitalize }}</span>
-                {% endif %}
-                <div class="pago-card__chevron"><i class="fas fa-chevron-down"></i></div>
             </div>
         </div>
-        <div class="pago-card__details">
-            <div class="pago-card__details-inner">
-                <div class="pago-card__info">
-                    <div class="pago-card__info-item">
-                        Aplicado
-                        <span>${{ p.monto_aplicado|formato_pesos }}</span>
-                    </div>
-                    <div class="pago-card__info-item">
-                        Saldo Favor
-                        <span>{% if p.monto_a_favor > 0 %}${{ p.monto_a_favor|formato_pesos }}{% else %}-{% endif %}</span>
-                    </div>
-                    <div class="pago-card__info-item">
-                        Metodo
-                        <span>{{ p.metodo_pago|capitalize if p.metodo_pago else '-' }}</span>
-                    </div>
-                    <div class="pago-card__info-item">
-                        Fecha
-                        <span>{{ p.fecha_envio }}</span>
-                    </div>
-                    <div class="pago-card__info-item">
-                        Boletas
-                        <span>{{ p.num_boletas }}</span>
-                    </div>
+        <div class="collapse-content bg-base-200/50">
+            <div class="grid grid-cols-2 gap-2 py-2 text-sm">
+                <div class="text-base-content/70">
+                    Aplicado
+                    <span class="block font-medium text-base-content">${{ p.monto_aplicado|formato_pesos }}</span>
                 </div>
-                <div class="pago-card__actions-primary">
-                    <a href="{{ url_for('boletas.pago_detalle', pago_id=p.id) }}" class="btn btn--primary btn--sm" onclick="event.stopPropagation()">
-                        <i class="fas fa-eye"></i> Ver Detalle
-                    </a>
-                    {% if p.estado == 'en_revision' %}
-                    <button class="btn btn--success btn--sm" onclick="event.stopPropagation(); aprobarPago({{ p.id }})">
+                <div class="text-base-content/70">
+                    Saldo Favor
+                    <span class="block font-medium {% if p.monto_a_favor > 0 %}text-success{% endif %}">
+                        {% if p.monto_a_favor > 0 %}${{ p.monto_a_favor|formato_pesos }}{% else %}-{% endif %}
+                    </span>
+                </div>
+                <div class="text-base-content/70">
+                    Metodo
+                    <span class="block font-medium text-base-content">{{ p.metodo_pago|capitalize if p.metodo_pago else '-' }}</span>
+                </div>
+                <div class="text-base-content/70">
+                    Boletas
+                    <span class="block font-medium text-base-content">{{ p.num_boletas }}</span>
+                </div>
+            </div>
+            <div class="flex flex-col gap-2 pt-2">
+                <a href="{{ url_for('boletas.pago_detalle', pago_id=p.id) }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i> Ver Detalle
+                </a>
+                {% if p.estado == 'en_revision' %}
+                <div class="flex gap-2">
+                    <button class="btn btn-success btn-sm flex-1" onclick="aprobarPago({{ p.id }})">
                         <i class="fas fa-check"></i> Aprobar
                     </button>
-                    <button class="btn btn--danger btn--sm" onclick="event.stopPropagation(); rechazarPago({{ p.id }})">
+                    <button class="btn btn-error btn-sm flex-1" onclick="rechazarPago({{ p.id }})">
                         <i class="fas fa-times"></i> Rechazar
                     </button>
-                    {% endif %}
-                    {% if p.comprobante_path %}
-                    <a href="/{{ p.comprobante_path }}" target="_blank" class="btn btn--secondary btn--sm" onclick="event.stopPropagation()">
-                        <i class="fas fa-paperclip"></i> Ver Comprobante
-                    </a>
-                    {% endif %}
                 </div>
+                {% endif %}
+                {% if p.comprobante_path %}
+                <a href="/{{ p.comprobante_path }}" target="_blank" class="btn btn-ghost btn-sm">
+                    <i class="fas fa-paperclip"></i> Ver Comprobante
+                </a>
+                {% endif %}
             </div>
         </div>
     </div>
     {% endfor %}
 </div>
-{% else %}
-<!-- Empty States -->
-<div class="empty-state hide-mobile">
-    <div class="empty-state__icon"><i class="fas fa-receipt"></i></div>
-    <h3 class="empty-state__title">No hay pagos</h3>
-    <p class="empty-state__description">No se encontraron pagos con los filtros seleccionados.</p>
-    {% if filtros.estado or filtros.cliente_id %}
-    <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn--secondary">Limpiar Filtros</a>
-    {% endif %}
-</div>
-<div class="empty-state hide-desktop">
-    <div class="empty-state__icon"><i class="fas fa-search"></i></div>
-    <h3 class="empty-state__title">Sin resultados</h3>
-    <p class="empty-state__description">No se encontraron pagos.</p>
-    <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="btn btn--primary">Registrar Pago</a>
-</div>
-{% endif %}
 
-<!-- Modal Filtros Mobile -->
-<div class="modal" id="modalFiltrosPagos">
-    <div class="modal__backdrop" onclick="cerrarModal('modalFiltrosPagos')"></div>
-    <div class="modal__content modal__content--bottom">
-        <div class="modal__drag-indicator"></div>
-        <div class="modal__header">
-            <h3>Filtros Avanzados</h3>
-            <button class="modal__close" onclick="cerrarModal('modalFiltrosPagos')">&times;</button>
-        </div>
-        <div class="modal__body">
-            <form method="GET" action="{{ url_for('boletas.pagos_lista') }}">
-                <div class="form-group">
-                    <label class="form-label">Estado</label>
-                    <select name="estado">
-                        <option value="">Todos</option>
-                        <option value="en_revision" {{ 'selected' if filtros.estado == 'en_revision' }}>En Revision</option>
-                        <option value="aprobado" {{ 'selected' if filtros.estado == 'aprobado' }}>Aprobados</option>
-                        <option value="rechazado" {{ 'selected' if filtros.estado == 'rechazado' }}>Rechazados</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Cliente</label>
-                    <select name="cliente_id">
-                        <option value="">Todos los clientes</option>
-                        {% for c in clientes %}
-                        <option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>{{ c.nombre }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn--primary" style="width:100%">Aplicar Filtros</button>
-                </div>
-            </form>
+<!-- TABLE - solo desktop -->
+<div class="overflow-x-auto hidden lg:block">
+    <table class="table table-zebra bg-base-100">
+        <thead>
+            <tr>
+                <th class="sortable">N Pago</th>
+                <th class="sortable">Cliente</th>
+                <th class="sortable">Monto</th>
+                <th class="sortable">Aplicado</th>
+                <th class="sortable">Saldo Favor</th>
+                <th>Metodo</th>
+                <th class="sortable">Fecha</th>
+                <th>Estado</th>
+                <th>Boletas</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in pagos %}
+            <tr class="hover">
+                <td>
+                    <a href="{{ url_for('boletas.pago_detalle', pago_id=p.id) }}" class="link link-primary">{{ p.numero_pago }}</a>
+                </td>
+                <td>{{ p.cliente_nombre }}</td>
+                <td>${{ p.monto_total|formato_pesos }}</td>
+                <td>${{ p.monto_aplicado|formato_pesos }}</td>
+                <td>
+                    {% if p.monto_a_favor > 0 %}
+                    <span class="text-success font-medium">${{ p.monto_a_favor|formato_pesos }}</span>
+                    {% else %}-{% endif %}
+                </td>
+                <td>{{ p.metodo_pago|capitalize if p.metodo_pago else '-' }}</td>
+                <td>{{ p.fecha_envio }}</td>
+                <td>
+                    {% if p.estado == 'aprobado' %}
+                        <span class="badge badge-success">Aprobado</span>
+                    {% elif p.estado == 'rechazado' %}
+                        <span class="badge badge-error">Rechazado</span>
+                    {% elif p.estado == 'en_revision' %}
+                        <span class="badge badge-warning">En Revision</span>
+                    {% else %}
+                        <span class="badge badge-neutral">{{ p.estado|capitalize }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.num_boletas }}</td>
+                <td>
+                    <div class="flex gap-1">
+                        <a href="{{ url_for('boletas.pago_detalle', pago_id=p.id) }}" class="btn btn-ghost btn-xs btn-square" title="Ver detalle">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if p.estado == 'en_revision' %}
+                        <button class="btn btn-ghost btn-xs btn-square text-success" title="Aprobar" onclick="aprobarPago({{ p.id }})">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="btn btn-ghost btn-xs btn-square text-error" title="Rechazar" onclick="rechazarPago({{ p.id }})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        {% endif %}
+                        {% if p.comprobante_path %}
+                        <a href="/{{ p.comprobante_path }}" target="_blank" class="btn btn-ghost btn-xs btn-square" title="Ver comprobante">
+                            <i class="fas fa-paperclip"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<!-- Empty state -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body items-center text-center py-12">
+        <i class="fas fa-receipt text-5xl text-base-content/30 mb-4"></i>
+        <h3 class="card-title">No hay pagos</h3>
+        <p class="text-base-content/70 mb-4">No se encontraron pagos con los filtros seleccionados.</p>
+        <div class="card-actions">
+            {% if filtros.estado or filtros.cliente_id %}
+            <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn-ghost">Limpiar Filtros</a>
+            {% endif %}
+            <a href="{{ url_for('boletas.registrar_pago_admin') }}" class="btn btn-primary">+ Registrar Pago</a>
         </div>
     </div>
 </div>
+{% endif %}
+
+<!-- Modal filtros (mobile) -->
+<dialog id="modalFiltrosPagos" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box">
+        <h3 class="font-bold text-lg mb-4">Filtros Avanzados</h3>
+        <form method="GET">
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Estado</span></label>
+                <select name="estado" class="select select-bordered">
+                    <option value="">Todos</option>
+                    <option value="en_revision" {{ 'selected' if filtros.estado == 'en_revision' }}>En Revision</option>
+                    <option value="aprobado" {{ 'selected' if filtros.estado == 'aprobado' }}>Aprobados</option>
+                    <option value="rechazado" {{ 'selected' if filtros.estado == 'rechazado' }}>Rechazados</option>
+                </select>
+            </div>
+            <div class="form-control mb-4">
+                <label class="label"><span class="label-text">Cliente</span></label>
+                <select name="cliente_id" class="select select-bordered">
+                    <option value="">Todos los clientes</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id }}" {{ 'selected' if filtros.cliente_id == c.id }}>{{ c.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="modal-action">
+                <a href="{{ url_for('boletas.pagos_lista') }}" class="btn btn-ghost">Limpiar</a>
+                <button type="submit" class="btn btn-primary">Aplicar</button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 
 <script>
-function toggleCard(card) {
-    var expanded = card.getAttribute('data-expanded') === 'true';
-    card.setAttribute('data-expanded', !expanded);
-}
-
-function toggleStats() {
-    var section = document.getElementById('statsSection');
-    var chevron = document.getElementById('statsChevron');
-    var isOpen = section.style.display !== 'none';
-    section.style.display = isOpen ? 'none' : 'block';
-    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
-    localStorage.setItem('pagos-stats-open', !isOpen);
-}
-
-(function() {
-    var saved = localStorage.getItem('pagos-stats-open');
-    if (saved === 'false') {
-        var section = document.getElementById('statsSection');
-        var chevron = document.getElementById('statsChevron');
-        if (section) { section.style.display = 'none'; }
-        if (chevron) { chevron.style.transform = ''; }
-    }
-})();
-
-if (typeof FilterBar !== 'undefined') {
-    FilterBar.init('#filterFormPagos', { debounceMs: 400, containerSelector: '.data-table' });
-}
-
-function abrirModal(id) {
-    document.getElementById(id).classList.add('modal--active');
-    document.body.style.overflow = 'hidden';
-}
-
-function cerrarModal(id) {
-    document.getElementById(id).classList.remove('modal--active');
-    document.body.style.overflow = '';
-}
-
 function aprobarPago(pagoId) {
-    ConfirmModal.show({
-        title: 'Aprobar Pago',
-        message: 'Se aprobara este pago y se aplicara a las boletas correspondientes.',
-        icon: 'success',
-        confirmText: 'Aprobar',
-        confirmClass: 'btn--success'
-    }).then(function(ok) {
-        if (ok) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/boletas/pagos/' + pagoId + '/aprobar';
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
+    if (window.ConfirmModal) {
+        ConfirmModal.show({
+            title: 'Aprobar Pago',
+            message: 'Se aprobara este pago y se aplicara a las boletas correspondientes.',
+            icon: 'success',
+            confirmText: 'Aprobar',
+            confirmClass: 'btn-success'
+        }).then(function(ok) {
+            if (ok) submitPagoAction(pagoId, 'aprobar');
+        });
+    } else if (confirm('Aprobar este pago?')) {
+        submitPagoAction(pagoId, 'aprobar');
+    }
 }
 
 function rechazarPago(pagoId) {
-    ConfirmModal.show({
-        title: 'Rechazar Pago',
-        message: 'El pago sera rechazado y las boletas volveran a estado pendiente.',
-        icon: 'danger',
-        confirmText: 'Rechazar',
-        confirmClass: 'btn--danger',
-        showInput: true,
-        inputLabel: 'Motivo del rechazo:',
-        inputPlaceholder: 'Ingrese el motivo...',
-        inputRequired: true
-    }).then(function(motivo) {
-        if (motivo) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/boletas/pagos/' + pagoId + '/rechazar';
-            var input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = 'motivo';
-            input.value = motivo;
-            form.appendChild(input);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    });
+    var motivo = prompt('Motivo del rechazo:');
+    if (motivo) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/boletas/pagos/' + pagoId + '/rechazar';
+        var input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'motivo';
+        input.value = motivo;
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
+
+function submitPagoAction(pagoId, action) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/boletas/pagos/' + pagoId + '/' + action;
+    document.body.appendChild(form);
+    form.submit();
+}
+
+// Restore stats collapse state
+(function() {
+    var saved = localStorage.getItem('pagos-stats-open');
+    if (saved === '1') {
+        var toggle = document.getElementById('stats-toggle');
+        if (toggle) toggle.checked = true;
+    }
+    document.getElementById('stats-toggle')?.addEventListener('change', function() {
+        localStorage.setItem('pagos-stats-open', this.checked ? '1' : '0');
+    });
+})();
 </script>
 {% endblock %}

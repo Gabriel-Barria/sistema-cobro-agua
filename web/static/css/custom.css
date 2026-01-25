@@ -1,0 +1,165 @@
+/* =============================================================================
+   CUSTOM.CSS - Overrides minimos para DaisyUI
+   Solo agregar estilos que no se pueden lograr con clases de DaisyUI/Tailwind
+   ============================================================================= */
+
+/* Form control - stack label above input */
+.form-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Label block display */
+.form-control .label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.25rem;
+}
+
+.form-control .label-text {
+  font-size: 0.875rem;
+  color: currentColor;
+}
+
+.form-control .label-text-alt {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Input full width inside form-control */
+.form-control .input,
+.form-control .select,
+.form-control .textarea,
+.form-control .file-input {
+  width: 100%;
+}
+
+/* Toast container positioning */
+.toast-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .toast-container {
+    top: auto;
+    bottom: 1rem;
+    right: 1rem;
+    left: 1rem;
+  }
+}
+
+/* Active menu item styling override */
+.menu li > a.active,
+.menu li > .active {
+  background-color: oklch(var(--p) / 0.2);
+  color: oklch(var(--p));
+}
+
+/* Sort indicators for tables */
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+th.sortable::after {
+  content: '';
+  display: inline-block;
+  margin-left: 0.5rem;
+  opacity: 0.4;
+}
+
+th.sortable.asc::after {
+  content: '\25B2';
+  opacity: 1;
+}
+
+th.sortable.desc::after {
+  content: '\25BC';
+  opacity: 1;
+}
+
+/* Card expand animation (for mobile cards) */
+[data-expanded="false"] .collapse-content-inner {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+[data-expanded="true"] .collapse-content-inner {
+  max-height: 500px;
+  transition: max-height 0.25s ease;
+}
+
+/* Row inactive state */
+.row--inactive {
+  opacity: 0.6;
+}
+
+/* Lectura foto sizing */
+.lectura-foto {
+  max-width: 100%;
+  border-radius: 0.5rem;
+}
+
+/* Collapse fix - ensure checkbox covers full clickable area */
+.collapse > input[type="checkbox"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 3rem;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.collapse {
+  position: relative;
+}
+
+.collapse-title {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.collapse-content {
+  visibility: hidden;
+  opacity: 0;
+  max-height: 0;
+  overflow: hidden;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: all 0.2s ease-out;
+}
+
+.collapse > input[type="checkbox"]:checked ~ .collapse-content {
+  visibility: visible;
+  opacity: 1;
+  max-height: 1000px;
+  padding-top: 0.5rem;
+  padding-bottom: 1rem;
+}
+
+/* Print styles */
+@media print {
+  .drawer-side,
+  .navbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .drawer-content {
+    margin-left: 0 !important;
+  }
+}
