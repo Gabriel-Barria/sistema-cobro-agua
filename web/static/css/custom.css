@@ -110,8 +110,12 @@ th.sortable.desc::after {
   border-radius: 0.5rem;
 }
 
-/* Collapse fix - ensure checkbox covers full clickable area */
-.collapse > input[type="checkbox"] {
+/* Collapse fix - ONLY for stats sections (not mobile cards) */
+.collapse-stats {
+  position: relative;
+}
+
+.collapse-stats > input[type="checkbox"] {
   position: absolute;
   top: 0;
   left: 0;
@@ -123,32 +127,37 @@ th.sortable.desc::after {
   z-index: 10;
 }
 
-.collapse {
-  position: relative;
-}
-
-.collapse-title {
-  position: relative;
-  z-index: 1;
+.collapse-stats > .collapse-title {
   pointer-events: none;
 }
 
+/* Generic collapse-content visibility fix */
 .collapse-content {
   visibility: hidden;
   opacity: 0;
   max-height: 0;
   overflow: hidden;
-  padding-top: 0;
-  padding-bottom: 0;
   transition: all 0.2s ease-out;
 }
 
-.collapse > input[type="checkbox"]:checked ~ .collapse-content {
+.collapse > input[type="checkbox"]:checked ~ .collapse-content,
+.collapse > input[type="radio"]:checked ~ .collapse-content {
   visibility: visible;
   opacity: 1;
-  max-height: 1000px;
-  padding-top: 0.5rem;
+  max-height: 2000px;
   padding-bottom: 1rem;
+}
+
+/* Mobile cards - ensure buttons are clickable */
+.collapse:not(.collapse-stats) > .collapse-title {
+  pointer-events: auto;
+}
+
+.collapse-content .btn,
+.collapse-content a {
+  pointer-events: auto;
+  position: relative;
+  z-index: 5;
 }
 
 /* Print styles */
