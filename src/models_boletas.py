@@ -144,7 +144,7 @@ def listar_boletas(cliente_id: int = None, medidor_id: int = None,
     cursor = conn.cursor()
 
     query = '''
-        SELECT b.*, m.numero_medidor, c.nombre as cliente_nombre_actual, c.id as cliente_id
+        SELECT b.*, m.numero_medidor, c.nombre as cliente_nombre_actual, c.id as cliente_id, c.telefono as cliente_telefono
         FROM boletas b
         JOIN medidores m ON b.medidor_id = m.id
         JOIN clientes c ON m.cliente_id = c.id

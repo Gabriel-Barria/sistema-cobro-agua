@@ -370,22 +370,55 @@
 </div>
 
 <script>
-function enviarWhatsApp() {
-    ConfirmModal.show({
+async function enviarWhatsApp() {
+    var confirmed = await ConfirmModal.show({
         title: 'Enviar por WhatsApp',
-        message: 'Se enviara la boleta <strong>{{ boleta.numero_boleta }}</strong> al numero de telefono del cliente.',
+        message: 'Se enviara la boleta <strong>{{ boleta.numero_boleta }}</strong> con PDF adjunto al numero de telefono del cliente.',
         icon: 'info',
         confirmText: 'Enviar',
         confirmClass: 'btn-success'
-    }).then(function(ok) {
-        if (ok) {
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ url_for("boletas.enviar_whatsapp", boleta_id=boleta.id) }}';
-            document.body.appendChild(form);
-            form.submit();
-        }
     });
+
+    if (!confirmed) return;
+
+    // Show loading toast
+    var loadingToast = showToast('Generando PDF y enviando...', 'loading');
+
+    try {
+        var response = await fetch('{{ url_for("boletas.enviar_whatsapp", boleta_id=boleta.id) }}', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        var data = await response.json();
+
+        // Remove loading toast
+        if (loadingToast) loadingToast.remove();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.error || 'Error al enviar', 'error');
+        }
+    } catch (error) {
+        if (loadingToast) loadingToast.remove();
+        showToast('Error de conexion', 'error');
+    }
+}
+
+function showToast(message, type) {
+    var toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;';
+    var alertClass = type === 'success' ? 'alert-success' : (type === 'loading' ? 'alert-info' : 'alert-error');
+    var icon = type === 'success' ? 'fa-check-circle' : (type === 'loading' ? 'fa-spinner fa-spin' : 'fa-exclamation-circle');
+    toast.innerHTML = '<div class="alert ' + alertClass + ' shadow-lg"><i class="fas ' + icon + '"></i><span>' + message + '</span></div>';
+    document.body.appendChild(toast);
+    if (type !== 'loading') {
+        setTimeout(function() { toast.remove(); }, 4000);
+    }
+    return toast;
 }
 
 function desmarcarPagada() {
