@@ -230,7 +230,7 @@
                     </a>
                     {% if boleta.cliente_telefono %}
                     <button class="btn btn-success btn-sm flex-1" onclick="enviarWhatsApp({{ boleta.id }}, '{{ boleta.numero_boleta }}', '{{ boleta.cliente_telefono }}')">
-                        <i class="fab fa-whatsapp"></i> WhatsApp
+                        <span class="inline-flex"><i class="fab fa-whatsapp"></i></span> WhatsApp
                     </button>
                     {% endif %}
                 </div>
@@ -352,7 +352,7 @@
                         </a>
                         {% if boleta.cliente_telefono %}
                         <button class="btn btn-success btn-xs btn-square" onclick="enviarWhatsApp({{ boleta.id }}, '{{ boleta.numero_boleta }}', '{{ boleta.cliente_telefono }}')" title="Enviar por WhatsApp">
-                            <i class="fab fa-whatsapp"></i>
+                            <span class="inline-flex"><i class="fab fa-whatsapp"></i></span>
                         </button>
                         {% endif %}
                     </div>

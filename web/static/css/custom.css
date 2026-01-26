@@ -160,6 +160,15 @@ th.sortable.desc::after {
   z-index: 5;
 }
 
+/* Font Awesome icon positioning fix */
+.btn .fa,
+.btn .fas,
+.btn .far,
+.btn .fab {
+  position: relative;
+  display: inline-block;
+}
+
 /* Print styles */
 @media print {
   .drawer-side,
