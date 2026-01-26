@@ -8,7 +8,8 @@
     <h1 class="text-2xl font-bold">Boleta {{ boleta.numero_boleta }}</h1>
     <div class="flex flex-wrap gap-2">
         <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Descargar</a>
-        <a href="{{ url_for('boletas.listar') }}" class="btn btn-secondary btn-sm">Volver</a>
+        <button type="button" onclick="enviarWhatsApp()" class="btn btn-success btn-sm"><i class="fab fa-whatsapp"></i> Enviar</button>
+        <a href="{{ url_for('boletas.listar') }}" class="btn btn-ghost btn-sm">Volver</a>
     </div>
 </div>
 
@@ -369,6 +370,24 @@
 </div>
 
 <script>
+function enviarWhatsApp() {
+    ConfirmModal.show({
+        title: 'Enviar por WhatsApp',
+        message: 'Se enviara la boleta <strong>{{ boleta.numero_boleta }}</strong> al numero de telefono del cliente.',
+        icon: 'info',
+        confirmText: 'Enviar',
+        confirmClass: 'btn-success'
+    }).then(function(ok) {
+        if (ok) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ url_for("boletas.enviar_whatsapp", boleta_id=boleta.id) }}';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
 function desmarcarPagada() {
     ConfirmModal.show({
         title: 'Desmarcar Pagada',

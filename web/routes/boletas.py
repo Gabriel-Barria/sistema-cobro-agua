@@ -23,6 +23,7 @@ from src.models_pagos import (
     registrar_pago_directo, listar_saldos_clientes, ajustar_saldo_cliente,
     obtener_resumen_cuenta_cliente, obtener_saldo_cliente
 )
+from src.services.mensajes_service import enviar_boleta_whatsapp, MensajesError
 
 boletas_bp = Blueprint('boletas', __name__)
 
@@ -1235,3 +1236,230 @@ def api_boletas_pendientes(cliente_id):
         'total': float(b['total']),
         'saldo_pendiente': float(b.get('saldo_pendiente', b['total']))
     } for b in boletas])
+
+
+# =============================================================================
+# ENVIO DE BOLETAS POR WHATSAPP
+# =============================================================================
+
+@boletas_bp.route('/<int:boleta_id>/enviar-whatsapp', methods=['POST'])
+@admin_required
+def enviar_whatsapp(boleta_id):
+    """Envia una boleta por WhatsApp al telefono del cliente con PDF adjunto."""
+    from src.database import get_connection
+    from src.models import obtener_cliente
+
+    boleta = obtener_boleta(boleta_id)
+    if not boleta:
+        flash('Boleta no encontrada', 'error')
+        return redirect(url_for('boletas.listar'))
+
+    # Obtener cliente_id desde el medidor
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute('SELECT cliente_id FROM medidores WHERE id = %s', (boleta['medidor_id'],))
+    medidor = cursor.fetchone()
+    conn.close()
+
+    if not medidor:
+        flash('Medidor no encontrado', 'error')
+        return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
+
+    # Obtener datos del cliente
+    cliente = obtener_cliente(medidor['cliente_id'])
+    if not cliente:
+        flash('Cliente no encontrado', 'error')
+        return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
+
+    telefono = cliente.get('telefono')
+    if not telefono:
+        flash('El cliente no tiene numero de telefono registrado', 'error')
+        return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
+
+    try:
+        # Generar PDF de la boleta (misma logica que descargar())
+        meses = {
+            1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+            5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+            9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+        }
+
+        # Obtener la lectura actual asociada para la foto y fecha
+        lectura_actual = None
+        foto_lectura = None
+        fecha_lectura_actual = None
+        if boleta['lectura_id']:
+            lectura_actual = obtener_lectura(boleta['lectura_id'])
+            if lectura_actual:
+                if lectura_actual.get('foto_path') and lectura_actual.get('foto_path') != '':
+                    foto_lectura = os.path.join(BASE_DIR, 'fotos', lectura_actual['foto_path'])
+                fecha_lectura_actual = lectura_actual.get('fecha_lectura')
+
+        # Obtener fecha de lectura anterior
+        fecha_lectura_anterior = None
+        if boleta['lectura_anterior'] is not None:
+            medidor_id = boleta['medidor_id']
+            año = boleta['periodo_año']
+            mes = boleta['periodo_mes']
+
+            if mes == 1:
+                mes_anterior = 12
+                año_anterior = año - 1
+            else:
+                mes_anterior = mes - 1
+                año_anterior = año
+
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT fecha_lectura FROM lecturas
+                WHERE medidor_id = %s AND año = %s AND mes = %s
+            ''', (medidor_id, año_anterior, mes_anterior))
+            lectura_ant = cursor.fetchone()
+            conn.close()
+
+            if lectura_ant:
+                fecha_lectura_anterior = lectura_ant['fecha_lectura']
+
+        # Renderizar template HTML
+        html_string = render_template('boletas/boleta_pdf.html',
+                                       boleta=boleta,
+                                       meses=meses,
+                                       foto_lectura=foto_lectura,
+                                       fecha_lectura_actual=fecha_lectura_actual,
+                                       fecha_lectura_anterior=fecha_lectura_anterior)
+
+        # Generar PDF usando WeasyPrint
+        pdf_file = BytesIO()
+        HTML(string=html_string, base_url=BASE_DIR).write_pdf(pdf_file)
+        pdf_file.seek(0)
+        pdf_bytes = pdf_file.getvalue()
+
+        # Construir URL del portal (opcional)
+        url_portal = None  # Se puede configurar si hay portal publico
+
+        # Enviar boleta con PDF adjunto
+        resultado = enviar_boleta_whatsapp(telefono, boleta, pdf_bytes=pdf_bytes, url_portal=url_portal)
+        flash(f'Boleta con PDF enviada por WhatsApp a {telefono}', 'success')
+
+    except MensajesError as e:
+        flash(f'Error al enviar WhatsApp: {str(e)}', 'error')
+    except Exception as e:
+        flash(f'Error inesperado: {str(e)}', 'error')
+
+    return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
+
+
+@boletas_bp.route('/enviar-whatsapp-masivo', methods=['POST'])
+@admin_required
+def enviar_whatsapp_masivo():
+    """Envia multiples boletas por WhatsApp con PDF adjunto."""
+    from flask import jsonify
+    from src.database import get_connection
+    from src.models import obtener_cliente
+
+    boletas_ids = request.form.getlist('boletas')
+    if not boletas_ids:
+        flash('Debe seleccionar al menos una boleta', 'error')
+        return redirect(url_for('boletas.listar'))
+
+    enviadas = 0
+    errores = []
+
+    meses = {
+        1: 'Enero', 2: 'Febrero', 3: 'Marzo', 4: 'Abril',
+        5: 'Mayo', 6: 'Junio', 7: 'Julio', 8: 'Agosto',
+        9: 'Septiembre', 10: 'Octubre', 11: 'Noviembre', 12: 'Diciembre'
+    }
+
+    for boleta_id in boletas_ids:
+        try:
+            boleta_id = int(boleta_id)
+            boleta = obtener_boleta(boleta_id)
+            if not boleta:
+                errores.append(f'Boleta {boleta_id}: no encontrada')
+                continue
+
+            # Obtener cliente_id desde el medidor
+            conn = get_connection()
+            cursor = conn.cursor()
+            cursor.execute('SELECT cliente_id FROM medidores WHERE id = %s', (boleta['medidor_id'],))
+            medidor = cursor.fetchone()
+            conn.close()
+
+            if not medidor:
+                errores.append(f'Boleta {boleta["numero_boleta"]}: medidor no encontrado')
+                continue
+
+            cliente = obtener_cliente(medidor['cliente_id'])
+            if not cliente:
+                errores.append(f'Boleta {boleta["numero_boleta"]}: cliente no encontrado')
+                continue
+
+            telefono = cliente.get('telefono')
+            if not telefono:
+                errores.append(f'Boleta {boleta["numero_boleta"]}: sin telefono')
+                continue
+
+            # Generar PDF de la boleta
+            lectura_actual = None
+            foto_lectura = None
+            fecha_lectura_actual = None
+            if boleta['lectura_id']:
+                lectura_actual = obtener_lectura(boleta['lectura_id'])
+                if lectura_actual:
+                    if lectura_actual.get('foto_path') and lectura_actual.get('foto_path') != '':
+                        foto_lectura = os.path.join(BASE_DIR, 'fotos', lectura_actual['foto_path'])
+                    fecha_lectura_actual = lectura_actual.get('fecha_lectura')
+
+            fecha_lectura_anterior = None
+            if boleta['lectura_anterior'] is not None:
+                med_id = boleta['medidor_id']
+                año = boleta['periodo_año']
+                mes = boleta['periodo_mes']
+
+                if mes == 1:
+                    mes_anterior = 12
+                    año_anterior = año - 1
+                else:
+                    mes_anterior = mes - 1
+                    año_anterior = año
+
+                conn = get_connection()
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT fecha_lectura FROM lecturas
+                    WHERE medidor_id = %s AND año = %s AND mes = %s
+                ''', (med_id, año_anterior, mes_anterior))
+                lectura_ant = cursor.fetchone()
+                conn.close()
+
+                if lectura_ant:
+                    fecha_lectura_anterior = lectura_ant['fecha_lectura']
+
+            html_string = render_template('boletas/boleta_pdf.html',
+                                           boleta=boleta,
+                                           meses=meses,
+                                           foto_lectura=foto_lectura,
+                                           fecha_lectura_actual=fecha_lectura_actual,
+                                           fecha_lectura_anterior=fecha_lectura_anterior)
+
+            pdf_file = BytesIO()
+            HTML(string=html_string, base_url=BASE_DIR).write_pdf(pdf_file)
+            pdf_file.seek(0)
+            pdf_bytes = pdf_file.getvalue()
+
+            enviar_boleta_whatsapp(telefono, boleta, pdf_bytes=pdf_bytes)
+            enviadas += 1
+
+        except MensajesError as e:
+            errores.append(f'Boleta {boleta_id}: {str(e)}')
+        except Exception as e:
+            errores.append(f'Boleta {boleta_id}: error inesperado')
+
+    if enviadas > 0:
+        flash(f'{enviadas} boleta(s) con PDF enviada(s) por WhatsApp', 'success')
+    if errores:
+        flash(f'{len(errores)} error(es): {"; ".join(errores[:3])}{"..." if len(errores) > 3 else ""}', 'warning')
+
+    return redirect(url_for('boletas.listar'))
