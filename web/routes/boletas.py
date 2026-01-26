@@ -15,7 +15,8 @@ from src.models_boletas import (
     guardar_comprobante, eliminar_boleta,
     obtener_lectura_anterior, calcular_consumo,
     obtener_lecturas_sin_boleta, obtener_años_disponibles,
-    obtener_estadisticas_boletas
+    obtener_estadisticas_boletas,
+    registrar_envio_boleta, obtener_envios_boleta
 )
 from src.models import listar_clientes, listar_medidores, obtener_lectura, obtener_estadisticas_pagos
 from src.models_pagos import (
@@ -88,6 +89,7 @@ def listar():
     sin_comprobante = request.args.get('sin_comprobante', type=int) == 1
     año = request.args.get('año', type=int)
     mes = request.args.get('mes', type=int)
+    enviada = request.args.get('enviada', type=int)
 
     # Obtener parametros de ordenamiento
     sort_by = request.args.get('sort_by', type=str)
@@ -106,7 +108,8 @@ def listar():
         pagada=pagada,
         sin_comprobante=sin_comprobante,
         año=año,
-        mes=mes
+        mes=mes,
+        enviada=enviada
     )
 
     # Calcular paginacion
@@ -160,6 +163,7 @@ def listar():
                                'sin_comprobante': sin_comprobante,
                                'año': año,
                                'mes': mes,
+                               'enviada': enviada,
                                'sort_by': sort_by,
                                'sort_order': sort_order
                            })
@@ -195,9 +199,13 @@ def detalle(boleta_id):
     pagos = [dict(p) for p in cursor.fetchall()]
     conn.close()
 
+    # Obtener historial de envios
+    envios = obtener_envios_boleta(boleta_id)
+
     return render_template('boletas/detalle.html',
                           boleta=boleta,
-                          pagos=pagos)
+                          pagos=pagos,
+                          envios=envios)
 
 
 # =============================================================================
@@ -1223,6 +1231,23 @@ def ajustar_saldo(cliente_id):
 # API: BOLETAS PENDIENTES POR CLIENTE
 # =============================================================================
 
+@boletas_bp.route('/api/envios/<int:boleta_id>')
+@admin_required
+def api_envios_boleta(boleta_id):
+    """Retorna historial de envios de una boleta en formato JSON."""
+    from flask import jsonify
+    envios = obtener_envios_boleta(boleta_id)
+    return jsonify([{
+        'id': e['id'],
+        'canal': e['canal'],
+        'destinatario': e['destinatario'],
+        'estado': e['estado'],
+        'mensaje_error': e.get('mensaje_error'),
+        'created_at': e['created_at'].isoformat() if e.get('created_at') else None,
+        'usuario_nombre': e.get('usuario_nombre') or e.get('username') or '-'
+    } for e in envios])
+
+
 @boletas_bp.route('/api/boletas-pendientes/<int:cliente_id>')
 @admin_required
 def api_boletas_pendientes(cliente_id):
@@ -1353,6 +1378,17 @@ def enviar_whatsapp(boleta_id):
         # Enviar boleta con PDF adjunto
         resultado = enviar_boleta_whatsapp(telefono, boleta, pdf_bytes=pdf_bytes, url_portal=url_portal)
 
+        # Registrar envio exitoso en historial
+        usuario = get_current_user()
+        usuario_id = usuario['id'] if usuario else None
+        registrar_envio_boleta(
+            boleta_id=boleta_id,
+            usuario_id=usuario_id,
+            canal='whatsapp',
+            destinatario=telefono,
+            estado='enviado'
+        )
+
         if is_ajax:
             return jsonify({
                 'success': True,
@@ -1362,6 +1398,17 @@ def enviar_whatsapp(boleta_id):
         flash(f'Boleta con PDF enviada por WhatsApp a {telefono}', 'success')
 
     except MensajesError as e:
+        # Registrar envio fallido en historial
+        usuario = get_current_user()
+        usuario_id = usuario['id'] if usuario else None
+        registrar_envio_boleta(
+            boleta_id=boleta_id,
+            usuario_id=usuario_id,
+            canal='whatsapp',
+            destinatario=telefono,
+            estado='fallido',
+            mensaje_error=str(e)
+        )
         if is_ajax:
             return jsonify({'success': False, 'error': str(e)}), 400
         flash(f'Error al enviar WhatsApp: {str(e)}', 'error')

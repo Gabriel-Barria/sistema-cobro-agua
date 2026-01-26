@@ -318,6 +318,98 @@
 </div>
 {% endif %}
 
+{% if envios %}
+<!-- Historial de Envios -->
+<div class="card bg-base-100 shadow mt-6">
+    <div class="card-body">
+        <h2 class="card-title">
+            <i class="fab fa-whatsapp text-success"></i> Historial de Envios
+        </h2>
+
+        <!-- Mobile View -->
+        <div class="lg:hidden space-y-3">
+            {% for envio in envios %}
+            <div class="border border-base-200 rounded-lg p-3">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex items-center gap-2">
+                        {% if envio.canal == 'whatsapp' %}
+                        <i class="fab fa-whatsapp text-success"></i>
+                        {% elif envio.canal == 'email' %}
+                        <i class="fas fa-envelope text-info"></i>
+                        {% else %}
+                        <i class="fas fa-paper-plane"></i>
+                        {% endif %}
+                        <span class="font-medium">{{ envio.canal|capitalize }}</span>
+                    </div>
+                    {% if envio.estado == 'enviado' %}
+                    <span class="badge badge-success badge-sm">Enviado</span>
+                    {% else %}
+                    <span class="badge badge-error badge-sm">Fallido</span>
+                    {% endif %}
+                </div>
+                <div class="text-sm space-y-1">
+                    <div class="flex justify-between">
+                        <span class="text-base-content/70">Destinatario:</span>
+                        <span>{{ envio.destinatario }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-base-content/70">Fecha:</span>
+                        <span>{{ envio.created_at|formato_fecha_hora }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-base-content/70">Usuario:</span>
+                        <span>{{ envio.usuario_nombre or envio.username or '-' }}</span>
+                    </div>
+                    {% if envio.estado == 'fallido' and envio.mensaje_error %}
+                    <div class="text-error text-xs mt-2">{{ envio.mensaje_error }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Desktop View -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="table table-zebra">
+                <thead>
+                    <tr>
+                        <th>Canal</th>
+                        <th>Destinatario</th>
+                        <th>Fecha</th>
+                        <th>Usuario</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for envio in envios %}
+                    <tr>
+                        <td>
+                            {% if envio.canal == 'whatsapp' %}
+                            <i class="fab fa-whatsapp text-success"></i>
+                            {% elif envio.canal == 'email' %}
+                            <i class="fas fa-envelope text-info"></i>
+                            {% endif %}
+                            {{ envio.canal|capitalize }}
+                        </td>
+                        <td>{{ envio.destinatario }}</td>
+                        <td>{{ envio.created_at|formato_fecha_hora }}</td>
+                        <td>{{ envio.usuario_nombre or envio.username or '-' }}</td>
+                        <td>
+                            {% if envio.estado == 'enviado' %}
+                            <span class="badge badge-success">Enviado</span>
+                            {% else %}
+                            <span class="badge badge-error tooltip" data-tip="{{ envio.mensaje_error or 'Error desconocido' }}">Fallido</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <!-- Acciones -->
 <div class="card bg-base-100 shadow mt-6">
     <div class="card-body">

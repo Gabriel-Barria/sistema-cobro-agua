@@ -145,6 +145,15 @@
             </div>
 
             <div class="form-control">
+                <label class="label py-1"><span class="label-text">Enviada</span></label>
+                <select name="enviada" class="select select-bordered select-sm">
+                    <option value="">Todas</option>
+                    <option value="1" {{ 'selected' if filtros.enviada == 1 }}>Enviadas</option>
+                    <option value="0" {{ 'selected' if filtros.enviada == 0 }}>No enviadas</option>
+                </select>
+            </div>
+
+            <div class="form-control">
                 <label class="label cursor-pointer justify-start gap-2 py-1">
                     <input type="checkbox" name="sin_comprobante" value="1" {{ 'checked' if filtros.sin_comprobante }} class="checkbox checkbox-sm checkbox-primary">
                     <span class="label-text">Sin comprobante</span>
@@ -171,7 +180,14 @@
         <div class="collapse-title pr-12">
             <div class="flex justify-between items-center">
                 <div class="min-w-0">
-                    <div class="font-semibold">{{ boleta.numero_boleta }}</div>
+                    <div class="font-semibold flex items-center gap-1">
+                        {{ boleta.numero_boleta }}
+                        {% if boleta.envios_count and boleta.envios_count > 0 %}
+                        <button class="text-success" onclick="event.stopPropagation(); verHistorialEnvios({{ boleta.id }}, '{{ boleta.numero_boleta }}')" title="Ver historial">
+                            <i class="fab fa-whatsapp text-sm"></i>
+                        </button>
+                        {% endif %}
+                    </div>
                     <div class="text-sm text-base-content/70 truncate">{{ boleta.cliente_nombre }}</div>
                     <div class="text-xs text-base-content/50">{{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}</div>
                 </div>
@@ -260,7 +276,16 @@
         <tbody>
             {% for boleta in boletas %}
             <tr class="hover">
-                <td>{{ boleta.numero_boleta }}</td>
+                <td>
+                    <div class="flex items-center gap-1">
+                        {{ boleta.numero_boleta }}
+                        {% if boleta.envios_count and boleta.envios_count > 0 %}
+                        <button class="btn btn-ghost btn-xs btn-circle text-success" onclick="verHistorialEnvios({{ boleta.id }}, '{{ boleta.numero_boleta }}')" title="Ver historial de envios">
+                            <i class="fab fa-whatsapp"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </td>
                 <td>
                     <a href="{{ url_for('boletas.listar', cliente_id=boleta.cliente_id) }}" class="link link-primary">
                         {{ boleta.cliente_nombre }}
@@ -391,6 +416,15 @@
                     {% for m in range(1, 13) %}
                     <option value="{{ m }}" {{ 'selected' if filtros.mes == m }}>{{ m|mes_nombre }}</option>
                     {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-control mb-3">
+                <label class="label"><span class="label-text">Enviada</span></label>
+                <select name="enviada" class="select select-bordered">
+                    <option value="">Todas</option>
+                    <option value="1" {{ 'selected' if filtros.enviada == 1 }}>Enviadas</option>
+                    <option value="0" {{ 'selected' if filtros.enviada == 0 }}>No enviadas</option>
                 </select>
             </div>
 
@@ -539,6 +573,48 @@
             <button type="button" id="btn-enviar-whatsapp" class="btn btn-success">
                 <i class="fab fa-whatsapp"></i> Enviar
             </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Modal Historial de Envios -->
+<dialog id="modalHistorialEnvios" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box max-w-2xl">
+        <h3 class="font-bold text-lg mb-4">
+            <i class="fab fa-whatsapp text-success"></i> Historial de Envios - <span id="modal-historial-numero"></span>
+        </h3>
+        <div id="historial-loading" class="text-center py-8">
+            <span class="loading loading-spinner loading-lg"></span>
+            <p class="mt-2 text-base-content/70">Cargando historial...</p>
+        </div>
+        <div id="historial-content" class="hidden">
+            <div id="historial-empty" class="hidden text-center py-8 text-base-content/70">
+                <i class="fas fa-inbox text-4xl mb-2"></i>
+                <p>No hay envios registrados</p>
+            </div>
+            <div id="historial-table" class="overflow-x-auto">
+                <table class="table table-zebra table-sm">
+                    <thead>
+                        <tr>
+                            <th>Canal</th>
+                            <th>Destinatario</th>
+                            <th>Fecha</th>
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historial-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Cerrar</button>
+            </form>
         </div>
     </div>
     <form method="dialog" class="modal-backdrop">
@@ -731,6 +807,72 @@ function showToast(message, type) {
     setTimeout(function() {
         toast.remove();
     }, 4000);
+}
+
+// === Ver Historial de Envios ===
+async function verHistorialEnvios(boletaId, numeroBoleta) {
+    document.getElementById('modal-historial-numero').textContent = numeroBoleta;
+    document.getElementById('historial-loading').classList.remove('hidden');
+    document.getElementById('historial-content').classList.add('hidden');
+    modalHistorialEnvios.showModal();
+
+    try {
+        var response = await fetch('/boletas/api/envios/' + boletaId, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        var envios = await response.json();
+
+        document.getElementById('historial-loading').classList.add('hidden');
+        document.getElementById('historial-content').classList.remove('hidden');
+
+        if (envios.length === 0) {
+            document.getElementById('historial-empty').classList.remove('hidden');
+            document.getElementById('historial-table').classList.add('hidden');
+        } else {
+            document.getElementById('historial-empty').classList.add('hidden');
+            document.getElementById('historial-table').classList.remove('hidden');
+
+            var tbody = document.getElementById('historial-tbody');
+            tbody.innerHTML = '';
+
+            envios.forEach(function(e) {
+                var iconClass = e.canal === 'whatsapp' ? 'fab fa-whatsapp text-success' :
+                               (e.canal === 'email' ? 'fas fa-envelope text-info' : 'fas fa-paper-plane');
+                var estadoBadge = e.estado === 'enviado' ?
+                    '<span class="badge badge-success badge-sm">Enviado</span>' :
+                    '<span class="badge badge-error badge-sm" title="' + (e.mensaje_error || '') + '">Fallido</span>';
+                var fecha = e.created_at ? formatDateTime(e.created_at) : '-';
+
+                var row = '<tr>' +
+                    '<td><i class="' + iconClass + '"></i> ' + capitalize(e.canal) + '</td>' +
+                    '<td>' + e.destinatario + '</td>' +
+                    '<td>' + fecha + '</td>' +
+                    '<td>' + e.usuario_nombre + '</td>' +
+                    '<td>' + estadoBadge + '</td>' +
+                    '</tr>';
+                tbody.innerHTML += row;
+            });
+        }
+    } catch (error) {
+        document.getElementById('historial-loading').classList.add('hidden');
+        document.getElementById('historial-content').classList.remove('hidden');
+        document.getElementById('historial-empty').classList.remove('hidden');
+        document.getElementById('historial-table').classList.add('hidden');
+    }
+}
+
+function formatDateTime(isoString) {
+    var d = new Date(isoString);
+    var day = String(d.getDate()).padStart(2, '0');
+    var month = String(d.getMonth() + 1).padStart(2, '0');
+    var year = d.getFullYear();
+    var hours = String(d.getHours()).padStart(2, '0');
+    var mins = String(d.getMinutes()).padStart(2, '0');
+    return day + '/' + month + '/' + year + ' ' + hours + ':' + mins;
+}
+
+function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
 </script>
 {% endblock %}

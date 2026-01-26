@@ -138,13 +138,25 @@ def obtener_boleta_por_lectura(lectura_id: int):
 
 def listar_boletas(cliente_id: int = None, medidor_id: int = None,
                    pagada: int = None, sin_comprobante: bool = False,
-                   año: int = None, mes: int = None):
-    """Lista boletas con filtros opcionales."""
+                   año: int = None, mes: int = None, enviada: int = None):
+    """Lista boletas con filtros opcionales.
+
+    Args:
+        cliente_id: Filtrar por cliente
+        medidor_id: Filtrar por medidor
+        pagada: Filtrar por estado de pago (0=pendiente, 1=revision, 2=pagada)
+        sin_comprobante: Filtrar boletas pagadas sin comprobante
+        año: Filtrar por año
+        mes: Filtrar por mes
+        enviada: Filtrar por estado de envio (1=enviada, 0=no enviada)
+    """
     conn = get_connection()
     cursor = conn.cursor()
 
     query = '''
-        SELECT b.*, m.numero_medidor, c.nombre as cliente_nombre_actual, c.id as cliente_id, c.telefono as cliente_telefono
+        SELECT b.*, m.numero_medidor, c.nombre as cliente_nombre_actual, c.id as cliente_id, c.telefono as cliente_telefono,
+               (SELECT COUNT(*) FROM envios_boletas e WHERE e.boleta_id = b.id AND e.estado = 'enviado') as envios_count,
+               (SELECT MAX(created_at) FROM envios_boletas e WHERE e.boleta_id = b.id AND e.estado = 'enviado') as ultimo_envio
         FROM boletas b
         JOIN medidores m ON b.medidor_id = m.id
         JOIN clientes c ON m.cliente_id = c.id
@@ -174,6 +186,12 @@ def listar_boletas(cliente_id: int = None, medidor_id: int = None,
     if mes is not None:
         query += ' AND b.periodo_mes = %s'
         params.append(mes)
+
+    if enviada is not None:
+        if enviada == 1:
+            query += ' AND EXISTS (SELECT 1 FROM envios_boletas e WHERE e.boleta_id = b.id AND e.estado = \'enviado\')'
+        else:
+            query += ' AND NOT EXISTS (SELECT 1 FROM envios_boletas e WHERE e.boleta_id = b.id AND e.estado = \'enviado\')'
 
     query += ' ORDER BY b.periodo_año DESC, b.periodo_mes DESC, b.id DESC'
 
@@ -538,3 +556,164 @@ def obtener_intento_en_revision(boleta_id: int) -> Optional[Dict]:
     conn.close()
 
     return dict(intento) if intento else None
+
+
+# =============================================================================
+# HISTORIAL DE ENVIOS DE BOLETAS
+# =============================================================================
+
+def registrar_envio_boleta(boleta_id: int, usuario_id: int, canal: str,
+                            destinatario: str, estado: str = 'enviado',
+                            mensaje_error: str = None) -> int:
+    """
+    Registra un envio de boleta en el historial.
+
+    Args:
+        boleta_id: ID de la boleta enviada
+        usuario_id: ID del usuario que realiza el envio
+        canal: Canal de envio (whatsapp, email, etc.)
+        destinatario: Telefono o email del destinatario
+        estado: Estado del envio (enviado, fallido)
+        mensaje_error: Mensaje de error si el envio fallo
+
+    Returns:
+        ID del registro de envio creado
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        INSERT INTO envios_boletas (boleta_id, usuario_id, canal, destinatario, estado, mensaje_error)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id
+    ''', (boleta_id, usuario_id, canal, destinatario, estado, mensaje_error))
+
+    envio_id = cursor.fetchone()[0]
+    conn.commit()
+    conn.close()
+    return envio_id
+
+
+def obtener_envios_boleta(boleta_id: int) -> List[Dict]:
+    """
+    Obtiene el historial de envios de una boleta.
+
+    Args:
+        boleta_id: ID de la boleta
+
+    Returns:
+        Lista de envios ordenados por fecha descendente
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT e.*, u.nombre_completo as usuario_nombre, u.username
+        FROM envios_boletas e
+        LEFT JOIN usuarios u ON e.usuario_id = u.id
+        WHERE e.boleta_id = %s
+        ORDER BY e.created_at DESC
+    ''', (boleta_id,))
+
+    envios = cursor.fetchall()
+    conn.close()
+    return [dict(e) for e in envios]
+
+
+def obtener_ultimo_envio_boleta(boleta_id: int) -> Optional[Dict]:
+    """
+    Obtiene el ultimo envio exitoso de una boleta.
+
+    Args:
+        boleta_id: ID de la boleta
+
+    Returns:
+        Diccionario con info del ultimo envio o None
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT e.*, u.nombre_completo as usuario_nombre
+        FROM envios_boletas e
+        LEFT JOIN usuarios u ON e.usuario_id = u.id
+        WHERE e.boleta_id = %s AND e.estado = 'enviado'
+        ORDER BY e.created_at DESC
+        LIMIT 1
+    ''', (boleta_id,))
+
+    envio = cursor.fetchone()
+    conn.close()
+    return dict(envio) if envio else None
+
+
+def contar_envios_boleta(boleta_id: int) -> int:
+    """
+    Cuenta el numero de envios exitosos de una boleta.
+
+    Args:
+        boleta_id: ID de la boleta
+
+    Returns:
+        Numero de envios exitosos
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT COUNT(*) as total
+        FROM envios_boletas
+        WHERE boleta_id = %s AND estado = 'enviado'
+    ''', (boleta_id,))
+
+    resultado = cursor.fetchone()
+    conn.close()
+    return resultado['total'] if resultado else 0
+
+
+def listar_envios(canal: str = None, fecha_desde: str = None,
+                   fecha_hasta: str = None, limit: int = 100) -> List[Dict]:
+    """
+    Lista todos los envios con filtros opcionales.
+
+    Args:
+        canal: Filtrar por canal (whatsapp, email)
+        fecha_desde: Filtrar desde fecha
+        fecha_hasta: Filtrar hasta fecha
+        limit: Limite de resultados
+
+    Returns:
+        Lista de envios
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    query = '''
+        SELECT e.*, b.numero_boleta, b.cliente_nombre, b.total,
+               u.nombre_completo as usuario_nombre
+        FROM envios_boletas e
+        JOIN boletas b ON e.boleta_id = b.id
+        LEFT JOIN usuarios u ON e.usuario_id = u.id
+        WHERE 1=1
+    '''
+    params = []
+
+    if canal:
+        query += ' AND e.canal = %s'
+        params.append(canal)
+
+    if fecha_desde:
+        query += ' AND e.created_at >= %s'
+        params.append(fecha_desde)
+
+    if fecha_hasta:
+        query += ' AND e.created_at <= %s'
+        params.append(fecha_hasta)
+
+    query += ' ORDER BY e.created_at DESC LIMIT %s'
+    params.append(limit)
+
+    cursor.execute(query, params)
+    envios = cursor.fetchall()
+    conn.close()
+    return [dict(e) for e in envios]

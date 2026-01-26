@@ -127,6 +127,29 @@ def formato_pesos(monto):
         return str(monto)
 
 
+@app.template_filter('formato_fecha_hora')
+def formato_fecha_hora(fecha):
+    """Convierte datetime a formato dd/mm/yyyy HH:MM."""
+    if not fecha:
+        return '-'
+    # Si es objeto datetime
+    if hasattr(fecha, 'strftime'):
+        return fecha.strftime('%d/%m/%Y %H:%M')
+    if isinstance(fecha, str):
+        # Si viene como yyyy-mm-dd HH:MM:SS
+        if 'T' in fecha or ' ' in fecha:
+            try:
+                from datetime import datetime
+                if 'T' in fecha:
+                    dt = datetime.fromisoformat(fecha.replace('Z', '+00:00'))
+                else:
+                    dt = datetime.strptime(fecha[:19], '%Y-%m-%d %H:%M:%S')
+                return dt.strftime('%d/%m/%Y %H:%M')
+            except:
+                pass
+    return str(fecha)
+
+
 @app.context_processor
 def utility_processor():
     """Inyecta utilidades al contexto de templates."""
