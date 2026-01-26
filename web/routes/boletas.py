@@ -1246,11 +1246,17 @@ def api_boletas_pendientes(cliente_id):
 @admin_required
 def enviar_whatsapp(boleta_id):
     """Envia una boleta por WhatsApp al telefono del cliente con PDF adjunto."""
+    from flask import jsonify
     from src.database import get_connection
     from src.models import obtener_cliente
 
+    # Detectar si es peticion AJAX
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
     boleta = obtener_boleta(boleta_id)
     if not boleta:
+        if is_ajax:
+            return jsonify({'success': False, 'error': 'Boleta no encontrada'}), 404
         flash('Boleta no encontrada', 'error')
         return redirect(url_for('boletas.listar'))
 
@@ -1262,17 +1268,23 @@ def enviar_whatsapp(boleta_id):
     conn.close()
 
     if not medidor:
+        if is_ajax:
+            return jsonify({'success': False, 'error': 'Medidor no encontrado'}), 404
         flash('Medidor no encontrado', 'error')
         return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
 
     # Obtener datos del cliente
     cliente = obtener_cliente(medidor['cliente_id'])
     if not cliente:
+        if is_ajax:
+            return jsonify({'success': False, 'error': 'Cliente no encontrado'}), 404
         flash('Cliente no encontrado', 'error')
         return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
 
     telefono = cliente.get('telefono')
     if not telefono:
+        if is_ajax:
+            return jsonify({'success': False, 'error': 'El cliente no tiene numero de telefono registrado'}), 400
         flash('El cliente no tiene numero de telefono registrado', 'error')
         return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
 
@@ -1340,11 +1352,22 @@ def enviar_whatsapp(boleta_id):
 
         # Enviar boleta con PDF adjunto
         resultado = enviar_boleta_whatsapp(telefono, boleta, pdf_bytes=pdf_bytes, url_portal=url_portal)
+
+        if is_ajax:
+            return jsonify({
+                'success': True,
+                'message': f'Boleta enviada por WhatsApp a {telefono}',
+                'telefono': telefono
+            })
         flash(f'Boleta con PDF enviada por WhatsApp a {telefono}', 'success')
 
     except MensajesError as e:
+        if is_ajax:
+            return jsonify({'success': False, 'error': str(e)}), 400
         flash(f'Error al enviar WhatsApp: {str(e)}', 'error')
     except Exception as e:
+        if is_ajax:
+            return jsonify({'success': False, 'error': str(e)}), 500
         flash(f'Error inesperado: {str(e)}', 'error')
 
     return redirect(url_for('boletas.detalle', boleta_id=boleta_id))
