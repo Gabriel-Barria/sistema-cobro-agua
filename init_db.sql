@@ -149,7 +149,24 @@ CREATE TABLE IF NOT EXISTS movimientos_saldo (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
 );
 
+-- Historial de envios de boletas
+CREATE TABLE IF NOT EXISTS envios_boletas (
+    id SERIAL PRIMARY KEY,
+    boleta_id INTEGER NOT NULL,
+    usuario_id INTEGER,
+    canal VARCHAR(20) NOT NULL,
+    destinatario VARCHAR(100) NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'enviado',
+    mensaje_error TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (boleta_id) REFERENCES boletas(id) ON DELETE CASCADE,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
+);
+
 -- Índices
+CREATE INDEX IF NOT EXISTS idx_envios_boleta ON envios_boletas(boleta_id);
+CREATE INDEX IF NOT EXISTS idx_envios_usuario ON envios_boletas(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_envios_fecha ON envios_boletas(created_at);
 CREATE INDEX IF NOT EXISTS idx_clientes_nombre ON clientes(nombre);
 CREATE INDEX IF NOT EXISTS idx_medidores_cliente ON medidores(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_lecturas_medidor ON lecturas(medidor_id);
