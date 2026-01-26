@@ -42,16 +42,23 @@
                 info: 'fa-info-circle'
             };
 
+            var alertClasses = {
+                success: 'alert-success',
+                error: 'alert-error',
+                warning: 'alert-warning',
+                info: 'alert-info'
+            };
+
             var toast = document.createElement('div');
-            toast.className = 'toast toast--' + type;
+            toast.className = 'alert ' + (alertClasses[type] || alertClasses.info) + ' shadow-lg pointer-events-auto';
             toast.setAttribute('role', 'alert');
             toast.innerHTML =
-                '<span class="toast__icon"><i class="fas ' + (icons[type] || icons.info) + '"></i></span>' +
-                '<span class="toast__message">' + message + '</span>' +
-                '<button class="toast__close" aria-label="Cerrar">&times;</button>';
+                '<i class="fas ' + (icons[type] || icons.info) + '"></i>' +
+                '<span>' + message + '</span>' +
+                '<button class="btn btn-sm btn-circle btn-ghost" aria-label="Cerrar">&times;</button>';
 
             var self = this;
-            var closeBtn = toast.querySelector('.toast__close');
+            var closeBtn = toast.querySelector('button');
             closeBtn.addEventListener('click', function() {
                 self._dismiss(toast);
             });
@@ -69,7 +76,9 @@
 
         _dismiss: function(toast) {
             if (!toast || !toast.parentNode) return;
-            toast.classList.add('toast--exiting');
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            toast.style.transition = 'all 0.2s ease-out';
             setTimeout(function() {
                 if (toast.parentNode) toast.parentNode.removeChild(toast);
             }, 200);
@@ -82,7 +91,7 @@
     };
 
     // ==============================
-    // CONFIRM/PROMPT MODAL
+    // CONFIRM/PROMPT MODAL (DaisyUI)
     // ==============================
 
     var ConfirmModal = {
@@ -96,7 +105,7 @@
          * @param {string} options.icon - 'warning' | 'danger' | 'success' | 'info'
          * @param {string} options.confirmText - Confirm button text (default 'Confirmar')
          * @param {string} options.cancelText - Cancel button text (default 'Cancelar')
-         * @param {string} options.confirmClass - Confirm button class (default 'btn--primary')
+         * @param {string} options.confirmClass - Confirm button class (default 'btn-primary')
          * @param {boolean} options.showInput - Show a text input field
          * @param {string} options.inputLabel - Label for the input field
          * @param {string} options.inputPlaceholder - Placeholder for input
@@ -112,50 +121,49 @@
             var icon = options.icon || 'warning';
             var confirmText = options.confirmText || 'Confirmar';
             var cancelText = options.cancelText || 'Cancelar';
-            var confirmClass = options.confirmClass || 'btn--primary';
+            var confirmClass = options.confirmClass || 'btn-primary';
             var showInput = options.showInput || false;
             var inputLabel = options.inputLabel || '';
             var inputPlaceholder = options.inputPlaceholder || '';
             var inputRequired = options.inputRequired !== false;
 
             var iconClasses = {
-                warning: 'fa-exclamation-triangle',
-                danger: 'fa-times-circle',
-                success: 'fa-check-circle',
-                info: 'fa-info-circle'
+                warning: 'fa-exclamation-triangle text-warning',
+                danger: 'fa-times-circle text-error',
+                success: 'fa-check-circle text-success',
+                info: 'fa-info-circle text-info'
             };
 
             var inputHtml = '';
             if (showInput) {
-                inputHtml = '<div class="form-group" style="margin-top: var(--spacing-md);">' +
-                    (inputLabel ? '<label>' + inputLabel + '</label>' : '') +
-                    '<textarea id="confirm-modal-input" rows="3" placeholder="' + inputPlaceholder + '"' +
-                    ' style="width:100%;min-height:80px;padding:8px;border:1px solid var(--color-border);border-radius:4px;font-size:14px;resize:vertical;"' +
+                inputHtml = '<div class="form-control mt-4">' +
+                    (inputLabel ? '<label class="label"><span class="label-text">' + inputLabel + '</span></label>' : '') +
+                    '<textarea id="confirm-modal-input" class="textarea textarea-bordered w-full" rows="3" placeholder="' + inputPlaceholder + '"' +
                     (inputRequired ? ' required' : '') + '></textarea></div>';
             }
 
             var html =
-                '<div class="modal__content">' +
-                '<div class="modal__drag-indicator"></div>' +
-                '<div class="modal__header"><h3>' + title + '</h3>' +
-                '<button class="modal__close" data-action="cancel">&times;</button></div>' +
-                '<div class="modal__body">' +
-                '<div class="modal__icon modal__icon--' + icon + '">' +
-                '<i class="fas ' + (iconClasses[icon] || iconClasses.warning) + '"></i></div>' +
-                '<p class="modal__text">' + message + '</p>' +
+                '<div class="modal-box">' +
+                '<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" data-action="cancel">&times;</button>' +
+                '<div class="text-center mb-4">' +
+                '<i class="fas ' + (iconClasses[icon] || iconClasses.warning) + ' text-4xl"></i>' +
+                '</div>' +
+                '<h3 class="font-bold text-lg text-center">' + title + '</h3>' +
+                '<p class="py-4 text-center">' + message + '</p>' +
                 inputHtml +
-                '<div class="modal__actions">' +
-                '<button class="btn btn--secondary" data-action="cancel">' + cancelText + '</button>' +
+                '<div class="modal-action justify-center">' +
+                '<button class="btn btn-ghost" data-action="cancel">' + cancelText + '</button>' +
                 '<button class="btn ' + confirmClass + '" data-action="confirm">' + confirmText + '</button>' +
-                '</div></div></div>';
+                '</div></div>' +
+                '<div class="modal-backdrop" data-action="cancel"><button>close</button></div>';
 
             // Remove existing
             if (self._modal && self._modal.parentNode) {
                 self._modal.parentNode.removeChild(self._modal);
             }
 
-            self._modal = document.createElement('div');
-            self._modal.className = 'modal active';
+            self._modal = document.createElement('dialog');
+            self._modal.className = 'modal modal-open';
             self._modal.id = 'confirmModal';
             self._modal.innerHTML = html;
             document.body.appendChild(self._modal);
@@ -172,9 +180,6 @@
                 function handleClick(e) {
                     var target = e.target.closest('[data-action]');
                     var action = target ? target.dataset.action : null;
-
-                    // Click on overlay
-                    if (e.target === self._modal) action = 'cancel';
 
                     if (!action) return;
 
