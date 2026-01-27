@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Configuracion del Sistema - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Configuracion del Sistema</h1>
+    <a href="{{ url_for('configuracion.index') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver</span>
+    </a>
+</div>
+
+<div class="card bg-base-100 shadow max-w-2xl mx-auto">
+    <div class="card-body">
+        <form method="POST">
+            <!-- Facturacion -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-file-invoice text-primary"></i>
+                    Facturacion
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Frecuencia de facturacion</span>
+                        </label>
+                        <select name="frecuencia_facturacion" class="select select-bordered">
+                            <option value="mensual" {{ 'selected' if config.get('frecuencia_facturacion', {}).get('valor') == 'mensual' }}>Mensual</option>
+                            <option value="bimestral" {{ 'selected' if config.get('frecuencia_facturacion', {}).get('valor') == 'bimestral' }}>Bimestral</option>
+                            <option value="trimestral" {{ 'selected' if config.get('frecuencia_facturacion', {}).get('valor') == 'trimestral' }}>Trimestral</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Dia habitual de toma de lecturas</span>
+                        </label>
+                        <input type="number" name="dia_toma_lectura" min="1" max="28"
+                               value="{{ config.get('dia_toma_lectura', {}).get('valor', 5) }}"
+                               class="input input-bordered">
+                        <label class="label">
+                            <span class="label-text-alt text-base-content/70">Dia del mes (1-28)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Asignacion de Periodo -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-primary"></i>
+                    Asignacion de Periodo
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Dia de corte</span>
+                        </label>
+                        <input type="number" name="dia_corte_periodo" min="1" max="28"
+                               value="{{ config.get('dia_corte_periodo', {}).get('valor', 1) }}"
+                               class="input input-bordered">
+                        <label class="label">
+                            <span class="label-text-alt text-base-content/70">Lecturas antes de este dia van al periodo anterior</span>
+                        </label>
+                    </div>
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">Regla de asignacion</span>
+                        </label>
+                        <select name="regla_periodo" class="select select-bordered">
+                            <option value="mes_anterior" {{ 'selected' if config.get('regla_periodo', {}).get('valor') == 'mes_anterior' }}>
+                                Mes anterior a la lectura
+                            </option>
+                            <option value="mes_lectura" {{ 'selected' if config.get('regla_periodo', {}).get('valor') == 'mes_lectura' }}>
+                                Mismo mes de la lectura
+                            </option>
+                        </select>
+                        <label class="label">
+                            <span class="label-text-alt text-base-content/70">Como se determina el periodo de una lectura</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <i class="fas fa-info-circle"></i>
+                    <div>
+                        <p class="font-medium">Ejemplo con configuracion actual:</p>
+                        <p class="text-sm">
+                            Con dia de corte <strong>{{ config.get('dia_corte_periodo', {}).get('valor', 1) }}</strong>
+                            y regla <strong>{{ 'mes anterior' if config.get('regla_periodo', {}).get('valor') == 'mes_anterior' else 'mes de lectura' }}</strong>:
+                        </p>
+                        <ul class="text-sm mt-1 list-disc list-inside">
+                            <li>Lectura del 10 de enero → periodo
+                                {% if config.get('regla_periodo', {}).get('valor') == 'mes_anterior' %}
+                                    {% if config.get('dia_corte_periodo', {}).get('valor', 1)|int > 10 %}diciembre{% else %}diciembre{% endif %}
+                                {% else %}
+                                    enero
+                                {% endif %}
+                            </li>
+                            <li>Lectura del 20 de enero → periodo
+                                {% if config.get('regla_periodo', {}).get('valor') == 'mes_anterior' %}
+                                    {% if config.get('dia_corte_periodo', {}).get('valor', 1)|int > 20 %}diciembre{% else %}diciembre{% endif %}
+                                {% else %}
+                                    enero
+                                {% endif %}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Lecturas Automaticas -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <i class="fas fa-magic text-primary"></i>
+                    Lecturas Automaticas
+                </h3>
+                <div class="form-control">
+                    <label class="flex items-center gap-2 cursor-pointer py-2">
+                        <input type="checkbox" name="crear_lecturas_faltantes"
+                               {{ 'checked' if config.get('crear_lecturas_faltantes', {}).get('valor', True) }}
+                               class="checkbox checkbox-primary">
+                        <span>Crear lecturas automaticas para medidores sin lectura</span>
+                    </label>
+                    <span class="text-sm text-base-content/70 ml-6">
+                        Al ejecutar la generacion automatica, se crearan lecturas para medidores que no tengan una
+                    </span>
+                </div>
+
+                <div class="form-control mt-4">
+                    <span class="font-medium mb-2">Valor para lecturas faltantes</span>
+                    <div class="flex flex-col gap-1">
+                        <label class="flex items-center gap-2 cursor-pointer py-1">
+                            <input type="radio" name="valor_lectura_faltante" value="ultima"
+                                   {{ 'checked' if config.get('valor_lectura_faltante', {}).get('valor', 'ultima') == 'ultima' }}
+                                   class="radio radio-primary">
+                            <div>
+                                <span>Estimar consumo (recomendado)</span>
+                                <p class="text-xs text-base-content/60">Suma el consumo del periodo anterior a la ultima lectura</p>
+                            </div>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer py-1">
+                            <input type="radio" name="valor_lectura_faltante" value="cero"
+                                   {{ 'checked' if config.get('valor_lectura_faltante', {}).get('valor') == 'cero' }}
+                                   class="radio radio-primary">
+                            <div>
+                                <span>Consumo cero</span>
+                                <p class="text-xs text-base-content/60">Crea lectura igual a la anterior (consumo = 0 m3)</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-actions justify-center mt-6">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Guardar Configuracion
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

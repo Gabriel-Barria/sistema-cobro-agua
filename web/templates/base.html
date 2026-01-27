@@ -186,6 +186,36 @@
                             Usuarios
                         </a>
                     </li>
+
+                    <!-- Configuracion (solo admin) -->
+                    <li>
+                        <details {% if request.endpoint and ('configuracion' in request.endpoint or 'scheduler' in request.endpoint) %}open{% endif %}>
+                            <summary>
+                                <i class="fas fa-cogs w-5"></i>
+                                Configuracion
+                            </summary>
+                            <ul>
+                                <li>
+                                    <a href="{{ url_for('configuracion.sistema') }}" class="{% if request.endpoint == 'configuracion.sistema' %}active{% endif %}">
+                                        <i class="fas fa-sliders-h w-4"></i>
+                                        Sistema
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('configuracion.tarifas') }}" class="{% if request.endpoint == 'configuracion.tarifas' %}active{% endif %}">
+                                        <i class="fas fa-dollar-sign w-4"></i>
+                                        Tarifas
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('scheduler.index') }}" class="{% if request.endpoint and 'scheduler' in request.endpoint %}active{% endif %}">
+                                        <i class="fas fa-clock w-4"></i>
+                                        Generacion Auto
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
+                    </li>
                     {% endif %}
 
                     <div class="divider my-2"></div>

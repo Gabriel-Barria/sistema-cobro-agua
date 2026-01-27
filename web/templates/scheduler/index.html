@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Generacion Automatica - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Generacion Automatica</h1>
+    <a href="{{ url_for('configuracion.index') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver</span>
+    </a>
+</div>
+
+<!-- Estado del Scheduler -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h2 class="card-title">
+            <i class="fas fa-server"></i>
+            Estado del Scheduler
+        </h2>
+        <div class="flex flex-wrap gap-4 mt-4">
+            <div class="badge badge-lg {{ 'badge-success' if estado.corriendo else 'badge-error' }}">
+                <i class="fas {{ 'fa-check-circle' if estado.corriendo else 'fa-times-circle' }} mr-2"></i>
+                {{ 'Activo' if estado.corriendo else 'Inactivo' }}
+            </div>
+            {% if cron_config %}
+            <div class="badge badge-lg {{ 'badge-primary' if cron_config.activo else 'badge-ghost' }}">
+                <i class="fas {{ 'fa-clock' if cron_config.activo else 'fa-pause' }} mr-2"></i>
+                Cron: {{ 'Habilitado' if cron_config.activo else 'Deshabilitado' }}
+            </div>
+            {% if cron_config.activo and cron_config.tipo_programacion == 'dia_mes' %}
+            <div class="badge badge-lg badge-ghost">
+                <i class="fas fa-calendar-day mr-2"></i>
+                Dia {{ cron_config.dia_mes }} a las {{ cron_config.hora_ejecucion }}
+            </div>
+            {% elif cron_config.activo and cron_config.tipo_programacion == 'intervalo_dias' %}
+            <div class="badge badge-lg badge-ghost">
+                <i class="fas fa-sync mr-2"></i>
+                Cada {{ cron_config.intervalo_dias }} dias
+            </div>
+            {% endif %}
+            {% endif %}
+        </div>
+        <div class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            {% if estado.proxima_ejecucion %}
+            <p class="text-base-content/70">
+                <i class="fas fa-forward text-primary mr-1"></i>
+                <strong>Proxima ejecucion:</strong> {{ estado.proxima_ejecucion }}
+            </p>
+            {% endif %}
+            {% if cron_config and cron_config.ultima_ejecucion %}
+            <p class="text-base-content/70">
+                <i class="fas fa-history text-success mr-1"></i>
+                <strong>Ultima ejecucion:</strong> {{ cron_config.ultima_ejecucion.strftime('%d/%m/%Y %H:%M') }}
+            </p>
+            {% endif %}
+        </div>
+        {% if estado.jobs %}
+        <div class="mt-2">
+            <span class="badge badge-info badge-sm">{{ estado.jobs|length }} job(s) programado(s)</span>
+        </div>
+        {% elif cron_config and cron_config.activo %}
+        <div class="alert alert-warning mt-4">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>El cron esta habilitado pero no hay jobs programados. Guarda la configuracion nuevamente.</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Acciones Rapidas -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <a href="{{ url_for('scheduler.configuracion') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+        <div class="card-body">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-primary/10 rounded-lg">
+                    <i class="fas fa-cog text-2xl text-primary"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold">Configurar Cron</h3>
+                    <p class="text-sm text-base-content/70">Programar ejecucion automatica</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('scheduler.ejecutar') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+        <div class="card-body">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-success/10 rounded-lg">
+                    <i class="fas fa-play text-2xl text-success"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold">Ejecutar Ahora</h3>
+                    <p class="text-sm text-base-content/70">Generar boletas manualmente</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('scheduler.logs') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+        <div class="card-body">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-warning/10 rounded-lg">
+                    <i class="fas fa-history text-2xl text-warning"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold">Ver Historial</h3>
+                    <p class="text-sm text-base-content/70">Logs de ejecuciones</p>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
+
+<!-- Logs Recientes -->
+{% if logs_recientes %}
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h2 class="card-title">
+            <i class="fas fa-history"></i>
+            Ejecuciones Recientes
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Periodo</th>
+                        <th>Lecturas</th>
+                        <th>Boletas</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs_recientes %}
+                    <tr>
+                        <td>{{ log.fecha_ejecucion.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            {% if log.periodo_mes and log.periodo_año %}
+                            {{ log.periodo_mes }}/{{ log.periodo_año }}
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ log.lecturas_creadas }}</td>
+                        <td>{{ log.boletas_generadas }}</td>
+                        <td>
+                            {% if log.estado == 'completado' %}
+                            <span class="badge badge-success">Completado</span>
+                            {% elif log.estado == 'error' %}
+                            <span class="badge badge-error">Error</span>
+                            {% else %}
+                            <span class="badge badge-warning">{{ log.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('scheduler.log_detalle', log_id=log.id) }}" class="btn btn-ghost btn-xs">
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

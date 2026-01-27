@@ -64,6 +64,8 @@ from web.routes.medidores import medidores_bp
 from web.routes.boletas import boletas_bp
 from web.routes.mobile import mobile_bp
 from web.routes.portal import portal_bp
+from web.routes.configuracion import configuracion_bp
+from web.routes.scheduler import scheduler_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(usuarios_bp)
@@ -73,6 +75,8 @@ app.register_blueprint(medidores_bp, url_prefix='/medidores')
 app.register_blueprint(boletas_bp, url_prefix='/boletas')
 app.register_blueprint(mobile_bp, url_prefix='/mobile')
 app.register_blueprint(portal_bp, url_prefix='/portal')
+app.register_blueprint(configuracion_bp, url_prefix='/configuracion')
+app.register_blueprint(scheduler_bp, url_prefix='/scheduler')
 
 
 # Filtros de plantilla
@@ -164,12 +168,23 @@ def utility_processor():
     return {'url_for_page': url_for_page}
 
 
-def crear_app():
-    """Factory para crear la aplicación."""
-    inicializar_db()
-    return app
+def _iniciar_scheduler():
+    """Inicializa el scheduler de tareas programadas."""
+    try:
+        from src.services.scheduler_service import init_scheduler, start_scheduler
+        init_scheduler(app)
+        start_scheduler()
+        print("Scheduler iniciado correctamente")
+    except Exception as e:
+        print(f"Error inicializando scheduler: {e}")
+
+
+# Inicializar base de datos al importar el modulo
+inicializar_db()
+
+# Inicializar scheduler (con 1 worker no hay riesgo de duplicados)
+_iniciar_scheduler()
 
 
 if __name__ == '__main__':
-    inicializar_db()
     app.run(debug=True, port=5000)

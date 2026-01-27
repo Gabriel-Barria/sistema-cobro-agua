@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle de Ejecucion - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Detalle de Ejecucion</h1>
+    <a href="{{ url_for('scheduler.logs') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver</span>
+    </a>
+</div>
+
+<!-- Resumen -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <div class="flex flex-wrap items-center gap-4 mb-4">
+            {% if log.estado == 'completado' %}
+            <span class="badge badge-success badge-lg">
+                <i class="fas fa-check-circle mr-2"></i> Completado
+            </span>
+            {% elif log.estado == 'error' %}
+            <span class="badge badge-error badge-lg">
+                <i class="fas fa-times-circle mr-2"></i> Error
+            </span>
+            {% else %}
+            <span class="badge badge-warning badge-lg">
+                <i class="fas fa-spinner fa-spin mr-2"></i> {{ log.estado }}
+            </span>
+            {% endif %}
+
+            {% if log.es_automatico %}
+            <span class="badge badge-ghost">
+                <i class="fas fa-clock mr-1"></i> Ejecucion automatica
+            </span>
+            {% else %}
+            <span class="badge badge-ghost">
+                <i class="fas fa-user mr-1"></i> {{ log.usuario_nombre or 'Manual' }}
+            </span>
+            {% endif %}
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+                <p class="text-sm text-base-content/70">Fecha</p>
+                <p class="font-medium">{{ log.fecha_ejecucion.strftime('%d/%m/%Y %H:%M:%S') }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-base-content/70">Periodo</p>
+                <p class="font-medium">
+                    {% if log.periodo_mes and log.periodo_año %}
+                    {{ log.periodo_mes }}/{{ log.periodo_año }}
+                    {% else %}
+                    -
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="text-sm text-base-content/70">Duracion</p>
+                <p class="font-medium">
+                    {% if log.duracion_segundos %}
+                    {{ '%.2f'|format(log.duracion_segundos) }} segundos
+                    {% else %}
+                    -
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <p class="text-sm text-base-content/70">Mensaje</p>
+                <p class="font-medium">{{ log.mensaje or '-' }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadisticas -->
+<div class="stats stats-vertical sm:stats-horizontal shadow mb-6 w-full">
+    <div class="stat">
+        <div class="stat-figure text-info">
+            <i class="fas fa-tachometer-alt text-2xl"></i>
+        </div>
+        <div class="stat-title">Lecturas creadas</div>
+        <div class="stat-value text-info">{{ log.lecturas_creadas }}</div>
+    </div>
+    <div class="stat">
+        <div class="stat-figure text-success">
+            <i class="fas fa-file-invoice text-2xl"></i>
+        </div>
+        <div class="stat-title">Boletas generadas</div>
+        <div class="stat-value text-success">{{ log.boletas_generadas }}</div>
+    </div>
+    <div class="stat">
+        <div class="stat-figure text-error">
+            <i class="fas fa-exclamation-triangle text-2xl"></i>
+        </div>
+        <div class="stat-title">Errores</div>
+        <div class="stat-value text-error">{{ log.errores }}</div>
+    </div>
+</div>
+
+<!-- Detalles -->
+{% if log.detalles %}
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h2 class="card-title mb-4">
+            <i class="fas fa-list"></i>
+            Detalles de la Ejecucion
+        </h2>
+
+        <!-- Lecturas creadas -->
+        {% if log.detalles.lecturas %}
+        <div class="collapse collapse-arrow bg-base-200 mb-4">
+            <input type="checkbox" checked>
+            <div class="collapse-title font-medium">
+                <i class="fas fa-tachometer-alt mr-2 text-info"></i>
+                Lecturas creadas ({{ log.detalles.lecturas|length }})
+            </div>
+            <div class="collapse-content">
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Cliente</th>
+                                <th>Medidor</th>
+                                <th>Lectura</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for l in log.detalles.lecturas %}
+                            <tr>
+                                <td>{{ l.lectura_id }}</td>
+                                <td>{{ l.cliente }}</td>
+                                <td>{{ l.medidor }}</td>
+                                <td>{{ l.lectura_m3 }} m3</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Boletas generadas -->
+        {% if log.detalles.boletas %}
+        <div class="collapse collapse-arrow bg-base-200 mb-4">
+            <input type="checkbox" checked>
+            <div class="collapse-title font-medium">
+                <i class="fas fa-file-invoice mr-2 text-success"></i>
+                Boletas generadas ({{ log.detalles.boletas|length }})
+            </div>
+            <div class="collapse-content">
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>ID Boleta</th>
+                                <th>Cliente</th>
+                                <th>Medidor</th>
+                                <th>Periodo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in log.detalles.boletas %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('boletas.detalle', boleta_id=b.boleta_id) }}" class="link link-primary">
+                                        {{ b.boleta_id }}
+                                    </a>
+                                </td>
+                                <td>{{ b.cliente }}</td>
+                                <td>{{ b.medidor }}</td>
+                                <td>{{ b.periodo }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Errores -->
+        {% if log.detalles.errores %}
+        <div class="collapse collapse-arrow bg-error/10 mb-4">
+            <input type="checkbox" checked>
+            <div class="collapse-title font-medium text-error">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                Errores ({{ log.detalles.errores|length }})
+            </div>
+            <div class="collapse-content">
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Referencia</th>
+                                <th>Error</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in log.detalles.errores %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-error badge-sm">{{ e.tipo }}</span>
+                                </td>
+                                <td>
+                                    {% if e.tipo == 'lectura' %}
+                                    Medidor {{ e.medidor_id }}
+                                    {% else %}
+                                    Lectura {{ e.lectura_id }}
+                                    {% endif %}
+                                </td>
+                                <td class="text-error">{{ e.error }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

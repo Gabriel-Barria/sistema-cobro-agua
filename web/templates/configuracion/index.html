@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Configuracion - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Configuracion</h1>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Configuracion del Sistema -->
+    <a href="{{ url_for('configuracion.sistema') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+        <div class="card-body">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-primary/10 rounded-lg">
+                    <i class="fas fa-cogs text-2xl text-primary"></i>
+                </div>
+                <div>
+                    <h2 class="card-title">Configuracion del Sistema</h2>
+                    <p class="text-base-content/70">Frecuencia de facturacion, reglas de periodo, lecturas automaticas</p>
+                </div>
+            </div>
+        </div>
+    </a>
+
+    <!-- Tarifas -->
+    <a href="{{ url_for('configuracion.tarifas') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+        <div class="card-body">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-success/10 rounded-lg">
+                    <i class="fas fa-dollar-sign text-2xl text-success"></i>
+                </div>
+                <div>
+                    <h2 class="card-title">Tarifas</h2>
+                    <p class="text-base-content/70">Cargo fijo y precio por m3</p>
+                </div>
+            </div>
+            {% if tarifas %}
+            <div class="mt-4 flex gap-4 text-sm">
+                <span class="badge badge-ghost">Cargo fijo: ${{ tarifas.cargo_fijo|formato_pesos }}</span>
+                <span class="badge badge-ghost">Precio m3: ${{ tarifas.precio_m3|formato_pesos }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </a>
+
+    <!-- Generacion Automatica -->
+    <a href="{{ url_for('scheduler.index') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+        <div class="card-body">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-warning/10 rounded-lg">
+                    <i class="fas fa-clock text-2xl text-warning"></i>
+                </div>
+                <div>
+                    <h2 class="card-title">Generacion Automatica</h2>
+                    <p class="text-base-content/70">Configurar cron para generar boletas automaticamente</p>
+                </div>
+            </div>
+        </div>
+    </a>
+</div>
+{% endblock %}

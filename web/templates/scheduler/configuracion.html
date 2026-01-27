@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Configurar Cron - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Configurar Cron</h1>
+    <a href="{{ url_for('scheduler.index') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver</span>
+    </a>
+</div>
+
+<div class="card bg-base-100 shadow max-w-2xl mx-auto">
+    <div class="card-body">
+        <form method="POST">
+            <!-- Estado -->
+            <div class="form-control mb-6">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input type="checkbox" name="activo"
+                           {{ 'checked' if cron_config and cron_config.activo }}
+                           class="toggle toggle-primary toggle-lg">
+                    <div>
+                        <span class="label-text text-lg font-medium">Cron Activo</span>
+                        <p class="text-sm text-base-content/70">Habilitar ejecucion automatica programada</p>
+                    </div>
+                </label>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Tipo de Programacion -->
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold mb-4">Tipo de Programacion</h3>
+                <div class="flex flex-col gap-3">
+                    <label class="label cursor-pointer justify-start gap-4 p-4 bg-base-200 rounded-lg">
+                        <input type="radio" name="tipo_programacion" value="dia_mes"
+                               {{ 'checked' if not cron_config or cron_config.tipo_programacion == 'dia_mes' }}
+                               class="radio radio-primary"
+                               onchange="toggleCampos()">
+                        <div>
+                            <span class="label-text font-medium">Dia especifico del mes</span>
+                            <p class="text-sm text-base-content/70">Ejecutar el mismo dia cada mes</p>
+                        </div>
+                    </label>
+                    <label class="label cursor-pointer justify-start gap-4 p-4 bg-base-200 rounded-lg">
+                        <input type="radio" name="tipo_programacion" value="intervalo_dias"
+                               {{ 'checked' if cron_config and cron_config.tipo_programacion == 'intervalo_dias' }}
+                               class="radio radio-primary"
+                               onchange="toggleCampos()">
+                        <div>
+                            <span class="label-text font-medium">Intervalo de dias</span>
+                            <p class="text-sm text-base-content/70">Ejecutar cada X dias</p>
+                        </div>
+                    </label>
+                    <label class="label cursor-pointer justify-start gap-4 p-4 bg-base-200 rounded-lg">
+                        <input type="radio" name="tipo_programacion" value="manual"
+                               {{ 'checked' if cron_config and cron_config.tipo_programacion == 'manual' }}
+                               class="radio radio-primary"
+                               onchange="toggleCampos()">
+                        <div>
+                            <span class="label-text font-medium">Solo manual</span>
+                            <p class="text-sm text-base-content/70">Sin ejecucion automatica</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Campos segun tipo -->
+            <div id="campo_dia_mes" class="form-control mb-4">
+                <label class="label">
+                    <span class="label-text font-medium">Dia del mes</span>
+                </label>
+                <input type="number" name="dia_mes" min="1" max="28"
+                       value="{{ cron_config.dia_mes if cron_config and cron_config.dia_mes else 5 }}"
+                       class="input input-bordered w-32">
+                <label class="label">
+                    <span class="label-text-alt text-base-content/70">Dia 1-28 (evitar dias 29-31)</span>
+                </label>
+            </div>
+
+            <div id="campo_intervalo" class="form-control mb-4 hidden">
+                <label class="label">
+                    <span class="label-text font-medium">Intervalo en dias</span>
+                </label>
+                <input type="number" name="intervalo_dias" min="1" max="365"
+                       value="{{ cron_config.intervalo_dias if cron_config and cron_config.intervalo_dias else 30 }}"
+                       class="input input-bordered w-32">
+                <label class="label">
+                    <span class="label-text-alt text-base-content/70">Ejecutar cada X dias</span>
+                </label>
+            </div>
+
+            <!-- Hora de ejecucion -->
+            <div id="campo_hora" class="form-control mb-6">
+                <label class="label">
+                    <span class="label-text font-medium">Hora de ejecucion</span>
+                </label>
+                <input type="time" name="hora_ejecucion"
+                       value="{{ cron_config.hora_ejecucion.strftime('%H:%M') if cron_config and cron_config.hora_ejecucion else '08:00' }}"
+                       class="input input-bordered w-40">
+                <label class="label">
+                    <span class="label-text-alt text-base-content/70">Hora local (America/Santiago)</span>
+                </label>
+            </div>
+
+            <div class="card-actions justify-center mt-6">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Guardar Configuracion
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleCampos() {
+    const tipo = document.querySelector('input[name="tipo_programacion"]:checked').value;
+    const campoDia = document.getElementById('campo_dia_mes');
+    const campoIntervalo = document.getElementById('campo_intervalo');
+    const campoHora = document.getElementById('campo_hora');
+
+    campoDia.classList.add('hidden');
+    campoIntervalo.classList.add('hidden');
+
+    if (tipo === 'dia_mes') {
+        campoDia.classList.remove('hidden');
+        campoHora.classList.remove('hidden');
+    } else if (tipo === 'intervalo_dias') {
+        campoIntervalo.classList.remove('hidden');
+        campoHora.classList.remove('hidden');
+    } else {
+        campoHora.classList.add('hidden');
+    }
+}
+
+// Inicializar estado
+document.addEventListener('DOMContentLoaded', toggleCampos);
+</script>
+{% endblock %}

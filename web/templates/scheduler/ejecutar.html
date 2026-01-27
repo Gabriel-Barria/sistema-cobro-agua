@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Ejecutar Generacion - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Ejecutar Generacion</h1>
+    <a href="{{ url_for('scheduler.index') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver</span>
+    </a>
+</div>
+
+<!-- Preview -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h2 class="card-title">
+            <i class="fas fa-eye"></i>
+            Preview de Generacion
+        </h2>
+        <p class="text-base-content/70">
+            Periodo objetivo: <strong>{{ preview.periodo_mes }}/{{ preview.periodo_año }}</strong>
+        </p>
+
+        <!-- Stats -->
+        <div class="stats stats-vertical sm:stats-horizontal shadow mt-4 w-full">
+            <div class="stat">
+                <div class="stat-figure text-primary">
+                    <i class="fas fa-tachometer-alt text-2xl"></i>
+                </div>
+                <div class="stat-title">Medidores sin lectura</div>
+                <div class="stat-value text-primary">{{ preview.total_medidores_sin_lectura }}</div>
+                <div class="stat-desc">Se crearan lecturas automaticas</div>
+            </div>
+            <div class="stat">
+                <div class="stat-figure text-success">
+                    <i class="fas fa-file-invoice text-2xl"></i>
+                </div>
+                <div class="stat-title">Lecturas sin boleta</div>
+                <div class="stat-value text-success">{{ preview.total_lecturas_sin_boleta }}</div>
+                <div class="stat-desc">Se generaran boletas</div>
+            </div>
+        </div>
+
+        <!-- Detalles -->
+        {% if preview.medidores_sin_lectura %}
+        <div class="collapse collapse-arrow bg-base-200 mt-4">
+            <input type="checkbox">
+            <div class="collapse-title font-medium">
+                <i class="fas fa-tachometer-alt mr-2"></i>
+                Medidores que recibiran lectura automatica ({{ preview.total_medidores_sin_lectura }})
+            </div>
+            <div class="collapse-content">
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Medidor</th>
+                                <th>Direccion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in preview.medidores_sin_lectura[:20] %}
+                            <tr>
+                                <td>{{ m.cliente_nombre }}</td>
+                                <td>{{ m.numero_medidor or '-' }}</td>
+                                <td>{{ m.direccion or '-' }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% if preview.total_medidores_sin_lectura > 20 %}
+                            <tr>
+                                <td colspan="3" class="text-center text-base-content/70">
+                                    ... y {{ preview.total_medidores_sin_lectura - 20 }} mas
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if preview.lecturas_sin_boleta %}
+        <div class="collapse collapse-arrow bg-base-200 mt-4">
+            <input type="checkbox">
+            <div class="collapse-title font-medium">
+                <i class="fas fa-file-invoice mr-2"></i>
+                Lecturas que recibiran boleta ({{ preview.total_lecturas_sin_boleta }})
+            </div>
+            <div class="collapse-content">
+                <div class="overflow-x-auto">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Medidor</th>
+                                <th>Periodo</th>
+                                <th>Lectura</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for l in preview.lecturas_sin_boleta[:20] %}
+                            <tr>
+                                <td>{{ l.cliente_nombre }}</td>
+                                <td>{{ l.numero_medidor or '-' }}</td>
+                                <td>{{ l.mes }}/{{ l.año }}</td>
+                                <td>{{ l.lectura_m3 }} m3</td>
+                            </tr>
+                            {% endfor %}
+                            {% if preview.total_lecturas_sin_boleta > 20 %}
+                            <tr>
+                                <td colspan="4" class="text-center text-base-content/70">
+                                    ... y {{ preview.total_lecturas_sin_boleta - 20 }} mas
+                                </td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Formulario de ejecucion -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <h2 class="card-title">
+            <i class="fas fa-play"></i>
+            Ejecutar Generacion Manual
+        </h2>
+
+        <form method="POST" id="formEjecutar">
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input type="checkbox" name="solo_boletas" class="checkbox checkbox-primary">
+                    <div>
+                        <span class="label-text font-medium">Solo generar boletas</span>
+                        <p class="text-sm text-base-content/70">No crear lecturas automaticas (solo procesar lecturas existentes)</p>
+                    </div>
+                </label>
+            </div>
+
+            {% if preview.total_medidores_sin_lectura == 0 and preview.total_lecturas_sin_boleta == 0 %}
+            <div class="alert alert-info mb-4">
+                <i class="fas fa-info-circle"></i>
+                <span>No hay nada que procesar. Todos los medidores tienen lecturas y todas las lecturas tienen boletas.</span>
+            </div>
+            {% endif %}
+
+            <div class="card-actions justify-center">
+                <button type="submit" class="btn btn-success btn-lg"
+                        {{ 'disabled' if preview.total_medidores_sin_lectura == 0 and preview.total_lecturas_sin_boleta == 0 }}
+                        onclick="return confirm('Esta seguro de ejecutar la generacion? Se crearan {{ preview.total_medidores_sin_lectura }} lecturas y {{ preview.total_lecturas_sin_boleta }} boletas.')">
+                    <i class="fas fa-play"></i>
+                    Ejecutar Generacion
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
