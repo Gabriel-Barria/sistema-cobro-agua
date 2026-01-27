@@ -118,9 +118,9 @@ def listar_clientes(busqueda: str = None, con_medidores: str = None,
         params.append('')
 
     if recibe_whatsapp == 'si':
-        query += ' AND c.recibe_boleta_whatsapp = 1'
+        query += ' AND c.recibe_boleta_whatsapp = TRUE'
     elif recibe_whatsapp == 'no':
-        query += ' AND (c.recibe_boleta_whatsapp = 0 OR c.recibe_boleta_whatsapp IS NULL)'
+        query += ' AND (c.recibe_boleta_whatsapp = FALSE OR c.recibe_boleta_whatsapp IS NULL)'
 
     query += ' GROUP BY c.id'
 
@@ -149,7 +149,7 @@ def obtener_cliente(cliente_id: int) -> Optional[Dict]:
 
 def actualizar_cliente(cliente_id: int, nombre: str = None, nombre_completo: str = None,
                        rut: str = None, telefono: str = None, email: str = None,
-                       recibe_boleta_whatsapp: int = None) -> bool:
+                       recibe_boleta_whatsapp: bool = None) -> bool:
     """Actualiza datos de un cliente."""
     conn = get_connection()
     cursor = conn.cursor()

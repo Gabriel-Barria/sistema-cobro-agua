@@ -102,11 +102,11 @@ def editar(cliente_id):
         rut = request.form.get('rut', '').strip() or None
         telefono = request.form.get('telefono', '').strip() or None
         email = request.form.get('email', '').strip() or None
-        recibe_boleta_whatsapp = 1 if request.form.get('recibe_boleta_whatsapp') == 'on' else 0
+        recibe_boleta_whatsapp = request.form.get('recibe_boleta_whatsapp') == 'on'
         volver_a_lista = request.form.get('volver_a_lista') == '1'
 
         # Validar que si activa recibe_boleta_whatsapp, debe tener telefono
-        if recibe_boleta_whatsapp == 1 and not telefono:
+        if recibe_boleta_whatsapp and not telefono:
             flash('Para recibir boleta por WhatsApp debe tener un numero de telefono', 'error')
             if volver_a_lista:
                 return redirect(url_for('clientes.listar'))

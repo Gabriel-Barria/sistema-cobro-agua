@@ -136,7 +136,7 @@
                     <div class="text-sm text-base-content/70">{{ c.rut or 'Sin RUT' }}</div>
                 </div>
                 <div class="flex items-center gap-2 ml-4">
-                    {% if c.recibe_boleta_whatsapp == 1 %}
+                    {% if c.recibe_boleta_whatsapp %}
                     <span class="badge badge-success badge-sm" title="Recibe boleta por WhatsApp">
                         <i class="fab fa-whatsapp"></i>
                     </span>
@@ -162,7 +162,7 @@
                 <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-eye"></i> Ver Detalle
                 </a>
-                <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}', {{ c.recibe_boleta_whatsapp or 0 }})">
+                <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}', {{ 'true' if c.recibe_boleta_whatsapp else 'false' }})">
                     <i class="fas fa-edit"></i> Editar
                 </button>
             </div>
@@ -198,7 +198,7 @@
                 <td>{{ c.email or '-' }}</td>
                 <td>{{ c.num_medidores }}</td>
                 <td>
-                    {% if c.recibe_boleta_whatsapp == 1 %}
+                    {% if c.recibe_boleta_whatsapp %}
                     <span class="badge badge-success badge-sm gap-1" title="Recibe boleta por WhatsApp">
                         <i class="fab fa-whatsapp"></i> Si
                     </span>
@@ -211,7 +211,7 @@
                         <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-ghost btn-xs btn-square" title="Ver detalle">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <button onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}', {{ c.recibe_boleta_whatsapp or 0 }})" class="btn btn-ghost btn-xs btn-square" title="Editar">
+                        <button onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}', {{ 'true' if c.recibe_boleta_whatsapp else 'false' }})" class="btn btn-ghost btn-xs btn-square" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>
@@ -391,7 +391,7 @@ function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, emai
     document.getElementById('edit_rut').value = rut;
     document.getElementById('edit_telefono').value = telefono;
     document.getElementById('edit_email').value = email;
-    document.getElementById('edit_recibe_whatsapp').checked = recibeWhatsapp == 1;
+    document.getElementById('edit_recibe_whatsapp').checked = recibeWhatsapp;
     modalEditar.showModal();
 }
 
