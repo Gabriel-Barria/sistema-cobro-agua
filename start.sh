@@ -17,7 +17,7 @@ fi
 
 echo "=== Iniciando Gunicorn ==="
 exec gunicorn --bind 0.0.0.0:5000 \
-    --workers 4 \
+    --workers 1 \
     --timeout 120 \
     --log-level debug \
     --access-logfile - \
