@@ -42,6 +42,10 @@ def init_scheduler(app=None) -> BackgroundScheduler:
     # Obtener URL de la base de datos
     database_url = os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/agua_db')
 
+    # SQLAlchemy requiere 'postgresql://' no 'postgres://'
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+
     # Configurar jobstore con PostgreSQL
     jobstores = {
         'default': SQLAlchemyJobStore(url=database_url)
