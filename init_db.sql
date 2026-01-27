@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS clientes (
     telefono VARCHAR(20),
     email VARCHAR(100),
     activo SMALLINT DEFAULT 1,
+    recibe_boleta_whatsapp SMALLINT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

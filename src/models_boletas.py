@@ -154,7 +154,8 @@ def listar_boletas(cliente_id: int = None, medidor_id: int = None,
     cursor = conn.cursor()
 
     query = '''
-        SELECT b.*, m.numero_medidor, c.nombre as cliente_nombre_actual, c.id as cliente_id, c.telefono as cliente_telefono,
+        SELECT b.*, m.numero_medidor, c.nombre as cliente_nombre_actual, c.id as cliente_id,
+               c.telefono as cliente_telefono, c.recibe_boleta_whatsapp,
                (SELECT COUNT(*) FROM envios_boletas e WHERE e.boleta_id = b.id AND e.estado = 'enviado') as envios_count,
                (SELECT MAX(created_at) FROM envios_boletas e WHERE e.boleta_id = b.id AND e.estado = 'enviado') as ultimo_envio
         FROM boletas b

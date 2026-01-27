@@ -21,9 +21,10 @@ def listar():
     busqueda = request.args.get('busqueda', '').strip() or None
     con_medidores = request.args.get('con_medidores', '').strip() or None
     filtro_telefono = request.args.get('filtro_telefono', '').strip() or None
+    recibe_whatsapp = request.args.get('recibe_whatsapp', '').strip() or None
 
     clientes = listar_clientes(busqueda=busqueda, con_medidores=con_medidores,
-                               filtro_telefono=filtro_telefono)
+                               filtro_telefono=filtro_telefono, recibe_whatsapp=recibe_whatsapp)
 
     # Estadísticas
     stats = obtener_estadisticas_clientes(busqueda=busqueda, con_medidores=con_medidores,
@@ -33,7 +34,8 @@ def listar():
     filtros = {
         'busqueda': busqueda,
         'con_medidores': con_medidores,
-        'filtro_telefono': filtro_telefono
+        'filtro_telefono': filtro_telefono,
+        'recibe_whatsapp': recibe_whatsapp
     }
 
     return render_template('clientes/lista.html',
@@ -42,7 +44,8 @@ def listar():
                            filtros=filtros,
                            busqueda=busqueda or '',
                            con_medidores=con_medidores or '',
-                           filtro_telefono=filtro_telefono or '')
+                           filtro_telefono=filtro_telefono or '',
+                           recibe_whatsapp=recibe_whatsapp or '')
 
 
 @clientes_bp.route('/nuevo', methods=['GET', 'POST'])
@@ -99,7 +102,15 @@ def editar(cliente_id):
         rut = request.form.get('rut', '').strip() or None
         telefono = request.form.get('telefono', '').strip() or None
         email = request.form.get('email', '').strip() or None
+        recibe_boleta_whatsapp = 1 if request.form.get('recibe_boleta_whatsapp') == 'on' else 0
         volver_a_lista = request.form.get('volver_a_lista') == '1'
+
+        # Validar que si activa recibe_boleta_whatsapp, debe tener telefono
+        if recibe_boleta_whatsapp == 1 and not telefono:
+            flash('Para recibir boleta por WhatsApp debe tener un numero de telefono', 'error')
+            if volver_a_lista:
+                return redirect(url_for('clientes.listar'))
+            return redirect(url_for('clientes.editar', cliente_id=cliente_id))
 
         # Verificar si el nuevo nombre ya existe (y no es el mismo cliente)
         if nombre and nombre != cliente['nombre']:
@@ -111,7 +122,8 @@ def editar(cliente_id):
                 return redirect(url_for('clientes.editar', cliente_id=cliente_id))
 
         actualizar_cliente(cliente_id, nombre=nombre, nombre_completo=nombre_completo,
-                          rut=rut, telefono=telefono, email=email)
+                          rut=rut, telefono=telefono, email=email,
+                          recibe_boleta_whatsapp=recibe_boleta_whatsapp)
         flash('Cliente actualizado', 'success')
 
         # Si viene del modal en la lista, volver a la lista con filtros

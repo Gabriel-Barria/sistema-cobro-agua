@@ -74,7 +74,7 @@ def obtener_o_crear_cliente(nombre: str) -> int:
 
 
 def listar_clientes(busqueda: str = None, con_medidores: str = None,
-                    filtro_telefono: str = None) -> List[Dict]:
+                    filtro_telefono: str = None, recibe_whatsapp: str = None) -> List[Dict]:
     """
     Lista clientes con filtros opcionales.
 
@@ -82,6 +82,7 @@ def listar_clientes(busqueda: str = None, con_medidores: str = None,
         busqueda: Texto para buscar en nombre, nombre_completo, RUT, telefono o email
         con_medidores: 'si' para clientes con medidores, 'no' para sin medidores, None para todos
         filtro_telefono: 'con' para clientes con telefono, 'sin' para sin telefono, None para todos
+        recibe_whatsapp: 'si' para clientes que reciben boleta por WhatsApp, 'no' para los que no, None para todos
 
     Returns:
         Lista de clientes con conteo de medidores
@@ -116,6 +117,11 @@ def listar_clientes(busqueda: str = None, con_medidores: str = None,
         query += ' AND c.telefono IS NOT NULL AND c.telefono != %s'
         params.append('')
 
+    if recibe_whatsapp == 'si':
+        query += ' AND c.recibe_boleta_whatsapp = 1'
+    elif recibe_whatsapp == 'no':
+        query += ' AND (c.recibe_boleta_whatsapp = 0 OR c.recibe_boleta_whatsapp IS NULL)'
+
     query += ' GROUP BY c.id'
 
     if con_medidores == 'si':
@@ -142,7 +148,8 @@ def obtener_cliente(cliente_id: int) -> Optional[Dict]:
 
 
 def actualizar_cliente(cliente_id: int, nombre: str = None, nombre_completo: str = None,
-                       rut: str = None, telefono: str = None, email: str = None) -> bool:
+                       rut: str = None, telefono: str = None, email: str = None,
+                       recibe_boleta_whatsapp: int = None) -> bool:
     """Actualiza datos de un cliente."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -165,6 +172,9 @@ def actualizar_cliente(cliente_id: int, nombre: str = None, nombre_completo: str
     if email is not None:
         updates.append('email = %s')
         params.append(email if email else None)
+    if recibe_boleta_whatsapp is not None:
+        updates.append('recibe_boleta_whatsapp = %s')
+        params.append(recibe_boleta_whatsapp)
 
     if not updates:
         conn.close()

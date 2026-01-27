@@ -235,7 +235,7 @@
                     <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn-ghost btn-sm flex-1">
                         <i class="fas fa-download"></i> Descargar
                     </a>
-                    {% if boleta.cliente_telefono %}
+                    {% if boleta.cliente_telefono and boleta.recibe_boleta_whatsapp == 1 %}
                     <button class="btn btn-success btn-sm flex-1" onclick="enviarWhatsApp({{ boleta.id }}, '{{ boleta.numero_boleta }}', '{{ boleta.cliente_telefono }}')">
                         <svg width="16" height="16" fill="currentColor"><use href="#icon-whatsapp"/></svg> WhatsApp
                     </button>
@@ -357,7 +357,7 @@
                         <a href="{{ url_for('boletas.descargar', boleta_id=boleta.id) }}" class="btn btn-ghost btn-xs btn-square" title="Descargar boleta">
                             <i class="fas fa-download"></i>
                         </a>
-                        {% if boleta.cliente_telefono %}
+                        {% if boleta.cliente_telefono and boleta.recibe_boleta_whatsapp == 1 %}
                         <button class="btn btn-success btn-xs btn-square" onclick="enviarWhatsApp({{ boleta.id }}, '{{ boleta.numero_boleta }}', '{{ boleta.cliente_telefono }}')" title="Enviar por WhatsApp">
                             <svg width="16" height="16" fill="currentColor"><use href="#icon-whatsapp"/></svg>
                         </button>

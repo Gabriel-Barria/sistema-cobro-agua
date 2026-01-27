@@ -71,6 +71,10 @@
         Sin telefono
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.sin_telefono or 0 }}</span>{% endif %}
     </a>
+    <a href="{{ url_for('clientes.listar', busqueda=filtros.busqueda or '', recibe_whatsapp='si') }}"
+       class="btn btn-sm {% if filtros.recibe_whatsapp == 'si' %}btn-primary{% else %}btn-ghost{% endif %}">
+        <i class="fab fa-whatsapp"></i> Boleta WA
+    </a>
     <button class="btn btn-sm btn-circle btn-ghost {% if filtros.busqueda %}btn-primary{% endif %}"
             onclick="modalFiltrosClientes.showModal()" title="Buscar">
         <i class="fas fa-search"></i>
@@ -101,10 +105,18 @@
                     <option value="sin" {% if filtro_telefono == 'sin' %}selected{% endif %}>Sin telefono</option>
                 </select>
             </div>
+            <div class="form-control">
+                <label class="label py-1"><span class="label-text">WhatsApp</span></label>
+                <select name="recibe_whatsapp" class="select select-bordered select-sm">
+                    <option value="">Todos</option>
+                    <option value="si" {% if recibe_whatsapp == 'si' %}selected{% endif %}>Recibe boleta</option>
+                    <option value="no" {% if recibe_whatsapp == 'no' %}selected{% endif %}>No recibe</option>
+                </select>
+            </div>
         </div>
         <div class="flex gap-2 mt-4">
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
-            {% if busqueda or con_medidores or filtro_telefono %}
+            {% if busqueda or con_medidores or filtro_telefono or recibe_whatsapp %}
             <a href="{{ url_for('clientes.listar') }}" class="btn btn-ghost btn-sm">Limpiar</a>
             {% endif %}
         </div>
@@ -124,6 +136,11 @@
                     <div class="text-sm text-base-content/70">{{ c.rut or 'Sin RUT' }}</div>
                 </div>
                 <div class="flex items-center gap-2 ml-4">
+                    {% if c.recibe_boleta_whatsapp == 1 %}
+                    <span class="badge badge-success badge-sm" title="Recibe boleta por WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </span>
+                    {% endif %}
                     <span class="badge {% if c.num_medidores > 0 %}badge-success{% else %}badge-neutral{% endif %} badge-sm">
                         {{ c.num_medidores }} med.
                     </span>
@@ -145,7 +162,7 @@
                 <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-eye"></i> Ver Detalle
                 </a>
-                <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}')">
+                <button class="btn btn-ghost btn-sm" onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}', {{ c.recibe_boleta_whatsapp or 0 }})">
                     <i class="fas fa-edit"></i> Editar
                 </button>
             </div>
@@ -166,6 +183,7 @@
                 <th class="sortable">Telefono</th>
                 <th class="sortable">Email</th>
                 <th class="sortable">Medidores</th>
+                <th>WhatsApp</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -180,11 +198,20 @@
                 <td>{{ c.email or '-' }}</td>
                 <td>{{ c.num_medidores }}</td>
                 <td>
+                    {% if c.recibe_boleta_whatsapp == 1 %}
+                    <span class="badge badge-success badge-sm gap-1" title="Recibe boleta por WhatsApp">
+                        <i class="fab fa-whatsapp"></i> Si
+                    </span>
+                    {% else %}
+                    <span class="badge badge-ghost badge-sm">No</span>
+                    {% endif %}
+                </td>
+                <td>
                     <div class="flex gap-1">
                         <a href="{{ url_for('clientes.detalle', cliente_id=c.id) }}" class="btn btn-ghost btn-xs btn-square" title="Ver detalle">
                             <i class="fas fa-eye"></i>
                         </a>
-                        <button onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}')" class="btn btn-ghost btn-xs btn-square" title="Editar">
+                        <button onclick="abrirModalEditar({{ c.id }}, '{{ c.nombre }}', '{{ c.nombre_completo or '' }}', '{{ c.rut or '' }}', '{{ c.telefono or '' }}', '{{ c.email or '' }}', {{ c.recibe_boleta_whatsapp or 0 }})" class="btn btn-ghost btn-xs btn-square" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>
                     </div>
@@ -203,7 +230,7 @@
         <h3 class="card-title">No hay clientes</h3>
         <p class="text-base-content/70 mb-4">No se encontraron clientes con los filtros seleccionados.</p>
         <div class="card-actions">
-            {% if busqueda or con_medidores or filtro_telefono %}
+            {% if busqueda or con_medidores or filtro_telefono or recibe_whatsapp %}
             <a href="{{ url_for('clientes.listar') }}" class="btn btn-ghost">Limpiar Filtros</a>
             {% endif %}
             <a href="{{ url_for('clientes.crear') }}" class="btn btn-primary">+ Nuevo Cliente</a>
@@ -222,6 +249,9 @@
             {% endif %}
             {% if filtros.filtro_telefono %}
             <input type="hidden" name="filtro_telefono" value="{{ filtros.filtro_telefono }}">
+            {% endif %}
+            {% if filtros.recibe_whatsapp %}
+            <input type="hidden" name="recibe_whatsapp" value="{{ filtros.recibe_whatsapp }}">
             {% endif %}
 
             <div class="form-control mb-4">
@@ -274,6 +304,17 @@
             <div class="form-control mb-4">
                 <label class="label"><span class="label-text">Correo Electronico</span></label>
                 <input type="email" name="email" id="edit_email" placeholder="cliente@ejemplo.com" class="input input-bordered">
+            </div>
+
+            <div class="form-control mb-4">
+                <label class="label cursor-pointer justify-start gap-3">
+                    <input type="checkbox" name="recibe_boleta_whatsapp" id="edit_recibe_whatsapp" class="checkbox checkbox-success">
+                    <span class="label-text flex items-center gap-2">
+                        <i class="fab fa-whatsapp text-success"></i>
+                        Recibe boleta por WhatsApp
+                    </span>
+                </label>
+                <label class="label"><span class="label-text-alt text-base-content/60">Requiere tener un numero de telefono registrado</span></label>
             </div>
 
             <div class="modal-action">
@@ -343,13 +384,14 @@
 
 <script>
 // === Edit modal ===
-function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, email) {
+function abrirModalEditar(clienteId, nombre, nombreCompleto, rut, telefono, email, recibeWhatsapp) {
     document.getElementById('formEditar').action = '/clientes/' + clienteId + '/editar';
     document.getElementById('edit_nombre').value = nombre;
     document.getElementById('edit_nombre_completo').value = nombreCompleto;
     document.getElementById('edit_rut').value = rut;
     document.getElementById('edit_telefono').value = telefono;
     document.getElementById('edit_email').value = email;
+    document.getElementById('edit_recibe_whatsapp').checked = recibeWhatsapp == 1;
     modalEditar.showModal();
 }
 
