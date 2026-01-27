@@ -2,6 +2,7 @@
 Rutas para gestion de boletas - Sistema desacoplado
 """
 import os
+from datetime import date, timedelta
 from io import BytesIO
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file, make_response
 from werkzeug.utils import secure_filename
@@ -82,13 +83,19 @@ def historial_pagos():
 @admin_required
 def listar():
     """Lista boletas con filtros y paginacion."""
-    # Obtener parametros de filtro
+    # Calcular mes anterior como valor por defecto
+    hoy = date.today()
+    mes_anterior = (hoy.replace(day=1) - timedelta(days=1))
+    año_default = mes_anterior.year
+    mes_default = mes_anterior.month
+
+    # Obtener parametros de filtro (mes anterior por defecto)
     cliente_id = request.args.get('cliente_id', type=int)
     medidor_id = request.args.get('medidor_id', type=int)
     pagada = request.args.get('pagada', type=int)
     sin_comprobante = request.args.get('sin_comprobante', type=int) == 1
-    año = request.args.get('año', type=int)
-    mes = request.args.get('mes', type=int)
+    año = request.args.get('año', default=año_default, type=int)
+    mes = request.args.get('mes', default=mes_default, type=int)
     enviada = request.args.get('enviada', type=int)
 
     # Obtener parametros de ordenamiento

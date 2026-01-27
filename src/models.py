@@ -783,13 +783,23 @@ def obtener_clientes_incompletos() -> List[int]:
 
 
 def obtener_años_disponibles() -> List[int]:
-    """Obtiene lista de años con lecturas."""
+    """Obtiene lista de años con lecturas, incluyendo año actual y anterior."""
+    from datetime import date
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT año FROM lecturas ORDER BY año DESC')
     rows = cursor.fetchall()
     conn.close()
-    return [row[0] for row in rows]
+    años = [row[0] for row in rows]
+
+    # Asegurar que el año actual y el anterior estén incluidos
+    año_actual = date.today().year
+    año_anterior = año_actual - 1
+    for a in [año_actual, año_anterior]:
+        if a not in años:
+            años.append(a)
+    años.sort(reverse=True)
+    return años
 
 
 def obtener_estadisticas_lecturas(año: int = None, mes: int = None,

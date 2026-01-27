@@ -3,7 +3,7 @@ Rutas para gestión de lecturas
 """
 import os
 import json
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from werkzeug.utils import secure_filename
 
@@ -33,9 +33,15 @@ def allowed_file(filename):
 @admin_required
 def listar():
     """Lista todas las lecturas con filtros."""
-    # Parámetros de filtro
-    año = request.args.get('año', type=int)
-    mes = request.args.get('mes', type=int)
+    # Calcular mes anterior como valor por defecto
+    hoy = date.today()
+    mes_anterior = (hoy.replace(day=1) - timedelta(days=1))
+    año_default = mes_anterior.year
+    mes_default = mes_anterior.month
+
+    # Parámetros de filtro (mes anterior por defecto)
+    año = request.args.get('año', default=año_default, type=int)
+    mes = request.args.get('mes', default=mes_default, type=int)
     cliente_id = request.args.get('cliente_id', type=int)
     medidor_id = request.args.get('medidor_id', type=int)
     con_foto = request.args.get('con_foto', type=int)

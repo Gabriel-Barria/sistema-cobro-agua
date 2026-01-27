@@ -339,12 +339,21 @@ def obtener_lecturas_sin_boleta(año: int = None, mes: int = None,
 
 
 def obtener_años_disponibles():
-    """Obtiene los años con lecturas disponibles."""
+    """Obtiene los años con lecturas disponibles, incluyendo año actual y anterior."""
+    from datetime import date
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('SELECT DISTINCT año FROM lecturas ORDER BY año DESC')
     años = [row['año'] for row in cursor.fetchall()]
     conn.close()
+
+    # Asegurar que el año actual y el anterior estén incluidos
+    año_actual = date.today().year
+    año_anterior = año_actual - 1
+    for a in [año_actual, año_anterior]:
+        if a not in años:
+            años.append(a)
+    años.sort(reverse=True)
     return años
 
 
