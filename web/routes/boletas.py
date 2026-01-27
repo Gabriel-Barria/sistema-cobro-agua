@@ -83,20 +83,33 @@ def historial_pagos():
 @admin_required
 def listar():
     """Lista boletas con filtros y paginacion."""
-    # Calcular mes anterior como valor por defecto
+    # Calcular mes anterior como valor por defecto (solo si no hay filtros en URL)
     hoy = date.today()
     mes_anterior = (hoy.replace(day=1) - timedelta(days=1))
     año_default = mes_anterior.year
     mes_default = mes_anterior.month
 
-    # Obtener parametros de filtro (mes anterior por defecto)
+    # Obtener parametros de filtro
     cliente_id = request.args.get('cliente_id', type=int)
     medidor_id = request.args.get('medidor_id', type=int)
     pagada = request.args.get('pagada', type=int)
     sin_comprobante = request.args.get('sin_comprobante', type=int) == 1
-    año = request.args.get('año', default=año_default, type=int)
-    mes = request.args.get('mes', default=mes_default, type=int)
     enviada = request.args.get('enviada', type=int)
+
+    # Manejar año y mes: si es string vacio significa "Todos"
+    año_param = request.args.get('año', '')
+    mes_param = request.args.get('mes', '')
+
+    # Si hay parametros en la URL (usuario filtro), respetar su seleccion
+    if 'año' in request.args:
+        año = int(año_param) if año_param else None
+    else:
+        año = año_default  # Primera carga: mes anterior
+
+    if 'mes' in request.args:
+        mes = int(mes_param) if mes_param else None
+    else:
+        mes = mes_default  # Primera carga: mes anterior
 
     # Obtener parametros de ordenamiento
     sort_by = request.args.get('sort_by', type=str)
