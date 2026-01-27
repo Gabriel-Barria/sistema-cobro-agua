@@ -97,13 +97,13 @@ def crear_boleta(lectura_id: int, cliente_nombre: str, medidor_id: int,
             numero_boleta, lectura_id, cliente_nombre, medidor_id,
             periodo_año, periodo_mes, lectura_actual, lectura_anterior,
             consumo_m3, cargo_fijo, precio_m3, subtotal_consumo, total,
-            fecha_emision, pagada
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0)
+            fecha_emision, pagada, saldo_pendiente, monto_pagado
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, %s, 0)
         RETURNING id
     ''', (numero_boleta, lectura_id, cliente_nombre, medidor_id,
           periodo_año, periodo_mes, lectura_actual, lectura_anterior,
           consumo_m3, cargo_fijo, precio_m3, subtotal_consumo, total,
-          fecha_emision))
+          fecha_emision, total))
 
     boleta_id = cursor.fetchone()[0]
     conn.commit()

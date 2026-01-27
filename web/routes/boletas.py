@@ -1259,7 +1259,7 @@ def api_boletas_pendientes(cliente_id):
         'numero_boleta': b['numero_boleta'],
         'periodo': f"{b['periodo_mes']}/{b['periodo_año']}",
         'total': float(b['total']),
-        'saldo_pendiente': float(b.get('saldo_pendiente', b['total']))
+        'saldo_pendiente': float(b['saldo_pendiente'] if b.get('saldo_pendiente') is not None else b['total'])
     } for b in boletas])
 
 
