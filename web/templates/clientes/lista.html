@@ -306,16 +306,11 @@
                 <input type="email" name="email" id="edit_email" placeholder="cliente@ejemplo.com" class="input input-bordered">
             </div>
 
-            <div class="form-control mb-4">
-                <label class="label cursor-pointer justify-start gap-3 py-1">
-                    <input type="checkbox" name="recibe_boleta_whatsapp" id="edit_recibe_whatsapp" class="checkbox checkbox-success">
-                    <span class="label-text flex items-center gap-2">
-                        <i class="fab fa-whatsapp text-success"></i>
-                        Recibe boleta por WhatsApp
-                    </span>
-                </label>
-                <span class="text-xs text-base-content/60 ml-9">Requiere tener telefono registrado</span>
-            </div>
+            <label class="flex items-center gap-2 cursor-pointer mt-2 mb-4">
+                <input type="checkbox" name="recibe_boleta_whatsapp" id="edit_recibe_whatsapp" class="checkbox checkbox-success checkbox-sm">
+                <i class="fab fa-whatsapp text-success"></i>
+                <span class="label-text">Recibe boleta por WhatsApp</span>
+            </label>
 
             <div class="modal-action">
                 <button type="button" onclick="modalEditar.close()" class="btn btn-ghost">Cancelar</button>
