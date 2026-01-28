@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 PAUSA_ENTRE_ENVIOS = 2
 
 
-def obtener_boletas_periodo_envio(año: int, mes: int) -> List[Dict]:
+def obtener_boletas_periodo_envio(anio: int, mes: int) -> List[Dict]:
     """
     Obtiene boletas del periodo especificado con datos del cliente.
     """
@@ -46,7 +46,7 @@ def obtener_boletas_periodo_envio(año: int, mes: int) -> List[Dict]:
           AND b.periodo_mes = %s
           AND b.pagada = 0
         ORDER BY c.nombre, b.numero_boleta
-    ''', (año, mes))
+    ''', (anio, mes))
 
     rows = cursor.fetchall()
     conn.close()
@@ -54,7 +54,7 @@ def obtener_boletas_periodo_envio(año: int, mes: int) -> List[Dict]:
     return [dict(row) for row in rows]
 
 
-def verificar_ya_enviada_whatsapp(boleta_id: int, año: int, mes: int) -> bool:
+def verificar_ya_enviada_whatsapp(boleta_id: int, anio: int, mes: int) -> bool:
     """
     Verifica si una boleta ya fue enviada por WhatsApp en el periodo actual.
     """
@@ -79,9 +79,9 @@ def obtener_preview_envio() -> Dict:
     """
     Obtiene un preview del envio masivo sin ejecutar.
     """
-    año, mes = obtener_periodo_objetivo_generacion()
+    anio, mes = obtener_periodo_objetivo_generacion()
 
-    boletas = obtener_boletas_periodo_envio(año, mes)
+    boletas = obtener_boletas_periodo_envio(anio, mes)
 
     enviables = []
     sin_telefono = []
@@ -92,7 +92,7 @@ def obtener_preview_envio() -> Dict:
         telefono = boleta.get('telefono')
         recibe_wa = boleta.get('recibe_boleta_whatsapp', False)
 
-        if verificar_ya_enviada_whatsapp(boleta['id'], año, mes):
+        if verificar_ya_enviada_whatsapp(boleta['id'], anio, mes):
             ya_enviadas.append(boleta)
         elif not telefono:
             sin_telefono.append(boleta)
@@ -102,7 +102,7 @@ def obtener_preview_envio() -> Dict:
             enviables.append(boleta)
 
     return {
-        'periodo_año': año,
+        'periodo_anio': anio,
         'periodo_mes': mes,
         'total_boletas': len(boletas),
         'enviables': enviables,
@@ -127,7 +127,7 @@ def hay_proceso_en_curso() -> Optional[Dict]:
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT id, fecha_ejecucion, periodo_año, periodo_mes,
+        SELECT id, fecha_ejecucion, periodo_anio, periodo_mes,
                total_boletas, enviadas_exitosas, enviadas_fallidas
         FROM log_envio_masivo
         WHERE estado = 'iniciado'
@@ -141,7 +141,7 @@ def hay_proceso_en_curso() -> Optional[Dict]:
     return dict(row) if row else None
 
 
-def crear_log_envio_masivo(usuario_id: int, año: int, mes: int, total_boletas: int = 0, total_enviables: int = 0) -> int:
+def crear_log_envio_masivo(usuario_id: int, anio: int, mes: int, total_boletas: int = 0, total_enviables: int = 0) -> int:
     """
     Crea un registro de log para el envio masivo.
     """
@@ -150,10 +150,10 @@ def crear_log_envio_masivo(usuario_id: int, año: int, mes: int, total_boletas: 
 
     cursor.execute('''
         INSERT INTO log_envio_masivo
-        (periodo_año, periodo_mes, estado, iniciado_por, total_boletas, total_enviables)
+        (periodo_anio, periodo_mes, estado, iniciado_por, total_boletas, total_enviables)
         VALUES (%s, %s, 'iniciado', %s, %s, %s)
         RETURNING id
-    ''', (año, mes, usuario_id, total_boletas, total_enviables))
+    ''', (anio, mes, usuario_id, total_boletas, total_enviables))
 
     log_id = cursor.fetchone()[0]
     conn.commit()
@@ -261,7 +261,7 @@ def listar_logs_envio(limite: int = 50) -> List[Dict]:
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT l.id, l.fecha_ejecucion, l.periodo_año, l.periodo_mes,
+        SELECT l.id, l.fecha_ejecucion, l.periodo_anio, l.periodo_mes,
                l.total_boletas, l.enviadas_exitosas, l.enviadas_fallidas,
                l.estado, l.duracion_segundos, l.mensaje,
                u.nombre_completo as usuario_nombre
@@ -357,7 +357,7 @@ def _ejecutar_envio_en_background(log_id: int, usuario_id: int, app):
     inicio = time.time()
 
     try:
-        año, mes = obtener_periodo_objetivo_generacion()
+        anio, mes = obtener_periodo_objetivo_generacion()
 
         # Obtener preview para clasificar boletas
         preview = obtener_preview_envio()
@@ -541,14 +541,14 @@ def iniciar_envio_masivo_async(usuario_id: int, app) -> int:
     if proceso:
         raise ValueError(f"Ya hay un proceso en curso (ID: {proceso['id']})")
 
-    año, mes = obtener_periodo_objetivo_generacion()
+    anio, mes = obtener_periodo_objetivo_generacion()
 
     # Obtener preview para saber totales
     preview = obtener_preview_envio()
 
     # Crear log inicial con total de enviables
     log_id = crear_log_envio_masivo(
-        usuario_id, año, mes,
+        usuario_id, anio, mes,
         total_boletas=preview['total_boletas'],
         total_enviables=preview['total_enviables']
     )
