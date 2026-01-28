@@ -68,7 +68,7 @@
 <div class="card bg-base-100 shadow mb-6">
     <div class="card-body">
         <h2 class="card-title text-lg">
-            <i class="fab fa-whatsapp text-success"></i>
+            <svg class="w-5 h-5 text-success inline" fill="currentColor"><use href="#icon-whatsapp"/></svg>
             Boletas a Enviar ({{ preview.total_enviables }})
         </h2>
 
@@ -156,7 +156,7 @@
             </div>
             <form id="form-envio" action="{{ url_for('envio_masivo.ejecutar') }}" method="POST">
                 <button type="button" onclick="confirmarEnvio()" class="btn btn-success btn-lg" {% if proceso_en_curso %}disabled{% endif %}>
-                    <i class="fab fa-whatsapp"></i>
+                    <svg class="w-5 h-5 inline" fill="currentColor"><use href="#icon-whatsapp"/></svg>
                     Enviar {{ preview.total_enviables }} Boletas
                 </button>
             </form>

@@ -73,7 +73,7 @@
     </a>
     <a href="{{ url_for('clientes.listar', busqueda=filtros.busqueda or '', recibe_whatsapp='si') }}"
        class="btn btn-sm {% if filtros.recibe_whatsapp == 'si' %}btn-primary{% else %}btn-ghost{% endif %}">
-        <i class="fab fa-whatsapp"></i> Boleta WA
+        <svg class="w-4 h-4 inline" fill="currentColor"><use href="#icon-whatsapp"/></svg> Boleta WA
     </a>
     <button class="btn btn-sm btn-circle btn-ghost {% if filtros.busqueda %}btn-primary{% endif %}"
             onclick="modalFiltrosClientes.showModal()" title="Buscar">
@@ -138,7 +138,7 @@
                 <div class="flex items-center gap-2 ml-4">
                     {% if c.recibe_boleta_whatsapp %}
                     <span class="badge badge-success badge-sm" title="Recibe boleta por WhatsApp">
-                        <i class="fab fa-whatsapp"></i>
+                        <svg class="w-3 h-3" fill="currentColor"><use href="#icon-whatsapp"/></svg>
                     </span>
                     {% endif %}
                     <span class="badge {% if c.num_medidores > 0 %}badge-success{% else %}badge-neutral{% endif %} badge-sm">
@@ -200,7 +200,7 @@
                 <td>
                     {% if c.recibe_boleta_whatsapp %}
                     <span class="badge badge-success badge-sm gap-1" title="Recibe boleta por WhatsApp">
-                        <i class="fab fa-whatsapp"></i> Si
+                        <svg class="w-3 h-3" fill="currentColor"><use href="#icon-whatsapp"/></svg> Si
                     </span>
                     {% else %}
                     <span class="badge badge-ghost badge-sm">No</span>
@@ -308,7 +308,7 @@
 
             <label class="flex items-center gap-2 cursor-pointer mt-2 mb-4">
                 <input type="checkbox" name="recibe_boleta_whatsapp" id="edit_recibe_whatsapp" class="checkbox checkbox-success checkbox-sm">
-                <i class="fab fa-whatsapp text-success"></i>
+                <svg class="w-4 h-4 text-success" fill="currentColor"><use href="#icon-whatsapp"/></svg>
                 <span class="label-text">Recibe boleta por WhatsApp</span>
             </label>
 
