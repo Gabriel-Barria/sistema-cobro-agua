@@ -418,7 +418,7 @@ def ejecutar_generacion(
                     resultado['lecturas_creadas'] += 1
                     resultado['detalles']['lecturas'].append({
                         'medidor_id': medidor['id'],
-                        'medidor': medidor['numero_medidor'],
+                        'medidor': medidor['numero_medidor'] or 'Sin número',
                         'cliente': medidor['cliente_nombre'],
                         'lectura_id': lectura_id,
                         'lectura_m3': lectura_m3
@@ -449,7 +449,7 @@ def ejecutar_generacion(
                         'boleta_id': boleta_id,
                         'lectura_id': lectura['id'],
                         'cliente': lectura['cliente_nombre'],
-                        'medidor': lectura['numero_medidor'],
+                        'medidor': lectura['numero_medidor'] or 'Sin número',
                         'periodo': f"{lectura['mes']}/{lectura['año']}"
                     })
                 else:

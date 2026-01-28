@@ -131,7 +131,7 @@
                             <tr>
                                 <td>{{ l.lectura_id }}</td>
                                 <td>{{ l.cliente }}</td>
-                                <td>{{ l.medidor }}</td>
+                                <td>{{ l.medidor or 'Sin número' }}</td>
                                 <td>{{ l.lectura_m3 }} m3</td>
                             </tr>
                             {% endfor %}
@@ -170,7 +170,7 @@
                                     </a>
                                 </td>
                                 <td>{{ b.cliente }}</td>
-                                <td>{{ b.medidor }}</td>
+                                <td>{{ b.medidor or 'Sin número' }}</td>
                                 <td>{{ b.periodo }}</td>
                             </tr>
                             {% endfor %}
