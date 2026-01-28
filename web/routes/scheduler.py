@@ -154,7 +154,7 @@ def api_preview():
     preview = obtener_preview_generacion()
 
     return jsonify({
-        'periodo': f"{preview['periodo_mes']}/{preview['periodo_año']}",
+        'periodo': f"{preview['periodo_mes']}/{preview['periodo_anio']}",
         'crear_lecturas_habilitado': preview['crear_lecturas_habilitado'],
         'total_medidores_sin_lectura': preview['total_medidores_sin_lectura'],
         'total_lecturas_sin_boleta': preview['total_lecturas_sin_boleta'],

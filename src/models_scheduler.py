@@ -122,7 +122,7 @@ def activar_cron(nombre: str, activo: bool = True) -> None:
 def crear_log_generacion(
     usuario_id: Optional[int] = None,
     es_automatico: bool = True,
-    periodo_año: Optional[int] = None,
+    periodo_anio: Optional[int] = None,
     periodo_mes: Optional[int] = None
 ) -> int:
     """Crea un nuevo registro de log de generacion."""
@@ -131,11 +131,11 @@ def crear_log_generacion(
 
     cursor.execute('''
         INSERT INTO log_generacion_boletas (
-            fecha_ejecucion, periodo_año, periodo_mes, estado,
+            fecha_ejecucion, periodo_anio, periodo_mes, estado,
             iniciado_por, es_automatico
         ) VALUES (CURRENT_TIMESTAMP, %s, %s, 'iniciado', %s, %s)
         RETURNING id
-    ''', (periodo_año, periodo_mes, usuario_id, es_automatico))
+    ''', (periodo_anio, periodo_mes, usuario_id, es_automatico))
 
     result = cursor.fetchone()
     log_id = result[0]
@@ -185,7 +185,7 @@ def listar_logs_generacion(limit: int = 50, offset: int = 0) -> List[Dict]:
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT l.id, l.fecha_ejecucion, l.periodo_año, l.periodo_mes,
+        SELECT l.id, l.fecha_ejecucion, l.periodo_anio, l.periodo_mes,
                l.lecturas_creadas, l.boletas_generadas, l.errores,
                l.estado, l.mensaje, l.detalles, l.duracion_segundos,
                l.iniciado_por, l.es_automatico, u.nombre_completo as usuario_nombre
@@ -210,7 +210,7 @@ def listar_logs_generacion(limit: int = 50, offset: int = 0) -> List[Dict]:
         logs.append({
             'id': row['id'],
             'fecha_ejecucion': row['fecha_ejecucion'],
-            'periodo_año': row['periodo_año'],
+            'periodo_anio': row['periodo_anio'],
             'periodo_mes': row['periodo_mes'],
             'lecturas_creadas': row['lecturas_creadas'],
             'boletas_generadas': row['boletas_generadas'],
@@ -233,7 +233,7 @@ def obtener_log_generacion(log_id: int) -> Optional[Dict]:
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT l.id, l.fecha_ejecucion, l.periodo_año, l.periodo_mes,
+        SELECT l.id, l.fecha_ejecucion, l.periodo_anio, l.periodo_mes,
                l.lecturas_creadas, l.boletas_generadas, l.errores,
                l.estado, l.mensaje, l.detalles, l.duracion_segundos,
                l.iniciado_por, l.es_automatico, u.nombre_completo as usuario_nombre
@@ -258,7 +258,7 @@ def obtener_log_generacion(log_id: int) -> Optional[Dict]:
     return {
         'id': row['id'],
         'fecha_ejecucion': row['fecha_ejecucion'],
-        'periodo_año': row['periodo_año'],
+        'periodo_anio': row['periodo_anio'],
         'periodo_mes': row['periodo_mes'],
         'lecturas_creadas': row['lecturas_creadas'],
         'boletas_generadas': row['boletas_generadas'],

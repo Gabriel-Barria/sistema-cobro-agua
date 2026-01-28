@@ -138,8 +138,8 @@
                     <tr>
                         <td>{{ log.fecha_ejecucion.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
-                            {% if log.periodo_mes and log.periodo_año %}
-                            {{ log.periodo_mes }}/{{ log.periodo_año }}
+                            {% if log.periodo_mes and log.periodo_anio %}
+                            {{ log.periodo_mes }}/{{ log.periodo_anio }}
                             {% else %}
                             -
                             {% endif %}
