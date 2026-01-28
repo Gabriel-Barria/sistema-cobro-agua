@@ -84,7 +84,7 @@ def obtener_usuario(usuario_id):
     usuario = cursor.fetchone()
     conn.close()
 
-    return usuario
+    return dict(usuario) if usuario else None
 
 
 def obtener_usuarios():
@@ -101,7 +101,7 @@ def obtener_usuarios():
     usuarios = cursor.fetchall()
     conn.close()
 
-    return usuarios
+    return [dict(u) for u in usuarios]
 
 
 def actualizar_usuario(usuario_id, username, nombre_completo, rol, activo):
