@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Detalle Envio Masivo{% endblock %}
+
+{% block content %}
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Detalle de Envio Masivo</h1>
+        <p class="text-base-content/70">
+            Periodo: <strong>{{ meses[log.periodo_mes] }} {{ log.periodo_año }}</strong>
+        </p>
+    </div>
+    <div class="flex gap-2">
+        <a href="{{ url_for('envio_masivo.logs') }}" class="btn btn-ghost">
+            <i class="fas fa-arrow-left"></i>
+            <span class="hidden sm:inline">Historial</span>
+        </a>
+        <a href="{{ url_for('envio_masivo.index') }}" class="btn btn-primary">
+            <i class="fab fa-whatsapp"></i>
+            <span class="hidden sm:inline">Nuevo Envio</span>
+        </a>
+    </div>
+</div>
+
+<!-- ESTADO -->
+<div id="estado-alert" class="alert mb-6
+    {% if log.estado == 'completado' %}alert-success
+    {% elif log.estado == 'interrumpido' %}alert-warning
+    {% elif log.estado == 'error' %}alert-error
+    {% else %}alert-info{% endif %}">
+    <i id="estado-icon" class="fas
+        {% if log.estado == 'completado' %}fa-check-circle
+        {% elif log.estado == 'interrumpido' %}fa-pause-circle
+        {% elif log.estado == 'error' %}fa-exclamation-circle
+        {% else %}fa-spinner fa-spin{% endif %}"></i>
+    <div>
+        <h3 id="estado-titulo" class="font-bold">
+            {% if log.estado == 'completado' %}Envio Completado
+            {% elif log.estado == 'interrumpido' %}Envio Interrumpido
+            {% elif log.estado == 'error' %}Error en Envio
+            {% else %}Envio en Curso{% endif %}
+        </h3>
+        <p id="estado-mensaje" class="text-sm">{{ log.mensaje or 'Procesando...' }}</p>
+    </div>
+    {% if log.estado == 'iniciado' %}
+    <span class="loading loading-dots loading-md"></span>
+    {% endif %}
+</div>
+
+<!-- PROGRESO (solo si está en curso) -->
+{% if log.estado == 'iniciado' %}
+<div class="card bg-base-100 shadow mb-6" id="progreso-card">
+    <div class="card-body">
+        <h3 class="font-semibold mb-2">
+            <i class="fab fa-whatsapp text-success"></i>
+            Progreso de Envio
+        </h3>
+        <progress id="progreso-bar" class="progress progress-success w-full h-4"
+                  value="{{ log.enviadas_exitosas }}"
+                  max="{{ log.total_enviables or 1 }}"></progress>
+        <p class="text-sm text-center mt-2" id="progreso-texto">
+            <span id="progreso-enviadas">{{ log.enviadas_exitosas }}</span> de
+            <span id="progreso-total">{{ log.total_enviables or 0 }}</span> boletas enviadas
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- ESTADISTICAS DE ENVIO -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h3 class="font-semibold mb-4">Resultado del Envio</h3>
+        <div class="grid grid-cols-3 gap-4">
+            <div class="text-center p-4 bg-success/10 rounded-lg">
+                <div class="text-3xl font-bold text-success" id="stat-enviadas">{{ log.enviadas_exitosas }}</div>
+                <div class="text-sm text-base-content/70">Enviadas</div>
+            </div>
+            <div class="text-center p-4 bg-error/10 rounded-lg">
+                <div class="text-3xl font-bold text-error" id="stat-fallidas">{{ log.enviadas_fallidas }}</div>
+                <div class="text-sm text-base-content/70">Fallidas</div>
+            </div>
+            <div class="text-center p-4 bg-base-200 rounded-lg">
+                <div class="text-3xl font-bold">{{ log.total_enviables or 0 }}</div>
+                <div class="text-sm text-base-content/70">Total a Enviar</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ESTADISTICAS DE BOLETAS -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h3 class="font-semibold mb-4">Desglose de Boletas del Periodo</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-3 bg-base-200 rounded-lg">
+                <div class="text-2xl font-bold">{{ log.total_boletas }}</div>
+                <div class="text-xs text-base-content/70">Total Periodo</div>
+            </div>
+            <div class="text-center p-3 bg-warning/10 rounded-lg">
+                <div class="text-2xl font-bold text-warning">{{ log.omitidas_sin_telefono }}</div>
+                <div class="text-xs text-base-content/70">Sin Telefono</div>
+            </div>
+            <div class="text-center p-3 bg-error/10 rounded-lg">
+                <div class="text-2xl font-bold text-error">{{ log.omitidas_no_recibe_wa }}</div>
+                <div class="text-xs text-base-content/70">No Recibe WA</div>
+            </div>
+            <div class="text-center p-3 bg-info/10 rounded-lg">
+                <div class="text-2xl font-bold text-info">{{ log.omitidas_ya_enviadas or 0 }}</div>
+                <div class="text-xs text-base-content/70">Ya Enviadas</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- INFO -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h3 class="font-semibold">Informacion</h3>
+        <div class="text-sm space-y-1 mt-2">
+            <p><span class="text-base-content/50">Fecha:</span> {{ log.fecha_ejecucion.strftime('%d/%m/%Y %H:%M:%S') if log.fecha_ejecucion else '-' }}</p>
+            <p><span class="text-base-content/50">Usuario:</span> {{ log.usuario_nombre or 'Sistema' }}</p>
+            <p><span class="text-base-content/50">Duracion:</span> <span id="duracion">{{ '%.2f'|format(log.duracion_segundos) if log.duracion_segundos else '-' }}</span> segundos</p>
+        </div>
+    </div>
+</div>
+
+{% if log.detalles and log.estado != 'iniciado' %}
+<!-- ENVIADAS EXITOSAS -->
+{% if log.detalles.enviadas %}
+<div class="card bg-base-100 shadow mb-4">
+    <div class="card-body">
+        <h2 class="card-title text-lg text-success">
+            <i class="fas fa-check-circle"></i>
+            Enviadas Exitosamente ({{ log.detalles.enviadas|length }})
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th># Boleta</th>
+                        <th>Cliente</th>
+                        <th>Telefono</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in log.detalles.enviadas %}
+                    <tr>
+                        <td class="font-mono text-sm">{{ item.numero_boleta }}</td>
+                        <td>{{ item.cliente }}</td>
+                        <td class="font-mono text-sm">{{ item.telefono }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- FALLIDAS -->
+{% if log.detalles.fallidas %}
+<div class="card bg-base-100 shadow mb-4">
+    <div class="card-body">
+        <h2 class="card-title text-lg text-error">
+            <i class="fas fa-times-circle"></i>
+            Envios Fallidos ({{ log.detalles.fallidas|length }})
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th># Boleta</th>
+                        <th>Cliente</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in log.detalles.fallidas %}
+                    <tr>
+                        <td class="font-mono text-sm">{{ item.numero_boleta }}</td>
+                        <td>{{ item.cliente }}</td>
+                        <td class="text-error text-sm">{{ item.error }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- OMITIDAS -->
+{% if log.detalles.omitidas %}
+<div class="card bg-base-100 shadow mb-4">
+    <div class="card-body">
+        <h2 class="card-title text-lg text-warning">
+            <i class="fas fa-ban"></i>
+            Omitidas ({{ log.detalles.omitidas|length }})
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th># Boleta</th>
+                        <th>Cliente</th>
+                        <th>Motivo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in log.detalles.omitidas %}
+                    <tr>
+                        <td class="font-mono text-sm">{{ item.numero_boleta }}</td>
+                        <td>{{ item.cliente }}</td>
+                        <td>
+                            {% if item.motivo == 'sin_telefono' %}
+                            <span class="badge badge-warning badge-sm">Sin telefono</span>
+                            {% elif item.motivo == 'no_recibe_whatsapp' %}
+                            <span class="badge badge-error badge-sm">No recibe WA</span>
+                            {% elif item.motivo == 'ya_enviada' %}
+                            <span class="badge badge-info badge-sm">Ya enviada</span>
+                            {% else %}
+                            <span class="badge badge-ghost badge-sm">{{ item.motivo }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if log.estado == 'iniciado' %}
+<script>
+    const logId = {{ log.id }};
+    const totalEnviables = {{ log.total_enviables or 0 }};
+
+    function actualizarEstado() {
+        fetch(`/envio-masivo/estado/${logId}`)
+            .then(response => response.json())
+            .then(data => {
+                // Actualizar estadisticas
+                document.getElementById('stat-enviadas').textContent = data.enviadas_exitosas;
+                document.getElementById('stat-fallidas').textContent = data.enviadas_fallidas;
+                document.getElementById('estado-mensaje').textContent = data.mensaje || 'Procesando...';
+
+                // Actualizar progreso
+                const progresoBar = document.getElementById('progreso-bar');
+                const progresoEnviadas = document.getElementById('progreso-enviadas');
+                if (progresoBar && progresoEnviadas) {
+                    progresoBar.value = data.enviadas_exitosas;
+                    progresoBar.max = data.total_enviables || totalEnviables || 1;
+                    progresoEnviadas.textContent = data.enviadas_exitosas;
+                }
+
+                // Si ya no está en curso, recargar la página para ver detalles completos
+                if (!data.en_curso) {
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Error al obtener estado:', error);
+            });
+    }
+
+    // Polling cada 3 segundos
+    setInterval(actualizarEstado, 3000);
+
+    // Ejecutar inmediatamente
+    actualizarEstado();
+</script>
+{% endif %}
+{% endblock %}

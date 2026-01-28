@@ -66,6 +66,7 @@ from web.routes.mobile import mobile_bp
 from web.routes.portal import portal_bp
 from web.routes.configuracion import configuracion_bp
 from web.routes.scheduler import scheduler_bp
+from web.routes.envio_masivo import envio_masivo_bp
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(usuarios_bp)
@@ -77,6 +78,7 @@ app.register_blueprint(mobile_bp, url_prefix='/mobile')
 app.register_blueprint(portal_bp, url_prefix='/portal')
 app.register_blueprint(configuracion_bp, url_prefix='/configuracion')
 app.register_blueprint(scheduler_bp, url_prefix='/scheduler')
+app.register_blueprint(envio_masivo_bp)
 
 
 # Filtros de plantilla

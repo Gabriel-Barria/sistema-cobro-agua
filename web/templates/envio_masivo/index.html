@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Envio Masivo WhatsApp{% endblock %}
+
+{% block content %}
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold">Envio Masivo de Boletas</h1>
+        <p class="text-base-content/70">
+            Periodo: <strong>{{ meses[preview.periodo_mes] }} {{ preview.periodo_año }}</strong>
+        </p>
+    </div>
+    <a href="{{ url_for('envio_masivo.logs') }}" class="btn btn-ghost">
+        <i class="fas fa-history"></i>
+        <span class="hidden sm:inline">Historial</span>
+    </a>
+</div>
+
+{% if proceso_en_curso %}
+<!-- PROCESO EN CURSO -->
+<div class="alert alert-warning mb-6">
+    <i class="fas fa-spinner fa-spin"></i>
+    <div>
+        <h3 class="font-bold">Hay un proceso de envio en curso</h3>
+        <p class="text-sm">Debe esperar a que termine antes de iniciar otro envio.</p>
+    </div>
+    <a href="{{ url_for('envio_masivo.log_detalle', log_id=proceso_en_curso.id) }}" class="btn btn-sm">
+        Ver Progreso
+    </a>
+</div>
+{% endif %}
+
+<!-- ESTADISTICAS -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+    <div class="stat bg-base-100 shadow rounded-box p-4">
+        <div class="stat-title text-xs">Total Boletas</div>
+        <div class="stat-value text-2xl">{{ preview.total_boletas }}</div>
+        <div class="stat-desc">del periodo</div>
+    </div>
+
+    <div class="stat bg-success/10 shadow rounded-box p-4">
+        <div class="stat-title text-xs">Enviables</div>
+        <div class="stat-value text-2xl text-success">{{ preview.total_enviables }}</div>
+        <div class="stat-desc">listas para enviar</div>
+    </div>
+
+    <div class="stat bg-warning/10 shadow rounded-box p-4">
+        <div class="stat-title text-xs">Sin Telefono</div>
+        <div class="stat-value text-2xl text-warning">{{ preview.total_sin_telefono }}</div>
+        <div class="stat-desc">sin numero</div>
+    </div>
+
+    <div class="stat bg-error/10 shadow rounded-box p-4">
+        <div class="stat-title text-xs">No recibe WA</div>
+        <div class="stat-value text-2xl text-error">{{ preview.total_no_recibe_wa }}</div>
+        <div class="stat-desc">deshabilitado</div>
+    </div>
+
+    <div class="stat bg-info/10 shadow rounded-box p-4">
+        <div class="stat-title text-xs">Ya Enviadas</div>
+        <div class="stat-value text-2xl text-info">{{ preview.total_ya_enviadas }}</div>
+        <div class="stat-desc">este periodo</div>
+    </div>
+</div>
+
+<!-- BOLETAS A ENVIAR -->
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h2 class="card-title text-lg">
+            <i class="fab fa-whatsapp text-success"></i>
+            Boletas a Enviar ({{ preview.total_enviables }})
+        </h2>
+
+        {% if preview.enviables %}
+        <div class="overflow-x-auto">
+            <table class="table table-sm">
+                <thead>
+                    <tr>
+                        <th># Boleta</th>
+                        <th>Cliente</th>
+                        <th>Telefono</th>
+                        <th class="text-right">Monto</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for boleta in preview.enviables[:20] %}
+                    <tr>
+                        <td class="font-mono text-sm">{{ boleta.numero_boleta }}</td>
+                        <td>{{ boleta.cliente_nombre }}</td>
+                        <td class="font-mono text-sm">{{ boleta.telefono }}</td>
+                        <td class="text-right">${{ '{:,.0f}'.format(boleta.total).replace(',', '.') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if preview.total_enviables > 20 %}
+            <p class="text-center text-base-content/50 text-sm mt-2">
+                ... y {{ preview.total_enviables - 20 }} boletas mas
+            </p>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="alert">
+            <i class="fas fa-info-circle"></i>
+            <span>No hay boletas pendientes para enviar en este periodo.</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- OMITIDAS -->
+{% if preview.total_sin_telefono > 0 or preview.total_no_recibe_wa > 0 or preview.total_ya_enviadas > 0 %}
+<div class="card bg-base-100 shadow mb-6">
+    <div class="card-body">
+        <h2 class="card-title text-lg">
+            <i class="fas fa-ban text-warning"></i>
+            Boletas Omitidas
+        </h2>
+
+        <div class="space-y-2">
+            {% if preview.total_sin_telefono > 0 %}
+            <div class="flex items-center gap-2">
+                <span class="badge badge-warning">{{ preview.total_sin_telefono }}</span>
+                <span>Sin telefono registrado</span>
+            </div>
+            {% endif %}
+
+            {% if preview.total_no_recibe_wa > 0 %}
+            <div class="flex items-center gap-2">
+                <span class="badge badge-error">{{ preview.total_no_recibe_wa }}</span>
+                <span>No reciben boleta por WhatsApp</span>
+            </div>
+            {% endif %}
+
+            {% if preview.total_ya_enviadas > 0 %}
+            <div class="flex items-center gap-2">
+                <span class="badge badge-info">{{ preview.total_ya_enviadas }}</span>
+                <span>Ya enviadas en este periodo</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- BOTON ENVIAR -->
+{% if preview.total_enviables > 0 %}
+<div class="card bg-base-100 shadow">
+    <div class="card-body">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-sm text-base-content/70">
+                <i class="fas fa-clock"></i>
+                Tiempo estimado: ~{{ (preview.total_enviables * 2) // 60 }} min {{ (preview.total_enviables * 2) % 60 }} seg
+                <span class="text-xs">(2 seg. entre envios)</span>
+            </div>
+            <form id="form-envio" action="{{ url_for('envio_masivo.ejecutar') }}" method="POST">
+                <button type="button" onclick="confirmarEnvio()" class="btn btn-success btn-lg" {% if proceso_en_curso %}disabled{% endif %}>
+                    <i class="fab fa-whatsapp"></i>
+                    Enviar {{ preview.total_enviables }} Boletas
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmarEnvio() {
+    var total = {{ preview.total_enviables }};
+    if (window.ConfirmModal) {
+        ConfirmModal.show({
+            title: 'Enviar Boletas por WhatsApp',
+            message: 'Se enviaran <strong>' + total + '</strong> boletas por WhatsApp.<br><br>El proceso se ejecutara en segundo plano y podra ver el progreso en tiempo real.',
+            icon: 'info',
+            confirmText: 'Enviar',
+            confirmClass: 'btn-success'
+        }).then(function(ok) {
+            if (ok) {
+                document.getElementById('form-envio').submit();
+            }
+        });
+    } else if (confirm('Se enviaran ' + total + ' boletas por WhatsApp. ¿Continuar?')) {
+        document.getElementById('form-envio').submit();
+    }
+}
+</script>
+{% endblock %}

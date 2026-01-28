@@ -124,10 +124,40 @@
 
                     <!-- Boletas -->
                     <li>
-                        <a href="{{ url_for('boletas.listar') }}" class="{% if request.endpoint and 'boletas' in request.endpoint and request.endpoint not in ['boletas.pagos_lista', 'boletas.pago_detalle', 'boletas.registrar_pago_admin', 'boletas.saldos_lista', 'boletas.saldo_detalle'] %}active{% endif %}">
-                            <i class="fas fa-file-invoice-dollar w-5"></i>
-                            Boletas
-                        </a>
+                        <details {% if (request.endpoint and 'boletas' in request.endpoint and request.endpoint not in ['boletas.pagos_lista', 'boletas.pago_detalle', 'boletas.registrar_pago_admin', 'boletas.saldos_lista', 'boletas.saldo_detalle']) or (request.endpoint and 'envio_masivo' in request.endpoint) %}open{% endif %}>
+                            <summary>
+                                <i class="fas fa-file-invoice-dollar w-5"></i>
+                                Boletas
+                            </summary>
+                            <ul>
+                                <li>
+                                    <a href="{{ url_for('boletas.listar') }}" class="{% if request.endpoint in ['boletas.listar', 'boletas.detalle', 'boletas.crear', 'boletas.editar'] %}active{% endif %}">
+                                        <i class="fas fa-list w-4"></i>
+                                        Lista
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ url_for('boletas.crear_masivo') }}" class="{% if request.endpoint == 'boletas.crear_masivo' %}active{% endif %}">
+                                        <i class="fas fa-layer-group w-4"></i>
+                                        Crear Masivo
+                                    </a>
+                                </li>
+                                {% if session.get('rol') == 'administrador' %}
+                                <li>
+                                    <a href="{{ url_for('envio_masivo.index') }}" class="{% if request.endpoint and 'envio_masivo' in request.endpoint %}active{% endif %}">
+                                        <i class="fab fa-whatsapp w-4"></i>
+                                        Envio WhatsApp
+                                    </a>
+                                </li>
+                                {% endif %}
+                                <li>
+                                    <a href="{{ url_for('boletas.configuracion') }}" class="{% if request.endpoint == 'boletas.configuracion' %}active{% endif %}">
+                                        <i class="fas fa-cog w-4"></i>
+                                        Configuracion
+                                    </a>
+                                </li>
+                            </ul>
+                        </details>
                     </li>
 
                     {% if session.get('rol') == 'administrador' %}

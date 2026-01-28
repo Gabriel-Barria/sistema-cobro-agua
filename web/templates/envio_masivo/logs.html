@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Historial Envios Masivos{% endblock %}
+
+{% block content %}
+<!-- HEADER -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Historial de Envios Masivos</h1>
+    <a href="{{ url_for('envio_masivo.index') }}" class="btn btn-primary">
+        <i class="fab fa-whatsapp"></i>
+        <span class="hidden sm:inline">Nuevo Envio</span>
+    </a>
+</div>
+
+<!-- TABLA DE LOGS -->
+<div class="card bg-base-100 shadow">
+    <div class="card-body p-0 sm:p-6">
+        {% if logs %}
+        <div class="overflow-x-auto">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Periodo</th>
+                        <th class="text-center">Enviadas</th>
+                        <th class="text-center">Fallidas</th>
+                        <th>Estado</th>
+                        <th>Duracion</th>
+                        <th>Usuario</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="text-sm">
+                            {{ log.fecha_ejecucion.strftime('%d/%m/%Y %H:%M') if log.fecha_ejecucion else '-' }}
+                        </td>
+                        <td>{{ meses[log.periodo_mes] }} {{ log.periodo_año }}</td>
+                        <td class="text-center">
+                            <span class="badge badge-success">{{ log.enviadas_exitosas }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if log.enviadas_fallidas > 0 %}
+                            <span class="badge badge-error">{{ log.enviadas_fallidas }}</span>
+                            {% else %}
+                            <span class="text-base-content/30">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.estado == 'completado' %}
+                            <span class="badge badge-success badge-sm">Completado</span>
+                            {% elif log.estado == 'interrumpido' %}
+                            <span class="badge badge-warning badge-sm">Interrumpido</span>
+                            {% elif log.estado == 'error' %}
+                            <span class="badge badge-error badge-sm">Error</span>
+                            {% elif log.estado == 'iniciado' %}
+                            <span class="badge badge-info badge-sm">En curso</span>
+                            {% else %}
+                            <span class="badge badge-ghost badge-sm">{{ log.estado }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-sm">
+                            {% if log.duracion_segundos %}
+                            {{ '%.1f'|format(log.duracion_segundos) }}s
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td class="text-sm">{{ log.usuario_nombre or '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('envio_masivo.log_detalle', log_id=log.id) }}"
+                               class="btn btn-ghost btn-xs">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-6">
+            <div class="alert">
+                <i class="fas fa-info-circle"></i>
+                <span>No hay registros de envios masivos.</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
