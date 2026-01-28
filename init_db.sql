@@ -216,7 +216,7 @@ CREATE TABLE IF NOT EXISTS configuracion_cron (
 CREATE TABLE IF NOT EXISTS log_generacion_boletas (
     id SERIAL PRIMARY KEY,
     fecha_ejecucion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    periodo_año INTEGER,
+    periodo_anio INTEGER,
     periodo_mes INTEGER,
     lecturas_creadas INTEGER DEFAULT 0,
     boletas_generadas INTEGER DEFAULT 0,

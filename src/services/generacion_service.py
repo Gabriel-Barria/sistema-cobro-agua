@@ -335,7 +335,7 @@ def obtener_preview_generacion() -> Dict:
     lecturas_sin_boleta = obtener_lecturas_sin_boleta_todas()
 
     return {
-        'periodo_año': año,
+        'periodo_anio': año,
         'periodo_mes': mes,
         'crear_lecturas_habilitado': crear_lecturas,
         'medidores_sin_lectura': medidores_sin_lectura,
@@ -368,13 +368,13 @@ def ejecutar_generacion(
     log_id = crear_log_generacion(
         usuario_id=usuario_id,
         es_automatico=es_automatico,
-        periodo_año=año,
+        periodo_anio=año,
         periodo_mes=mes
     )
 
     resultado = {
         'log_id': log_id,
-        'periodo_año': año,
+        'periodo_anio': año,
         'periodo_mes': mes,
         'lecturas_creadas': 0,
         'boletas_generadas': 0,
