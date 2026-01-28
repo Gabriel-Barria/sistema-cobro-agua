@@ -36,7 +36,7 @@
                         <td class="text-sm">
                             {{ log.fecha_ejecucion.strftime('%d/%m/%Y %H:%M') if log.fecha_ejecucion else '-' }}
                         </td>
-                        <td>{{ meses[log.periodo_mes] }} {{ log.periodo_año }}</td>
+                        <td>{{ meses[log.periodo_mes] }} {{ log.periodo_anio }}</td>
                         <td class="text-center">
                             <span class="badge badge-success">{{ log.enviadas_exitosas }}</span>
                         </td>
