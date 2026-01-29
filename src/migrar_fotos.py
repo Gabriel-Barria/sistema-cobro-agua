@@ -32,27 +32,27 @@ def obtener_carpetas_mensuales(ruta_base: str) -> List[str]:
     """
     carpetas = []
 
-    for año in os.listdir(ruta_base):
-        ruta_año = os.path.join(ruta_base, año)
-        if not os.path.isdir(ruta_año):
+    for anio in os.listdir(ruta_base):
+        ruta_anio = os.path.join(ruta_base, anio)
+        if not os.path.isdir(ruta_anio):
             continue
 
-        for mes in os.listdir(ruta_año):
-            ruta_mes = os.path.join(ruta_año, mes)
+        for mes in os.listdir(ruta_anio):
+            ruta_mes = os.path.join(ruta_anio, mes)
             if os.path.isdir(ruta_mes):
                 carpetas.append(ruta_mes)
 
     return carpetas
 
 
-def copiar_foto(origen: str, medidor_id: int, año: int, mes: int, nombre_archivo: str) -> str:
+def copiar_foto(origen: str, medidor_id: int, anio: int, mes: int, nombre_archivo: str) -> str:
     """
     Copia una foto al directorio organizado por medidor.
 
     Args:
         origen: Ruta original de la foto
         medidor_id: ID del medidor
-        año: Año del periodo
+        anio: Anio del periodo
         mes: Mes del periodo
         nombre_archivo: Nombre original del archivo
 
@@ -60,7 +60,7 @@ def copiar_foto(origen: str, medidor_id: int, año: int, mes: int, nombre_archiv
         Ruta relativa donde se copió la foto
     """
     # Crear estructura de directorios
-    destino_dir = os.path.join(FOTOS_DIR, f'medidor_{medidor_id}', str(año), f'{mes:02d}')
+    destino_dir = os.path.join(FOTOS_DIR, f'medidor_{medidor_id}', str(anio), f'{mes:02d}')
     os.makedirs(destino_dir, exist_ok=True)
 
     # Copiar archivo
@@ -114,7 +114,7 @@ def procesar_carpeta(carpeta: str, correcciones_fechas: Dict = None) -> Dict:
         stats['errores'].append(f"No se pudo extraer periodo de: {carpeta}")
         return stats
 
-    año_periodo, mes_periodo = periodo
+    anio_periodo, mes_periodo = periodo
 
     # Obtener carpeta real con fotos (puede ser subcarpeta 'lecturas')
     carpeta_fotos = obtener_carpeta_fotos(carpeta)
@@ -148,13 +148,13 @@ def procesar_carpeta(carpeta: str, correcciones_fechas: Dict = None) -> Dict:
         medidor_id = obtener_o_crear_medidor(cliente_id)
 
         # Verificar si ya existe lectura para este periodo
-        if lectura_existe(medidor_id, año_periodo, mes_periodo):
+        if lectura_existe(medidor_id, anio_periodo, mes_periodo):
             stats['duplicadas'] += 1
             continue
 
         # Copiar foto al nuevo sistema
         try:
-            foto_path = copiar_foto(ruta_origen, medidor_id, año_periodo, mes_periodo, archivo)
+            foto_path = copiar_foto(ruta_origen, medidor_id, anio_periodo, mes_periodo, archivo)
         except Exception as e:
             stats['errores'].append(f"Error copiando {archivo}: {str(e)}")
             continue
@@ -166,7 +166,7 @@ def procesar_carpeta(carpeta: str, correcciones_fechas: Dict = None) -> Dict:
             fecha_lectura=fecha_lectura,
             foto_path=foto_path,
             foto_nombre=archivo,
-            año=año_periodo,
+            anio=anio_periodo,
             mes=mes_periodo
         )
 
