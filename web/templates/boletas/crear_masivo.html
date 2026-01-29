@@ -45,10 +45,10 @@
                 <label class="label">
                     <span class="label-text">Ano</span>
                 </label>
-                <select name="año" id="año" class="select select-bordered select-sm">
+                <select name="anio" id="anio" class="select select-bordered select-sm">
                     <option value="">Todos</option>
-                    {% for a in años %}
-                    <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                    {% for a in anios %}
+                    <option value="{{ a }}" {{ 'selected' if filtros.anio == a }}>{{ a }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -99,7 +99,7 @@
                     </td>
                     <td>{{ lectura.cliente_nombre }}</td>
                     <td>{{ lectura.numero_medidor or 'Medidor ' ~ lectura.medidor_id }}</td>
-                    <td>{{ lectura.mes }}/{{ lectura.año }}</td>
+                    <td>{{ lectura.mes }}/{{ lectura.anio }}</td>
                     <td>{{ lectura.lectura_m3 }}</td>
                 </tr>
                 {% endfor %}

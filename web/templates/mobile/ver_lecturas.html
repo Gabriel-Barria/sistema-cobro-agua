@@ -12,10 +12,10 @@
 
     <form method="GET" class="filtros-form" id="filtros-form" style="display: none;">
         <div class="form-row">
-            <select name="año" class="input-mobile">
-                <option value="">Todos los años</option>
-                {% for a in años %}
-                <option value="{{ a }}" {% if a == año_sel %}selected{% endif %}>{{ a }}</option>
+            <select name="anio" class="input-mobile">
+                <option value="">Todos los anios</option>
+                {% for a in anios %}
+                <option value="{{ a }}" {% if a == anio_sel %}selected{% endif %}>{{ a }}</option>
                 {% endfor %}
             </select>
 
@@ -36,7 +36,7 @@
 {% else %}
 <!-- Solo mostrar período actual -->
 <div class="periodo-info">
-    <p><strong>Período:</strong> {{ mes_sel|mes_nombre }} {{ año_sel }}</p>
+    <p><strong>Período:</strong> {{ mes_sel|mes_nombre }} {{ anio_sel }}</p>
 </div>
 {% endif %}
 
@@ -61,7 +61,7 @@
             <div class="lectura-card" data-lectura-id="{{ lectura.id }}">
                 <div class="card-header">
                     <h3 class="cliente-nombre">{{ lectura.cliente_nombre }}</h3>
-                    <span class="badge-periodo">{{ lectura.mes|mes_nombre }} {{ lectura.año }}</span>
+                    <span class="badge-periodo">{{ lectura.mes|mes_nombre }} {{ lectura.anio }}</span>
                 </div>
                 <div class="card-body">
                     <p><strong>Medidor:</strong> {{ lectura.numero_medidor or 'S/N' }}</p>
@@ -81,7 +81,7 @@
     {% else %}
         <div class="empty-state">
             <p>No hay lecturas registradas</p>
-            {% if año_sel or mes_sel %}
+            {% if anio_sel or mes_sel %}
             <p class="text-muted">Intenta limpiar los filtros o seleccionar otro período</p>
             {% endif %}
         </div>

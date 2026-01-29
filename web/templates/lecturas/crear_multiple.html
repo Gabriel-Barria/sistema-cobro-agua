@@ -49,8 +49,8 @@
                             <label class="label">
                                 <span class="label-text">Desde - Ano</span>
                             </label>
-                            <select id="año_desde" required class="select select-bordered select-sm">
-                                {% for a in años %}
+                            <select id="anio_desde" required class="select select-bordered select-sm">
+                                {% for a in anios %}
                                 <option value="{{ a }}">{{ a }}</option>
                                 {% endfor %}
                             </select>
@@ -69,8 +69,8 @@
                             <label class="label">
                                 <span class="label-text">Hasta - Ano</span>
                             </label>
-                            <select id="año_hasta" required class="select select-bordered select-sm">
-                                {% for a in años %}
+                            <select id="anio_hasta" required class="select select-bordered select-sm">
+                                {% for a in anios %}
                                 <option value="{{ a }}">{{ a }}</option>
                                 {% endfor %}
                             </select>
@@ -143,9 +143,9 @@ let fechasData = [];
 document.getElementById('btn-calcular').addEventListener('click', calcularPeriodos);
 
 function calcularPeriodos() {
-    const anioDesde = parseInt(document.getElementById('año_desde').value);
+    const anioDesde = parseInt(document.getElementById('anio_desde').value);
     const mesDesde = parseInt(document.getElementById('mes_desde').value);
-    const anioHasta = parseInt(document.getElementById('año_hasta').value);
+    const anioHasta = parseInt(document.getElementById('anio_hasta').value);
     const mesHasta = parseInt(document.getElementById('mes_hasta').value);
 
     // Validar rango

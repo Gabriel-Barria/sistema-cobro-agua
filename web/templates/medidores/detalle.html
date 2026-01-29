@@ -156,7 +156,7 @@
                 {% for l in lecturas %}
                 <div class="border border-base-200 rounded-lg p-3">
                     <div class="flex justify-between items-start mb-2">
-                        <span class="font-semibold">{{ l.mes|mes_nombre }} {{ l.año }}</span>
+                        <span class="font-semibold">{{ l.mes|mes_nombre }} {{ l.anio }}</span>
                         <a href="{{ url_for('lecturas.detalle', lectura_id=l.id) }}" class="btn btn-ghost btn-xs">
                             <i class="fas fa-eye"></i>
                         </a>
@@ -189,7 +189,7 @@
                     <tbody>
                         {% for l in lecturas %}
                         <tr>
-                            <td>{{ l.mes|mes_nombre }} {{ l.año }}</td>
+                            <td>{{ l.mes|mes_nombre }} {{ l.anio }}</td>
                             <td>{{ l.lectura_m3 }}</td>
                             <td>{{ l.fecha_lectura|fecha_formato }}</td>
                             <td>

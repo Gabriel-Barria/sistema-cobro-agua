@@ -64,7 +64,7 @@ def obtener_fecha_mas_frecuente(fechas: List[Tuple[str, date]]) -> Optional[date
     return fecha_comun
 
 
-def fecha_es_coherente(fecha: date, año_periodo: int, mes_periodo: int) -> bool:
+def fecha_es_coherente(fecha: date, anio_periodo: int, mes_periodo: int) -> bool:
     """
     Valida si una fecha es coherente con el periodo de la carpeta.
 
@@ -73,7 +73,7 @@ def fecha_es_coherente(fecha: date, año_periodo: int, mes_periodo: int) -> bool
 
     Args:
         fecha: Fecha a validar
-        año_periodo: Año del periodo (de la carpeta)
+        anio_periodo: Año del periodo (de la carpeta)
         mes_periodo: Mes del periodo (de la carpeta)
 
     Returns:
@@ -82,22 +82,22 @@ def fecha_es_coherente(fecha: date, año_periodo: int, mes_periodo: int) -> bool
     # Meses válidos: el mes del periodo o el siguiente
     meses_validos = [mes_periodo]
     if mes_periodo == 12:
-        # Si es diciembre, el siguiente es enero del año siguiente
+        # Si es diciembre, el siguiente es enero del anio siguiente
         meses_validos.append(1)
     else:
         meses_validos.append(mes_periodo + 1)
 
     # Años válidos
-    años_validos = [año_periodo]
+    anios_validos = [anio_periodo]
     if mes_periodo == 12:
-        años_validos.append(año_periodo + 1)
+        anios_validos.append(anio_periodo + 1)
 
     # Verificar coherencia
-    if fecha.year in años_validos and fecha.month in meses_validos:
+    if fecha.year in anios_validos and fecha.month in meses_validos:
         return True
 
-    # Caso especial: si es enero del periodo, también aceptar diciembre del año anterior
-    if mes_periodo == 1 and fecha.month == 12 and fecha.year == año_periodo - 1:
+    # Caso especial: si es enero del periodo, también aceptar diciembre del anio anterior
+    if mes_periodo == 1 and fecha.month == 12 and fecha.year == anio_periodo - 1:
         return True
 
     return False
@@ -112,7 +112,7 @@ def validar_fechas_carpeta(carpeta: str) -> Dict:
 
     Returns:
         Dict con:
-        - 'periodo': (año, mes) del periodo
+        - 'periodo': (anio, mes) del periodo
         - 'fecha_correcta': fecha más frecuente
         - 'validas': lista de archivos con fecha válida
         - 'corregidas': lista de tuplas (archivo, fecha_original, fecha_corregida)
@@ -131,7 +131,7 @@ def validar_fechas_carpeta(carpeta: str) -> Dict:
     if not periodo:
         return resultado
 
-    año_periodo, mes_periodo = periodo
+    anio_periodo, mes_periodo = periodo
     resultado['periodo'] = periodo
 
     # Obtener todas las fechas
@@ -156,7 +156,7 @@ def validar_fechas_carpeta(carpeta: str) -> Dict:
 
         fecha_archivo = datos['fecha']
 
-        if fecha_es_coherente(fecha_archivo, año_periodo, mes_periodo):
+        if fecha_es_coherente(fecha_archivo, anio_periodo, mes_periodo):
             resultado['validas'].append(archivo)
         else:
             # La fecha no es coherente, se debe corregir
@@ -190,9 +190,9 @@ def generar_reporte_correcciones(carpetas: List[str], archivo_log: str = None) -
         resultado = validar_fechas_carpeta(carpeta)
 
         if resultado['periodo']:
-            año, mes = resultado['periodo']
+            anio, mes = resultado['periodo']
             lineas.append(f"## Carpeta: {carpeta}")
-            lineas.append(f"Periodo: {año}/{mes:02d}")
+            lineas.append(f"Periodo: {anio}/{mes:02d}")
             lineas.append(f"Fecha correcta detectada: {resultado['fecha_correcta']}")
             lineas.append(f"Archivos válidos: {len(resultado['validas'])}")
             lineas.append(f"Archivos corregidos: {len(resultado['corregidas'])}")

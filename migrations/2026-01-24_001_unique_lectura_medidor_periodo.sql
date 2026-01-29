@@ -8,10 +8,10 @@
 -- Paso 1: Eliminar duplicados conservando la mejor lectura por grupo
 DELETE FROM lecturas
 WHERE id NOT IN (
-    SELECT DISTINCT ON (medidor_id, año, mes) l.id
+    SELECT DISTINCT ON (medidor_id, anio, mes) l.id
     FROM lecturas l
     LEFT JOIN boletas b ON b.lectura_id = l.id
-    ORDER BY medidor_id, año, mes,
+    ORDER BY medidor_id, anio, mes,
         -- Prioridad 1: tiene boleta asociada
         CASE WHEN b.id IS NOT NULL THEN 0 ELSE 1 END,
         -- Prioridad 2: tiene foto
@@ -22,4 +22,4 @@ WHERE id NOT IN (
 
 -- Paso 2: Agregar constraint UNIQUE
 ALTER TABLE lecturas
-ADD CONSTRAINT uq_lectura_medidor_periodo UNIQUE (medidor_id, año, mes);
+ADD CONSTRAINT uq_lectura_medidor_periodo UNIQUE (medidor_id, anio, mes);

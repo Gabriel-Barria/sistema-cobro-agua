@@ -167,7 +167,7 @@ def api_preview():
             'id': l['id'],
             'medidor': l['numero_medidor'],
             'cliente': l['cliente_nombre'],
-            'periodo': f"{l['mes']}/{l['año']}"
+            'periodo': f"{l['mes']}/{l['anio']}"
         } for l in preview['lecturas_sin_boleta'][:10]]
     })
 

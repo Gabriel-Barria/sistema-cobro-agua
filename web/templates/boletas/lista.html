@@ -69,27 +69,27 @@
 
 <!-- FILTER CHIPS - solo mobile -->
 <div class="flex items-center gap-2 overflow-x-auto pb-4 lg:hidden">
-    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '') }}"
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', anio=filtros.anio or '', mes=filtros.mes or '') }}"
        class="btn btn-sm {% if filtros.pagada is none %}btn-primary{% else %}btn-ghost{% endif %}">
         Todos
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.total or 0 }}</span>{% endif %}
     </a>
-    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=0) }}"
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', anio=filtros.anio or '', mes=filtros.mes or '', pagada=0) }}"
        class="btn btn-sm {% if filtros.pagada == 0 %}btn-primary{% else %}btn-ghost{% endif %}">
         Pendientes
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.pendientes or 0 }}</span>{% endif %}
     </a>
-    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=1) }}"
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', anio=filtros.anio or '', mes=filtros.mes or '', pagada=1) }}"
        class="btn btn-sm {% if filtros.pagada == 1 %}btn-primary{% else %}btn-ghost{% endif %}">
         En Revision
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.en_revision or 0 }}</span>{% endif %}
     </a>
-    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', año=filtros.año or '', mes=filtros.mes or '', pagada=2) }}"
+    <a href="{{ url_for('boletas.listar', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', anio=filtros.anio or '', mes=filtros.mes or '', pagada=2) }}"
        class="btn btn-sm {% if filtros.pagada == 2 %}btn-primary{% else %}btn-ghost{% endif %}">
         Pagadas
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.pagadas or 0 }}</span>{% endif %}
     </a>
-    <button class="btn btn-sm btn-circle btn-ghost {% if filtros.cliente_id or filtros.año or filtros.mes or filtros.sin_comprobante %}btn-primary{% endif %}"
+    <button class="btn btn-sm btn-circle btn-ghost {% if filtros.cliente_id or filtros.anio or filtros.mes or filtros.sin_comprobante %}btn-primary{% endif %}"
             onclick="modalFiltros.showModal()" title="Filtros avanzados">
         <i class="fas fa-sliders-h"></i>
     </button>
@@ -123,10 +123,10 @@
 
             <div class="form-control">
                 <label class="label py-1"><span class="label-text">Año</span></label>
-                <select name="año" class="select select-bordered select-sm">
+                <select name="anio" class="select select-bordered select-sm">
                     <option value="">Todos</option>
-                    {% for a in años %}
-                    <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                    {% for a in anios %}
+                    <option value="{{ a }}" {{ 'selected' if filtros.anio == a }}>{{ a }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -170,7 +170,7 @@
         <div class="flex gap-2 mt-4">
             <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
             <a href="{{ url_for('boletas.listar') }}" class="btn btn-ghost btn-sm">Limpiar</a>
-            <a href="{{ url_for('boletas.exportar', cliente_id=filtros.cliente_id, medidor_id=filtros.medidor_id, año=filtros.año, mes=filtros.mes, pagada=filtros.pagada, sin_comprobante=filtros.sin_comprobante) }}"
+            <a href="{{ url_for('boletas.exportar', cliente_id=filtros.cliente_id, medidor_id=filtros.medidor_id, anio=filtros.anio, mes=filtros.mes, pagada=filtros.pagada, sin_comprobante=filtros.sin_comprobante) }}"
                class="btn btn-success btn-sm">
                 <i class="fas fa-file-excel"></i> Exportar
             </a>
@@ -408,10 +408,10 @@
 
             <div class="form-control mb-3">
                 <label class="label"><span class="label-text">Año</span></label>
-                <select name="año" class="select select-bordered">
+                <select name="anio" class="select select-bordered">
                     <option value="">Todos</option>
-                    {% for a in años %}
-                    <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                    {% for a in anios %}
+                    <option value="{{ a }}" {{ 'selected' if filtros.anio == a }}>{{ a }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -462,7 +462,7 @@
             <input type="hidden" name="volver_a_lista" value="1">
             <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
             <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
-            <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+            <input type="hidden" name="anio" value="{{ filtros.anio if filtros.anio is not none else '' }}">
             <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
             <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
             <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
@@ -500,7 +500,7 @@
             <input type="hidden" name="volver_a_lista" value="1">
             <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
             <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
-            <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+            <input type="hidden" name="anio" value="{{ filtros.anio if filtros.anio is not none else '' }}">
             <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
             <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
             <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
@@ -525,7 +525,7 @@
             <input type="hidden" name="volver_a_lista" value="1">
             <input type="hidden" name="cliente_id" value="{{ filtros.cliente_id if filtros.cliente_id is not none else '' }}">
             <input type="hidden" name="medidor_id" value="{{ filtros.medidor_id if filtros.medidor_id is not none else '' }}">
-            <input type="hidden" name="año" value="{{ filtros.año if filtros.año is not none else '' }}">
+            <input type="hidden" name="anio" value="{{ filtros.anio if filtros.anio is not none else '' }}">
             <input type="hidden" name="mes" value="{{ filtros.mes if filtros.mes is not none else '' }}">
             <input type="hidden" name="pagada" value="{{ filtros.pagada if filtros.pagada is not none else '' }}">
             <input type="hidden" name="sin_comprobante" value="{{ '1' if filtros.sin_comprobante else '' }}">
@@ -731,7 +731,7 @@ function agregarFiltrosHidden(form) {
     var filtros = {
         'cliente_id': '{{ filtros.cliente_id or "" }}',
         'medidor_id': '{{ filtros.medidor_id or "" }}',
-        'año': '{{ filtros.año or "" }}',
+        'anio': '{{ filtros.anio or "" }}',
         'mes': '{{ filtros.mes or "" }}',
         'pagada': '{{ filtros.pagada if filtros.pagada is not none else "" }}',
         'sin_comprobante': '{{ "1" if filtros.sin_comprobante else "" }}'

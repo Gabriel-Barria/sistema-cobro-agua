@@ -102,7 +102,7 @@
                     {% for l in lecturas_recientes[:5] %}
                     <tr class="hover">
                         <td>{{ l.cliente_nombre }}</td>
-                        <td>{{ l.mes|mes_nombre }} {{ l.año }}</td>
+                        <td>{{ l.mes|mes_nombre }} {{ l.anio }}</td>
                         <td>{{ l.lectura_m3 }} m3</td>
                         <td>{{ l.fecha_lectura|fecha_formato }}</td>
                     </tr>

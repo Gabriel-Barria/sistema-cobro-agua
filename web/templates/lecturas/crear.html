@@ -25,11 +25,11 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="form-control mb-3">
-                    <label class="label" for="año">
+                    <label class="label" for="anio">
                         <span class="label-text">Ano del Periodo *</span>
                     </label>
-                    <select name="año" id="año" class="select select-bordered w-full" required>
-                        {% for a in años %}
+                    <select name="anio" id="anio" class="select select-bordered w-full" required>
+                        {% for a in anios %}
                         <option value="{{ a }}">{{ a }}</option>
                         {% endfor %}
                     </select>

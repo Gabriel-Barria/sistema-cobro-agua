@@ -23,12 +23,12 @@ from src.models_boletas import (
 )
 
 
-def obtener_medidores_sin_lectura(año: int, mes: int) -> List[Dict]:
+def obtener_medidores_sin_lectura(anio: int, mes: int) -> List[Dict]:
     """
     Obtiene medidores activos que no tienen lectura para el periodo especificado.
 
     Args:
-        año: Año del periodo
+        anio: Año del periodo
         mes: Mes del periodo
 
     Returns:
@@ -47,11 +47,11 @@ def obtener_medidores_sin_lectura(año: int, mes: int) -> List[Dict]:
           AND NOT EXISTS (
               SELECT 1 FROM lecturas l
               WHERE l.medidor_id = m.id
-                AND l.año = %s
+                AND l.anio = %s
                 AND l.mes = %s
           )
         ORDER BY c.nombre, m.numero_medidor
-    ''', (año, mes))
+    ''', (anio, mes))
 
     rows = cursor.fetchall()
     conn.close()
@@ -73,10 +73,10 @@ def obtener_ultima_lectura_medidor(medidor_id: int) -> Optional[Dict]:
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT id, lectura_m3, fecha_lectura, año, mes
+        SELECT id, lectura_m3, fecha_lectura, anio, mes
         FROM lecturas
         WHERE medidor_id = %s
-        ORDER BY año DESC, mes DESC, id DESC
+        ORDER BY anio DESC, mes DESC, id DESC
         LIMIT 1
     ''', (medidor_id,))
 
@@ -100,10 +100,10 @@ def obtener_ultimas_dos_lecturas_medidor(medidor_id: int) -> List[Dict]:
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT id, lectura_m3, fecha_lectura, año, mes
+        SELECT id, lectura_m3, fecha_lectura, anio, mes
         FROM lecturas
         WHERE medidor_id = %s
-        ORDER BY año DESC, mes DESC, id DESC
+        ORDER BY anio DESC, mes DESC, id DESC
         LIMIT 2
     ''', (medidor_id,))
 
@@ -210,7 +210,7 @@ def crear_lectura_automatica(
     medidor_id: int,
     lectura_m3: int,
     fecha_lectura: date,
-    año: int,
+    anio: int,
     mes: int
 ) -> int:
     """
@@ -220,7 +220,7 @@ def crear_lectura_automatica(
         medidor_id: ID del medidor
         lectura_m3: Valor de la lectura en m3
         fecha_lectura: Fecha de la lectura
-        año: Año del periodo
+        anio: Año del periodo
         mes: Mes del periodo
 
     Returns:
@@ -230,10 +230,10 @@ def crear_lectura_automatica(
     cursor = conn.cursor()
 
     cursor.execute('''
-        INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, año, mes)
+        INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, anio, mes)
         VALUES (%s, %s, %s, '', 'generacion_automatica', %s, %s)
         RETURNING id
-    ''', (medidor_id, lectura_m3, fecha_lectura, año, mes))
+    ''', (medidor_id, lectura_m3, fecha_lectura, anio, mes))
 
     lectura_id = cursor.fetchone()[0]
     conn.commit()
@@ -253,14 +253,14 @@ def obtener_lecturas_sin_boleta_todas() -> List[Dict]:
     cursor = conn.cursor()
 
     cursor.execute('''
-        SELECT l.id, l.medidor_id, l.lectura_m3, l.fecha_lectura, l.año, l.mes,
+        SELECT l.id, l.medidor_id, l.lectura_m3, l.fecha_lectura, l.anio, l.mes,
                m.numero_medidor, m.direccion, c.id as cliente_id, c.nombre as cliente_nombre
         FROM lecturas l
         JOIN medidores m ON l.medidor_id = m.id
         JOIN clientes c ON m.cliente_id = c.id
         LEFT JOIN boletas b ON l.id = b.lectura_id
         WHERE b.id IS NULL AND m.activo = 1
-        ORDER BY l.año DESC, l.mes DESC, c.nombre
+        ORDER BY l.anio DESC, l.mes DESC, c.nombre
     ''')
 
     rows = cursor.fetchall()
@@ -282,13 +282,13 @@ def generar_boleta_desde_lectura(lectura: Dict, config_boletas: Dict) -> Optiona
     """
     try:
         medidor_id = lectura['medidor_id']
-        año = lectura['año']
+        anio = lectura['anio']
         mes = lectura['mes']
         lectura_actual = lectura['lectura_m3']
         cliente_nombre = lectura['cliente_nombre']
 
         # Obtener lectura anterior
-        lectura_anterior = obtener_lectura_anterior(medidor_id, año, mes)
+        lectura_anterior = obtener_lectura_anterior(medidor_id, anio, mes)
         if lectura_anterior is None:
             lectura_anterior = 0
 
@@ -300,7 +300,7 @@ def generar_boleta_desde_lectura(lectura: Dict, config_boletas: Dict) -> Optiona
             lectura_id=lectura['id'],
             cliente_nombre=cliente_nombre,
             medidor_id=medidor_id,
-            periodo_anio=año,
+            periodo_anio=anio,
             periodo_mes=mes,
             lectura_actual=lectura_actual,
             lectura_anterior=lectura_anterior,
@@ -323,19 +323,19 @@ def obtener_preview_generacion() -> Dict:
     Returns:
         Diccionario con estadisticas del preview
     """
-    año, mes = obtener_periodo_objetivo_generacion()
+    anio, mes = obtener_periodo_objetivo_generacion()
     crear_lecturas = obtener_configuracion('crear_lecturas_faltantes', True)
 
     # Medidores sin lectura
     medidores_sin_lectura = []
     if crear_lecturas:
-        medidores_sin_lectura = obtener_medidores_sin_lectura(año, mes)
+        medidores_sin_lectura = obtener_medidores_sin_lectura(anio, mes)
 
     # Lecturas sin boleta
     lecturas_sin_boleta = obtener_lecturas_sin_boleta_todas()
 
     return {
-        'periodo_anio': año,
+        'periodo_anio': anio,
         'periodo_mes': mes,
         'crear_lecturas_habilitado': crear_lecturas,
         'medidores_sin_lectura': medidores_sin_lectura,
@@ -362,19 +362,19 @@ def ejecutar_generacion(
         Diccionario con resultados de la ejecucion
     """
     inicio = time.time()
-    año, mes = obtener_periodo_objetivo_generacion()
+    anio, mes = obtener_periodo_objetivo_generacion()
 
     # Crear log de ejecucion
     log_id = crear_log_generacion(
         usuario_id=usuario_id,
         es_automatico=es_automatico,
-        periodo_anio=año,
+        periodo_anio=anio,
         periodo_mes=mes
     )
 
     resultado = {
         'log_id': log_id,
-        'periodo_anio': año,
+        'periodo_anio': anio,
         'periodo_mes': mes,
         'lecturas_creadas': 0,
         'boletas_generadas': 0,
@@ -392,8 +392,8 @@ def ejecutar_generacion(
         valor_lectura = obtener_configuracion('valor_lectura_faltante', 'ultima')
 
         if crear_lecturas and not solo_boletas:
-            medidores = obtener_medidores_sin_lectura(año, mes)
-            fecha_lectura = obtener_fecha_lectura_por_defecto(año, mes)
+            medidores = obtener_medidores_sin_lectura(anio, mes)
+            fecha_lectura = obtener_fecha_lectura_por_defecto(anio, mes)
 
             for medidor in medidores:
                 try:
@@ -411,7 +411,7 @@ def ejecutar_generacion(
                         medidor_id=medidor['id'],
                         lectura_m3=lectura_m3,
                         fecha_lectura=fecha_lectura,
-                        año=año,
+                        anio=anio,
                         mes=mes
                     )
 
@@ -450,7 +450,7 @@ def ejecutar_generacion(
                         'lectura_id': lectura['id'],
                         'cliente': lectura['cliente_nombre'],
                         'medidor': lectura['numero_medidor'] or 'Sin número',
-                        'periodo': f"{lectura['mes']}/{lectura['año']}"
+                        'periodo': f"{lectura['mes']}/{lectura['anio']}"
                     })
                 else:
                     resultado['errores'] += 1

@@ -117,7 +117,7 @@ app/
 ### 1. Registro de Lecturas
 
 1. Acceder a **Lecturas** → **Registrar nueva lectura**
-2. Seleccionar periodo (mes/año)
+2. Seleccionar periodo (mes/anio)
 3. Registrar lecturas con foto del medidor
 4. Sistema valida duplicados automáticamente
 

@@ -51,22 +51,22 @@
 
 <!-- FILTER CHIPS - solo mobile -->
 <div class="flex items-center gap-2 overflow-x-auto pb-4 lg:hidden">
-    <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '') }}"
+    <a href="{{ url_for('lecturas.listar', anio=filtros.anio or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '') }}"
        class="btn btn-sm {% if filtros.con_foto is none %}btn-primary{% else %}btn-ghost{% endif %}">
         Todas
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.total or 0 }}</span>{% endif %}
     </a>
-    <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=1) }}"
+    <a href="{{ url_for('lecturas.listar', anio=filtros.anio or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=1) }}"
        class="btn btn-sm {% if filtros.con_foto == 1 %}btn-primary{% else %}btn-ghost{% endif %}">
         Con foto
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.con_foto or 0 }}</span>{% endif %}
     </a>
-    <a href="{{ url_for('lecturas.listar', año=filtros.año or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=0) }}"
+    <a href="{{ url_for('lecturas.listar', anio=filtros.anio or '', mes=filtros.mes or '', cliente_id=filtros.cliente_id or '', medidor_id=filtros.medidor_id or '', incompletos=1 if filtros.incompletos else '', con_foto=0) }}"
        class="btn btn-sm {% if filtros.con_foto == 0 %}btn-primary{% else %}btn-ghost{% endif %}">
         Sin foto
         {% if stats %}<span class="badge badge-sm ml-1">{{ stats.sin_foto or 0 }}</span>{% endif %}
     </a>
-    <button class="btn btn-sm btn-circle btn-ghost {% if filtros.año or filtros.mes or filtros.cliente_id or filtros.medidor_id or filtros.incompletos %}btn-primary{% endif %}"
+    <button class="btn btn-sm btn-circle btn-ghost {% if filtros.anio or filtros.mes or filtros.cliente_id or filtros.medidor_id or filtros.incompletos %}btn-primary{% endif %}"
             onclick="modalFiltrosLecturas.showModal()" title="Filtros avanzados">
         <i class="fas fa-sliders-h"></i>
     </button>
@@ -78,10 +78,10 @@
         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             <div class="form-control">
                 <label class="label py-1"><span class="label-text">Año</span></label>
-                <select name="año" class="select select-bordered select-sm">
-                    <option value="">Todos los años</option>
-                    {% for a in años %}
-                    <option value="{{ a }}" {% if a == año_sel %}selected{% endif %}>{{ a }}</option>
+                <select name="anio" class="select select-bordered select-sm">
+                    <option value="">Todos los anios</option>
+                    {% for a in anios %}
+                    <option value="{{ a }}" {% if a == anio_sel %}selected{% endif %}>{{ a }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -142,7 +142,7 @@
         <div class="collapse-title pr-12">
             <div class="flex justify-between items-center">
                 <div class="min-w-0">
-                    <div class="font-semibold">{{ l.mes|mes_nombre }} {{ l.año }}</div>
+                    <div class="font-semibold">{{ l.mes|mes_nombre }} {{ l.anio }}</div>
                     <div class="text-sm text-base-content/70 truncate">{{ l.cliente_nombre }}</div>
                 </div>
                 <div class="flex flex-col items-end gap-1 ml-4">
@@ -185,19 +185,19 @@
         <thead>
             <tr>
                 <th class="sortable {% if orden_col == 'id' %}{{ orden_dir }}{% endif %}">
-                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='id', dir='desc' if orden_col == 'id' and orden_dir == 'asc' else 'asc') }}">ID</a>
+                    <a href="{{ url_for('lecturas.listar', anio=anio_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='id', dir='desc' if orden_col == 'id' and orden_dir == 'asc' else 'asc') }}">ID</a>
                 </th>
                 <th class="sortable {% if orden_col == 'cliente' %}{{ orden_dir }}{% endif %}">
-                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='cliente', dir='desc' if orden_col == 'cliente' and orden_dir == 'asc' else 'asc') }}">Cliente</a>
+                    <a href="{{ url_for('lecturas.listar', anio=anio_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='cliente', dir='desc' if orden_col == 'cliente' and orden_dir == 'asc' else 'asc') }}">Cliente</a>
                 </th>
                 <th class="sortable {% if orden_col == 'periodo' %}{{ orden_dir }}{% endif %}">
-                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='periodo', dir='desc' if orden_col == 'periodo' and orden_dir == 'asc' else 'asc') }}">Periodo</a>
+                    <a href="{{ url_for('lecturas.listar', anio=anio_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='periodo', dir='desc' if orden_col == 'periodo' and orden_dir == 'asc' else 'asc') }}">Periodo</a>
                 </th>
                 <th class="sortable {% if orden_col == 'lectura_m3' %}{{ orden_dir }}{% endif %}">
-                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='lectura_m3', dir='desc' if orden_col == 'lectura_m3' and orden_dir == 'asc' else 'asc') }}">Lectura (m3)</a>
+                    <a href="{{ url_for('lecturas.listar', anio=anio_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='lectura_m3', dir='desc' if orden_col == 'lectura_m3' and orden_dir == 'asc' else 'asc') }}">Lectura (m3)</a>
                 </th>
                 <th class="sortable {% if orden_col == 'fecha_lectura' %}{{ orden_dir }}{% endif %}">
-                    <a href="{{ url_for('lecturas.listar', año=año_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='fecha_lectura', dir='desc' if orden_col == 'fecha_lectura' and orden_dir == 'asc' else 'asc') }}">Fecha Lectura</a>
+                    <a href="{{ url_for('lecturas.listar', anio=anio_sel, mes=mes_sel, cliente_id=cliente_sel, medidor_id=medidor_sel, incompletos=1 if incompletos else None, orden='fecha_lectura', dir='desc' if orden_col == 'fecha_lectura' and orden_dir == 'asc' else 'asc') }}">Fecha Lectura</a>
                 </th>
                 <th>Acciones</th>
             </tr>
@@ -207,7 +207,7 @@
             <tr class="hover">
                 <td>{{ l.id }}</td>
                 <td>{{ l.cliente_nombre }}</td>
-                <td data-sort="{{ l.año * 100 + l.mes }}">{{ l.mes|mes_nombre }} {{ l.año }}</td>
+                <td data-sort="{{ l.anio * 100 + l.mes }}">{{ l.mes|mes_nombre }} {{ l.anio }}</td>
                 <td>{{ l.lectura_m3 }}</td>
                 <td>{{ l.fecha_lectura|fecha_formato }}</td>
                 <td>
@@ -254,10 +254,10 @@
 
             <div class="form-control mb-3">
                 <label class="label"><span class="label-text">Año</span></label>
-                <select name="año" class="select select-bordered">
+                <select name="anio" class="select select-bordered">
                     <option value="">Todos</option>
-                    {% for a in años %}
-                    <option value="{{ a }}" {{ 'selected' if filtros.año == a }}>{{ a }}</option>
+                    {% for a in anios %}
+                    <option value="{{ a }}" {{ 'selected' if filtros.anio == a }}>{{ a }}</option>
                     {% endfor %}
                 </select>
             </div>

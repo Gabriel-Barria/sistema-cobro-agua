@@ -50,14 +50,14 @@ def parsear_nombre_archivo(nombre_archivo: str) -> Optional[dict]:
 
 def extraer_periodo_de_ruta(ruta_archivo: str) -> Optional[Tuple[int, int]]:
     """
-    Extrae el año y mes del periodo de la ruta del archivo.
+    Extrae el anio y mes del periodo de la ruta del archivo.
 
     Args:
         ruta_archivo: Ruta completa al archivo
         Ejemplo: .../2024/06_junio/archivo.jpg o .../2023/diciembre/archivo.jpg
 
     Returns:
-        Tupla (año, mes) o None si no se pudo extraer
+        Tupla (anio, mes) o None si no se pudo extraer
     """
     # Mapa de nombres de mes a número
     meses_nombres = {
@@ -70,13 +70,13 @@ def extraer_periodo_de_ruta(ruta_archivo: str) -> Optional[Tuple[int, int]]:
     ruta = ruta_archivo.replace('\\', '/')
     partes = ruta.split('/')
 
-    año = None
+    anio = None
     mes = None
 
     for i, parte in enumerate(partes):
-        # Buscar año (4 dígitos)
+        # Buscar anio (4 dígitos)
         if re.match(r'^\d{4}$', parte):
-            año = int(parte)
+            anio = int(parte)
             # El siguiente elemento debería ser el mes
             if i + 1 < len(partes):
                 siguiente = partes[i + 1].lower()
@@ -91,8 +91,8 @@ def extraer_periodo_de_ruta(ruta_archivo: str) -> Optional[Tuple[int, int]]:
                             mes = num
                             break
 
-    if año and mes:
-        return (año, mes)
+    if anio and mes:
+        return (anio, mes)
     return None
 
 

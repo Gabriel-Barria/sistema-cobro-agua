@@ -269,24 +269,24 @@ def descargar_boleta(boleta_id):
     fecha_lectura_anterior = None
     if boleta['lectura_anterior'] is not None:
         medidor_id = boleta['medidor_id']
-        año = boleta['periodo_anio']
+        anio = boleta['periodo_anio']
         mes = boleta['periodo_mes']
 
         # Calcular periodo anterior
         if mes == 1:
             mes_anterior = 12
-            año_anterior = año - 1
+            anio_anterior = anio - 1
         else:
             mes_anterior = mes - 1
-            año_anterior = año
+            anio_anterior = anio
 
         # Buscar lectura anterior
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute('''
             SELECT fecha_lectura FROM lecturas
-            WHERE medidor_id = %s AND año = %s AND mes = %s
-        ''', (medidor_id, año_anterior, mes_anterior))
+            WHERE medidor_id = %s AND anio = %s AND mes = %s
+        ''', (medidor_id, anio_anterior, mes_anterior))
         lectura_ant = cursor.fetchone()
         conn.close()
 

@@ -11,7 +11,7 @@ from web.auth import admin_required
 from src.models_boletas import obtener_boleta_por_lectura
 from src.models import (
     listar_lecturas, obtener_lectura, crear_lectura, actualizar_lectura,
-    eliminar_lectura, contar_lecturas, obtener_años_disponibles,
+    eliminar_lectura, contar_lecturas, obtener_anios_disponibles,
     listar_clientes, listar_medidores, obtener_o_crear_medidor,
     obtener_clientes_incompletos, obtener_fechas_comunes_por_periodo,
     crear_lecturas_multiple, obtener_estadisticas_lecturas,
@@ -36,18 +36,18 @@ def listar():
     # Calcular mes anterior como valor por defecto (solo si no hay filtros en URL)
     hoy = date.today()
     mes_anterior = (hoy.replace(day=1) - timedelta(days=1))
-    año_default = mes_anterior.year
+    anio_default = mes_anterior.year
     mes_default = mes_anterior.month
 
-    # Manejar año y mes: si es string vacio significa "Todos"
-    año_param = request.args.get('año', '')
+    # Manejar anio y mes: si es string vacio significa "Todos"
+    anio_param = request.args.get('anio', '')
     mes_param = request.args.get('mes', '')
 
     # Si hay parametros en la URL (usuario filtro), respetar su seleccion
-    if 'año' in request.args:
-        año = int(año_param) if año_param else None
+    if 'anio' in request.args:
+        anio = int(anio_param) if anio_param else None
     else:
-        año = año_default  # Primera carga: mes anterior
+        anio = anio_default  # Primera carga: mes anterior
 
     if 'mes' in request.args:
         mes = int(mes_param) if mes_param else None
@@ -70,12 +70,12 @@ def listar():
     # Obtener lecturas
     offset = (page - 1) * per_page
     lecturas = listar_lecturas(
-        año=año, mes=mes, cliente_id=cliente_id, medidor_id=medidor_id,
+        anio=anio, mes=mes, cliente_id=cliente_id, medidor_id=medidor_id,
         limit=per_page, offset=offset,
         orden_col=orden_col, orden_dir=orden_dir,
         solo_incompletos=incompletos
     )
-    total = contar_lecturas(año=año, mes=mes, cliente_id=cliente_id, medidor_id=medidor_id, solo_incompletos=incompletos)
+    total = contar_lecturas(anio=anio, mes=mes, cliente_id=cliente_id, medidor_id=medidor_id, solo_incompletos=incompletos)
 
     # Filtrar por foto si aplica
     if con_foto == 1:
@@ -87,13 +87,13 @@ def listar():
 
     # Estadísticas
     stats = obtener_estadisticas_lecturas(
-        año=año, mes=mes, cliente_id=cliente_id,
+        anio=anio, mes=mes, cliente_id=cliente_id,
         medidor_id=medidor_id, solo_incompletos=incompletos
     )
 
     # Dict de filtros para chips
     filtros = {
-        'año': año,
+        'anio': anio,
         'mes': mes,
         'cliente_id': cliente_id,
         'medidor_id': medidor_id,
@@ -113,21 +113,21 @@ def listar():
     }
 
     # Datos para filtros
-    años = obtener_años_disponibles()
+    anios = obtener_anios_disponibles()
     clientes = listar_clientes()
     medidores = listar_medidores(cliente_id) if cliente_id else listar_medidores()
     clientes_incompletos = obtener_clientes_incompletos() if incompletos else []
 
     return render_template('lecturas/lista.html',
                            lecturas=lecturas,
-                           años=años,
+                           anios=anios,
                            clientes=clientes,
                            medidores=medidores,
                            clientes_incompletos=clientes_incompletos,
                            filtros=filtros,
                            stats=stats,
                            pagination=pagination,
-                           año_sel=año,
+                           anio_sel=anio,
                            mes_sel=mes,
                            cliente_sel=cliente_id,
                            medidor_sel=medidor_id,
@@ -159,11 +159,11 @@ def crear():
         medidor_id = request.form.get('medidor_id', type=int)
         lectura_m3 = request.form.get('lectura_m3', type=int)
         fecha_str = request.form.get('fecha_lectura')
-        año = request.form.get('año', type=int)
+        anio = request.form.get('anio', type=int)
         mes = request.form.get('mes', type=int)
 
         # Validar (lectura_m3 puede ser 0)
-        if not medidor_id or lectura_m3 is None or not fecha_str or not año or not mes:
+        if not medidor_id or lectura_m3 is None or not fecha_str or not anio or not mes:
             flash('Todos los campos son requeridos', 'error')
             return redirect(url_for('lecturas.crear'))
 
@@ -182,14 +182,14 @@ def crear():
             if file and file.filename and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 # Crear directorio
-                destino_dir = os.path.join(FOTOS_DIR, f'medidor_{medidor_id}', str(año), f'{mes:02d}')
+                destino_dir = os.path.join(FOTOS_DIR, f'medidor_{medidor_id}', str(anio), f'{mes:02d}')
                 os.makedirs(destino_dir, exist_ok=True)
 
                 # Guardar archivo
                 destino = os.path.join(destino_dir, filename)
                 file.save(destino)
 
-                foto_path = f'medidor_{medidor_id}/{año}/{mes:02d}/{filename}'
+                foto_path = f'medidor_{medidor_id}/{anio}/{mes:02d}/{filename}'
                 foto_nombre = filename
 
         # Ajustar foto_path para lecturas sin foto
@@ -198,7 +198,7 @@ def crear():
             foto_nombre = 'sin_foto'
 
         # Validar duplicado
-        if lectura_existe(medidor_id, año, mes):
+        if lectura_existe(medidor_id, anio, mes):
             flash('Ya existe una lectura para este medidor en el periodo seleccionado', 'error')
             return redirect(url_for('lecturas.crear'))
 
@@ -210,7 +210,7 @@ def crear():
                 fecha_lectura=fecha_lectura,
                 foto_path=foto_path,
                 foto_nombre=foto_nombre,
-                año=año,
+                anio=anio,
                 mes=mes
             )
         except ValueError as e:
@@ -222,9 +222,9 @@ def crear():
 
     # GET: mostrar formulario
     medidores = listar_medidores()
-    años = list(range(2023, datetime.now().year + 1))
+    anios = list(range(2023, datetime.now().year + 1))
 
-    return render_template('lecturas/crear.html', medidores=medidores, años=años)
+    return render_template('lecturas/crear.html', medidores=medidores, anios=anios)
 
 
 @lecturas_bp.route('/<int:lectura_id>/editar', methods=['GET', 'POST'])
@@ -310,10 +310,10 @@ def crear_multiple():
             flash('Debe seleccionar al menos un periodo', 'error')
             return redirect(url_for('lecturas.crear_multiple'))
 
-        # Convertir 'anio' a 'año' para compatibilidad con el modelo
+        # Convertir 'anio' a 'anio' para compatibilidad con el modelo
         for p in periodos_data:
-            if 'anio' in p and 'año' not in p:
-                p['año'] = p['anio']
+            if 'anio' in p and 'anio' not in p:
+                p['anio'] = p['anio']
 
         # Crear las lecturas
         resultado = crear_lecturas_multiple(medidor_id, lectura_m3, periodos_data)
@@ -332,9 +332,9 @@ def crear_multiple():
 
     # GET: mostrar formulario
     medidores = listar_medidores()
-    años = list(range(2020, datetime.now().year + 2))
+    anios = list(range(2020, datetime.now().year + 2))
 
-    return render_template('lecturas/crear_multiple.html', medidores=medidores, años=años)
+    return render_template('lecturas/crear_multiple.html', medidores=medidores, anios=anios)
 
 
 @lecturas_bp.route('/api/medidores')
@@ -362,8 +362,8 @@ def api_fechas_comunes():
     if not data or 'periodos' not in data:
         return jsonify({'error': 'Periodos requeridos'}), 400
 
-    # Aceptar tanto 'año' como 'anio' para compatibilidad
-    periodos = [(p.get('año') or p.get('anio'), p['mes']) for p in data['periodos']]
+    # Aceptar tanto 'anio' como 'anio' para compatibilidad
+    periodos = [(p.get('anio') or p.get('anio'), p['mes']) for p in data['periodos']]
     fechas = obtener_fechas_comunes_por_periodo(periodos)
 
     # Convertir keys de tuplas a strings para JSON
@@ -374,7 +374,7 @@ def api_fechas_comunes():
         if dia is None:
             todas_encontradas = False
 
-        # Calcular mes/año de lectura (mes siguiente)
+        # Calcular mes/anio de lectura (mes siguiente)
         if mes == 12:
             mes_lectura = 1
             anio_lectura = anio + 1

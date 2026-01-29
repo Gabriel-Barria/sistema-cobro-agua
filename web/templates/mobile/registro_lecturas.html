@@ -7,9 +7,9 @@
 <!-- Selector de período sticky (solo admin) -->
 <div class="periodo-selector sticky">
     <form method="GET" class="periodo-form">
-        <select name="año" id="año-select" class="input-mobile" onchange="this.form.submit()">
-            {% for a in años %}
-            <option value="{{ a }}" {% if a == año %}selected{% endif %}>{{ a }}</option>
+        <select name="anio" id="anio-select" class="input-mobile" onchange="this.form.submit()">
+            {% for a in anios %}
+            <option value="{{ a }}" {% if a == anio %}selected{% endif %}>{{ a }}</option>
             {% endfor %}
         </select>
 
@@ -25,7 +25,7 @@
 {% else %}
 <!-- Mostrar período actual sin opción de cambiar -->
 <div class="periodo-info sticky">
-    <p><strong>Período:</strong> {{ mes|mes_nombre }} {{ año }}</p>
+    <p><strong>Período:</strong> {{ mes|mes_nombre }} {{ anio }}</p>
 </div>
 {% endif %}
 
@@ -40,7 +40,7 @@
 
 <!-- Banner informativo -->
 <div class="info-banner">
-    <p><span id="clientes-visibles">{{ clientes|length }}</span> clientes sin lectura en {{ mes|mes_nombre }} {{ año }}</p>
+    <p><span id="clientes-visibles">{{ clientes|length }}</span> clientes sin lectura en {{ mes|mes_nombre }} {{ anio }}</p>
 </div>
 
 <!-- Lista de clientes sin lectura -->
@@ -72,7 +72,7 @@
         {% endfor %}
     {% else %}
         <div class="empty-state">
-            <p>Todos los clientes tienen lectura registrada para {{ mes|mes_nombre }} {{ año }}</p>
+            <p>Todos los clientes tienen lectura registrada para {{ mes|mes_nombre }} {{ anio }}</p>
             <p class="text-muted">Intenta seleccionar otro período</p>
         </div>
     {% endif %}
@@ -100,7 +100,7 @@
         </div>
         <form id="form-registro-lectura" class="form-mobile" enctype="multipart/form-data">
             <input type="hidden" id="medidor-id" name="medidor_id">
-            <input type="hidden" id="año" name="año" value="{{ año }}">
+            <input type="hidden" id="anio" name="anio" value="{{ anio }}">
             <input type="hidden" id="mes" name="mes" value="{{ mes }}">
 
             <div class="form-group">

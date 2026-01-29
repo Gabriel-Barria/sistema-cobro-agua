@@ -33,11 +33,11 @@ CREATE TABLE IF NOT EXISTS lecturas (
     fecha_lectura DATE NOT NULL,
     foto_path TEXT NOT NULL,
     foto_nombre TEXT NOT NULL,
-    año INTEGER NOT NULL,
+    anio INTEGER NOT NULL,
     mes INTEGER NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (medidor_id) REFERENCES medidores(id),
-    CONSTRAINT uq_lectura_medidor_periodo UNIQUE (medidor_id, año, mes)
+    CONSTRAINT uq_lectura_medidor_periodo UNIQUE (medidor_id, anio, mes)
 );
 
 CREATE TABLE IF NOT EXISTS configuracion_boletas (
@@ -174,7 +174,7 @@ CREATE INDEX IF NOT EXISTS idx_clientes_nombre ON clientes(nombre);
 CREATE INDEX IF NOT EXISTS idx_medidores_cliente ON medidores(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_lecturas_medidor ON lecturas(medidor_id);
 CREATE INDEX IF NOT EXISTS idx_lecturas_fecha ON lecturas(fecha_lectura);
-CREATE INDEX IF NOT EXISTS idx_lecturas_año_mes ON lecturas(año, mes);
+CREATE INDEX IF NOT EXISTS idx_lecturas_anio_mes ON lecturas(anio, mes);
 CREATE INDEX IF NOT EXISTS idx_boletas_lectura ON boletas(lectura_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_medidor ON boletas(medidor_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_pagada ON boletas(pagada);

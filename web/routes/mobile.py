@@ -10,7 +10,7 @@ from web.auth import registrador_required
 from src.models import (
     listar_clientes, listar_medidores, crear_lectura,
     obtener_lectura, actualizar_lectura, listar_lecturas,
-    lectura_existe, obtener_años_disponibles
+    lectura_existe, obtener_anios_disponibles
 )
 from src.models_boletas import obtener_boleta_por_lectura
 from src.database import BASE_DIR
@@ -40,32 +40,32 @@ def registro_lecturas():
 
     # Calcular período automático (mes anterior)
     hoy = datetime.now()
-    año_auto = hoy.year if hoy.month > 1 else hoy.year - 1
+    anio_auto = hoy.year if hoy.month > 1 else hoy.year - 1
     mes_auto = hoy.month - 1 if hoy.month > 1 else 12
 
     # Si es admin, permite override via parámetros GET
     es_admin = session.get('rol') == 'administrador'
     if es_admin:
-        año = request.args.get('año', año_auto, type=int)
+        anio = request.args.get('anio', anio_auto, type=int)
         mes = request.args.get('mes', mes_auto, type=int)
     else:
         # Registrador: siempre usa período calculado
-        año = año_auto
+        anio = anio_auto
         mes = mes_auto
 
     # Filtrado AUTOMÁTICO: solo clientes sin lectura en período
-    clientes_pendientes = obtener_clientes_sin_lectura(año, mes)
+    clientes_pendientes = obtener_clientes_sin_lectura(anio, mes)
 
-    # Obtener años disponibles para el dropdown
-    años = obtener_años_disponibles()
-    if not años:
-        años = [datetime.now().year]
+    # Obtener anios disponibles para el dropdown
+    anios = obtener_anios_disponibles()
+    if not anios:
+        anios = [datetime.now().year]
 
     return render_template('mobile/registro_lecturas.html',
                           clientes=clientes_pendientes,
-                          año=año,
+                          anio=anio,
                           mes=mes,
-                          años=años,
+                          anios=anios,
                           es_admin=es_admin)
 
 
@@ -96,12 +96,12 @@ def crear_lectura_mobile():
     try:
         medidor_id = request.form.get('medidor_id', type=int)
         lectura_m3 = request.form.get('lectura_m3', type=int)
-        año = request.form.get('año', type=int)
+        anio = request.form.get('anio', type=int)
         mes = request.form.get('mes', type=int)
         foto = request.files.get('foto')
 
         # Validar campos requeridos (lectura_m3 puede ser 0)
-        if not medidor_id or lectura_m3 is None or not año or not mes:
+        if not medidor_id or lectura_m3 is None or not anio or not mes:
             return jsonify({'error': 'Campos requeridos faltantes'}), 400
 
         # Validar foto requerida
@@ -115,13 +115,13 @@ def crear_lectura_mobile():
         fecha_lectura = datetime.now().date()
 
         # Validar duplicado
-        if lectura_existe(medidor_id, año, mes):
+        if lectura_existe(medidor_id, anio, mes):
             return jsonify({'error': 'Ya existe lectura para este período'}), 400
 
         # Guardar foto
         filename = secure_filename(foto.filename)
-        # Estructura: fotos/medidor_{id}/{año}/{mes:02d}/
-        foto_dir = os.path.join(BASE_DIR, 'fotos', f'medidor_{medidor_id}', str(año), f'{mes:02d}')
+        # Estructura: fotos/medidor_{id}/{anio}/{mes:02d}/
+        foto_dir = os.path.join(BASE_DIR, 'fotos', f'medidor_{medidor_id}', str(anio), f'{mes:02d}')
         os.makedirs(foto_dir, exist_ok=True)
 
         # Nombre único con timestamp
@@ -131,7 +131,7 @@ def crear_lectura_mobile():
         foto.save(foto_path_completa)
 
         # Ruta relativa para BD
-        foto_path = f'medidor_{medidor_id}/{año}/{mes:02d}/{foto_nombre}'
+        foto_path = f'medidor_{medidor_id}/{anio}/{mes:02d}/{foto_nombre}'
 
         # Crear lectura
         lectura_id = crear_lectura(
@@ -140,7 +140,7 @@ def crear_lectura_mobile():
             fecha_lectura=fecha_lectura,
             foto_path=foto_path,
             foto_nombre=foto_nombre,
-            año=año,
+            anio=anio,
             mes=mes
         )
 
@@ -163,32 +163,32 @@ def ver_lecturas():
     """
     # Calcular período automático (mes anterior)
     hoy = datetime.now()
-    año_auto = hoy.year if hoy.month > 1 else hoy.year - 1
+    anio_auto = hoy.year if hoy.month > 1 else hoy.year - 1
     mes_auto = hoy.month - 1 if hoy.month > 1 else 12
 
     es_admin = session.get('rol') == 'administrador'
     if es_admin:
         # Admin: permite filtros, default al período calculado
-        año = request.args.get('año', año_auto, type=int)
+        anio = request.args.get('anio', anio_auto, type=int)
         mes = request.args.get('mes', mes_auto, type=int)
     else:
         # Registrador: siempre período fijo
-        año = año_auto
+        anio = anio_auto
         mes = mes_auto
 
     # Usar función existente con filtros
-    lecturas = listar_lecturas(año=año, mes=mes, limit=200, offset=0)
+    lecturas = listar_lecturas(anio=anio, mes=mes, limit=200, offset=0)
 
-    # Obtener años disponibles para filtros
-    años = obtener_años_disponibles()
-    if not años:
-        años = [datetime.now().year]
+    # Obtener anios disponibles para filtros
+    anios = obtener_anios_disponibles()
+    if not anios:
+        anios = [datetime.now().year]
 
     return render_template('mobile/ver_lecturas.html',
                           lecturas=lecturas,
-                          año_sel=año,
+                          anio_sel=anio,
                           mes_sel=mes,
-                          años=años,
+                          anios=anios,
                           es_admin=es_admin)
 
 

@@ -404,7 +404,7 @@ function cargarFormularioEdicion(lectura) {
                 <p class="form-note">
                     <strong>Cliente:</strong> ${lectura.cliente_nombre}<br>
                     <strong>Medidor:</strong> ${lectura.numero_medidor || 'S/N'}<br>
-                    <strong>Período:</strong> ${lectura.mes}/${lectura.año}
+                    <strong>Período:</strong> ${lectura.mes}/${lectura.anio}
                 </p>
             </div>
 

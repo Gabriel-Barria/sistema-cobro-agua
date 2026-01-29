@@ -51,7 +51,7 @@ def guardar_configuracion(cargo_fijo: float, precio_m3: float):
 # BOLETAS - CRUD
 # =============================================================================
 
-def generar_numero_boleta(año: int, mes: int) -> str:
+def generar_numero_boleta(anio: int, mes: int) -> str:
     """Genera un numero de boleta unico formato BOL-YYYYMM-XXXX."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -62,7 +62,7 @@ def generar_numero_boleta(año: int, mes: int) -> str:
         WHERE periodo_anio = %s AND periodo_mes = %s
         ORDER BY numero_boleta DESC
         LIMIT 1
-    ''', (año, mes))
+    ''', (anio, mes))
 
     resultado = cursor.fetchone()
     conn.close()
@@ -76,7 +76,7 @@ def generar_numero_boleta(año: int, mes: int) -> str:
         # Primera boleta del periodo
         numero = 1
 
-    return f"BOL-{año}{mes:02d}-{numero:04d}"
+    return f"BOL-{anio}{mes:02d}-{numero:04d}"
 
 
 def crear_boleta(lectura_id: int, cliente_nombre: str, medidor_id: int,
@@ -138,7 +138,7 @@ def obtener_boleta_por_lectura(lectura_id: int):
 
 def listar_boletas(cliente_id: int = None, medidor_id: int = None,
                    pagada: int = None, sin_comprobante: bool = False,
-                   año: int = None, mes: int = None, enviada: int = None):
+                   anio: int = None, mes: int = None, enviada: int = None):
     """Lista boletas con filtros opcionales.
 
     Args:
@@ -146,7 +146,7 @@ def listar_boletas(cliente_id: int = None, medidor_id: int = None,
         medidor_id: Filtrar por medidor
         pagada: Filtrar por estado de pago (0=pendiente, 1=revision, 2=pagada)
         sin_comprobante: Filtrar boletas pagadas sin comprobante
-        año: Filtrar por año
+        anio: Filtrar por anio
         mes: Filtrar por mes
         enviada: Filtrar por estado de envio (1=enviada, 0=no enviada)
     """
@@ -180,9 +180,9 @@ def listar_boletas(cliente_id: int = None, medidor_id: int = None,
     if sin_comprobante:
         query += ' AND b.pagada = 2 AND (b.comprobante_path IS NULL OR b.comprobante_path = \'\')'
 
-    if año is not None:
+    if anio is not None:
         query += ' AND b.periodo_anio = %s'
-        params.append(año)
+        params.append(anio)
 
     if mes is not None:
         query += ' AND b.periodo_mes = %s'
@@ -272,7 +272,7 @@ def eliminar_boleta(boleta_id: int) -> bool:
 # FUNCIONES AUXILIARES PARA CALCULO
 # =============================================================================
 
-def obtener_lectura_anterior(medidor_id: int, año: int, mes: int):
+def obtener_lectura_anterior(medidor_id: int, anio: int, mes: int):
     """Obtiene la lectura del periodo anterior."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -280,15 +280,15 @@ def obtener_lectura_anterior(medidor_id: int, año: int, mes: int):
     # Calcular periodo anterior
     if mes == 1:
         mes_anterior = 12
-        año_anterior = año - 1
+        anio_anterior = anio - 1
     else:
         mes_anterior = mes - 1
-        año_anterior = año
+        anio_anterior = anio
 
     cursor.execute('''
         SELECT lectura_m3 FROM lecturas
-        WHERE medidor_id = %s AND año = %s AND mes = %s
-    ''', (medidor_id, año_anterior, mes_anterior))
+        WHERE medidor_id = %s AND anio = %s AND mes = %s
+    ''', (medidor_id, anio_anterior, mes_anterior))
 
     lectura = cursor.fetchone()
     conn.close()
@@ -303,7 +303,7 @@ def calcular_consumo(lectura_actual: int, lectura_anterior: int) -> int:
     return max(0, consumo)  # No permitir consumo negativo
 
 
-def obtener_lecturas_sin_boleta(año: int = None, mes: int = None,
+def obtener_lecturas_sin_boleta(anio: int = None, mes: int = None,
                                  cliente_id: int = None):
     """Obtiene lecturas que aun no tienen boleta asociada."""
     conn = get_connection()
@@ -319,9 +319,9 @@ def obtener_lecturas_sin_boleta(año: int = None, mes: int = None,
     '''
     params = []
 
-    if año is not None:
-        query += ' AND l.año = %s'
-        params.append(año)
+    if anio is not None:
+        query += ' AND l.anio = %s'
+        params.append(anio)
 
     if mes is not None:
         query += ' AND l.mes = %s'
@@ -331,7 +331,7 @@ def obtener_lecturas_sin_boleta(año: int = None, mes: int = None,
         query += ' AND c.id = %s'
         params.append(cliente_id)
 
-    query += ' ORDER BY l.año DESC, l.mes DESC, c.nombre'
+    query += ' ORDER BY l.anio DESC, l.mes DESC, c.nombre'
 
     cursor.execute(query, params)
     lecturas = cursor.fetchall()
@@ -339,28 +339,28 @@ def obtener_lecturas_sin_boleta(año: int = None, mes: int = None,
     return [dict(l) for l in lecturas]
 
 
-def obtener_años_disponibles():
-    """Obtiene los años con lecturas disponibles, incluyendo año actual y anterior."""
+def obtener_anios_disponibles():
+    """Obtiene los anios con lecturas disponibles, incluyendo anio actual y anterior."""
     from datetime import date
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT año FROM lecturas ORDER BY año DESC')
-    años = [row['año'] for row in cursor.fetchall()]
+    cursor.execute('SELECT DISTINCT anio FROM lecturas ORDER BY anio DESC')
+    anios = [row['anio'] for row in cursor.fetchall()]
     conn.close()
 
-    # Asegurar que el año actual y el anterior estén incluidos
-    año_actual = date.today().year
-    año_anterior = año_actual - 1
-    for a in [año_actual, año_anterior]:
-        if a not in años:
-            años.append(a)
-    años.sort(reverse=True)
-    return años
+    # Asegurar que el anio actual y el anterior estén incluidos
+    anio_actual = date.today().year
+    anio_anterior = anio_actual - 1
+    for a in [anio_actual, anio_anterior]:
+        if a not in anios:
+            anios.append(a)
+    anios.sort(reverse=True)
+    return anios
 
 
 def obtener_estadisticas_boletas(cliente_id: int = None, medidor_id: int = None,
                                   pagada: int = None, sin_comprobante: bool = False,
-                                  año: int = None, mes: int = None):
+                                  anio: int = None, mes: int = None):
     """Obtiene estadisticas de boletas con filtros opcionales."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -398,9 +398,9 @@ def obtener_estadisticas_boletas(cliente_id: int = None, medidor_id: int = None,
     if sin_comprobante:
         query += ' AND b.pagada = 2 AND (b.comprobante_path IS NULL OR b.comprobante_path = \'\')'
 
-    if año is not None:
+    if anio is not None:
         query += ' AND b.periodo_anio = %s'
-        params.append(año)
+        params.append(anio)
 
     if mes is not None:
         query += ' AND b.periodo_mes = %s'

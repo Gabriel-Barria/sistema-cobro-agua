@@ -106,9 +106,9 @@ def guardar_configuraciones_multiple(configuraciones: Dict[str, Any]) -> None:
 
 def calcular_periodo_para_fecha(fecha: date) -> Tuple[int, int]:
     """
-    Calcula el periodo (año, mes) para una fecha de lectura segun la configuracion.
+    Calcula el periodo (anio, mes) para una fecha de lectura segun la configuracion.
 
-    Retorna: (año, mes) del periodo correspondiente
+    Retorna: (anio, mes) del periodo correspondiente
     """
     dia_corte = obtener_configuracion('dia_corte_periodo', 1)
     regla = obtener_configuracion('regla_periodo', 'mes_anterior')
@@ -142,7 +142,7 @@ def obtener_periodo_actual() -> Tuple[int, int]:
     """
     Obtiene el periodo actual basado en la fecha de hoy y la configuracion.
 
-    Retorna: (año, mes) del periodo actual
+    Retorna: (anio, mes) del periodo actual
     """
     return calcular_periodo_para_fecha(date.today())
 
@@ -152,7 +152,7 @@ def obtener_periodo_objetivo_generacion() -> Tuple[int, int]:
     Obtiene el periodo objetivo para generar boletas.
     Generalmente es el mes anterior al actual.
 
-    Retorna: (año, mes) del periodo objetivo
+    Retorna: (anio, mes) del periodo objetivo
     """
     hoy = date.today()
 
@@ -163,13 +163,13 @@ def obtener_periodo_objetivo_generacion() -> Tuple[int, int]:
         return (hoy.year, hoy.month - 1)
 
 
-def obtener_fecha_lectura_por_defecto(año: int, mes: int) -> date:
+def obtener_fecha_lectura_por_defecto(anio: int, mes: int) -> date:
     """
     Obtiene la fecha de lectura por defecto para un periodo.
     Usa el dia_toma_lectura configurado.
 
     Args:
-        año: Año del periodo
+        anio: Año del periodo
         mes: Mes del periodo
 
     Retorna: Fecha de lectura por defecto (mes siguiente al periodo)
@@ -179,14 +179,14 @@ def obtener_fecha_lectura_por_defecto(año: int, mes: int) -> date:
     # La lectura se toma el mes siguiente al periodo
     if mes == 12:
         mes_lectura = 1
-        año_lectura = año + 1
+        anio_lectura = anio + 1
     else:
         mes_lectura = mes + 1
-        año_lectura = año
+        anio_lectura = anio
 
     # Validar que el dia sea valido para el mes
     import calendar
-    dias_en_mes = calendar.monthrange(año_lectura, mes_lectura)[1]
+    dias_en_mes = calendar.monthrange(anio_lectura, mes_lectura)[1]
     dia_toma = min(dia_toma, dias_en_mes)
 
-    return date(año_lectura, mes_lectura, dia_toma)
+    return date(anio_lectura, mes_lectura, dia_toma)

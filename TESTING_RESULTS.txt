@@ -15,7 +15,7 @@ ENTORNO: Docker (lecturas-app en puerto 5000)
 Tablas creadas:
   - clientes (con índice en nombre)
   - medidores (con índice en cliente_id)
-  - lecturas (con índices en medidor_id, fecha_lectura, año/mes)
+  - lecturas (con índices en medidor_id, fecha_lectura, anio/mes)
   - boletas (con índices en lectura_id, medidor_id, pagada, periodo)
   - configuracion_boletas
 
@@ -253,7 +253,7 @@ ACTUALIZACION: GENERACION DE PDF HABILITADA (2026-01-10 15:20)
    a) Placeholders SQLite en routes/boletas.py:
       - Linea 405: WHERE comprobante_path = ?
       - Linea 459: WHERE comprobante_path = ?
-      - Linea 594: WHERE medidor_id = ? AND año = ? AND mes = ?
+      - Linea 594: WHERE medidor_id = ? AND anio = ? AND mes = ?
       Solucion: Cambiar ? a %s (PostgreSQL)
       
    b) Funcion descargar() deshabilitada:
@@ -274,7 +274,7 @@ VERIFICACION POST-CORRECCION - GENERACION DE PDF
 
 ✅ DESCARGA DE BOLETAS PDF FUNCIONANDO:
    - HTTP 200 (exitoso)
-   - Tamaño: 204.783 bytes (~200 KB)
+   - Tamanio: 204.783 bytes (~200 KB)
    - Formato: PDF version 1.7
    - WeasyPrint operativo en Docker
 

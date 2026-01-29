@@ -480,7 +480,7 @@ def eliminar_cliente(cliente_id: int) -> tuple:
 # ============== LECTURAS ==============
 
 def crear_lectura(medidor_id: int, lectura_m3: int, fecha_lectura: date,
-                  foto_path: str, foto_nombre: str, año: int, mes: int) -> int:
+                  foto_path: str, foto_nombre: str, anio: int, mes: int) -> int:
     """
     Crea una nueva lectura.
 
@@ -490,7 +490,7 @@ def crear_lectura(medidor_id: int, lectura_m3: int, fecha_lectura: date,
         fecha_lectura: Fecha de la lectura
         foto_path: Ruta a la foto
         foto_nombre: Nombre original del archivo
-        año: Año del periodo
+        anio: Año del periodo
         mes: Mes del periodo
 
     Returns:
@@ -499,29 +499,29 @@ def crear_lectura(medidor_id: int, lectura_m3: int, fecha_lectura: date,
     Raises:
         ValueError: Si ya existe una lectura para ese medidor en ese periodo
     """
-    if lectura_existe(medidor_id, año, mes):
-        raise ValueError(f'Ya existe una lectura para el medidor {medidor_id} en {mes}/{año}')
+    if lectura_existe(medidor_id, anio, mes):
+        raise ValueError(f'Ya existe una lectura para el medidor {medidor_id} en {mes}/{anio}')
 
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, año, mes)
+        INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, anio, mes)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
         RETURNING id
-    ''', (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, año, mes))
+    ''', (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, anio, mes))
     lectura_id = cursor.fetchone()[0]
     conn.commit()
     conn.close()
     return lectura_id
 
 
-def lectura_existe(medidor_id: int, año: int, mes: int) -> bool:
+def lectura_existe(medidor_id: int, anio: int, mes: int) -> bool:
     """
     Verifica si ya existe una lectura para un medidor en un periodo.
 
     Args:
         medidor_id: ID del medidor
-        año: Año del periodo
+        anio: Año del periodo
         mes: Mes del periodo
 
     Returns:
@@ -531,14 +531,14 @@ def lectura_existe(medidor_id: int, año: int, mes: int) -> bool:
     cursor = conn.cursor()
     cursor.execute('''
         SELECT COUNT(*) FROM lecturas
-        WHERE medidor_id = %s AND año = %s AND mes = %s
-    ''', (medidor_id, año, mes))
+        WHERE medidor_id = %s AND anio = %s AND mes = %s
+    ''', (medidor_id, anio, mes))
     count = cursor.fetchone()[0]
     conn.close()
     return count > 0
 
 
-def listar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
+def listar_lecturas(medidor_id: int = None, anio: int = None, mes: int = None,
                     cliente_id: int = None, limit: int = 100, offset: int = 0,
                     orden_col: str = None, orden_dir: str = 'asc',
                     solo_incompletos: bool = False) -> List[Dict]:
@@ -547,7 +547,7 @@ def listar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
 
     Args:
         medidor_id: Filtrar por medidor
-        año: Filtrar por año
+        anio: Filtrar por anio
         mes: Filtrar por mes
         cliente_id: Filtrar por cliente
         limit: Límite de resultados
@@ -574,9 +574,9 @@ def listar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
     if medidor_id:
         query += ' AND l.medidor_id = %s'
         params.append(medidor_id)
-    if año:
-        query += ' AND l.año = %s'
-        params.append(año)
+    if anio:
+        query += ' AND l.anio = %s'
+        params.append(anio)
     if mes:
         query += ' AND l.mes = %s'
         params.append(mes)
@@ -598,7 +598,7 @@ def listar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
     columnas_orden = {
         'id': 'l.id',
         'cliente': 'c.nombre',
-        'periodo': 'l.año, l.mes',
+        'periodo': 'l.anio, l.mes',
         'lectura_m3': 'l.lectura_m3',
         'fecha_lectura': 'l.fecha_lectura'
     }
@@ -610,11 +610,11 @@ def listar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
         query += f' ORDER BY {columnas_orden[orden_col]} {direccion}'
         # Agregar orden secundario para periodo
         if orden_col == 'periodo':
-            pass  # Ya tiene año y mes
+            pass  # Ya tiene anio y mes
         else:
-            query += ', l.año DESC, l.mes DESC'
+            query += ', l.anio DESC, l.mes DESC'
     else:
-        query += ' ORDER BY l.año DESC, l.mes DESC, c.nombre'
+        query += ' ORDER BY l.anio DESC, l.mes DESC, c.nombre'
 
     query += ' LIMIT %s OFFSET %s'
     params.extend([limit, offset])
@@ -681,7 +681,7 @@ def eliminar_lectura(lectura_id: int) -> bool:
     return affected > 0
 
 
-def contar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
+def contar_lecturas(medidor_id: int = None, anio: int = None, mes: int = None,
                     cliente_id: int = None, solo_incompletos: bool = False) -> int:
     """Cuenta lecturas con filtros opcionales."""
     conn = get_connection()
@@ -698,9 +698,9 @@ def contar_lecturas(medidor_id: int = None, año: int = None, mes: int = None,
     if medidor_id:
         query += ' AND l.medidor_id = %s'
         params.append(medidor_id)
-    if año:
-        query += ' AND l.año = %s'
-        params.append(año)
+    if anio:
+        query += ' AND l.anio = %s'
+        params.append(anio)
     if mes:
         query += ' AND l.mes = %s'
         params.append(mes)
@@ -743,13 +743,13 @@ def obtener_medidores_incompletos() -> List[int]:
         SELECT m.id
         FROM medidores m
         WHERE (
-            SELECT COUNT(DISTINCT l.año * 100 + l.mes)
+            SELECT COUNT(DISTINCT l.anio * 100 + l.mes)
             FROM lecturas l
             WHERE l.medidor_id = m.id
             AND (
-                (l.año = 2023 AND l.mes = 12) OR
-                (l.año = 2024) OR
-                (l.año = 2025 AND l.mes <= 11)
+                (l.anio = 2023 AND l.mes = 12) OR
+                (l.anio = 2024) OR
+                (l.anio = 2025 AND l.mes <= 11)
             )
         ) < %s
     ''', (total_periodos,))
@@ -776,13 +776,13 @@ def obtener_clientes_incompletos() -> List[int]:
         SELECT DISTINCT m.cliente_id
         FROM medidores m
         WHERE (
-            SELECT COUNT(DISTINCT l.año * 100 + l.mes)
+            SELECT COUNT(DISTINCT l.anio * 100 + l.mes)
             FROM lecturas l
             WHERE l.medidor_id = m.id
             AND (
-                (l.año = 2023 AND l.mes = 12) OR
-                (l.año = 2024) OR
-                (l.año = 2025 AND l.mes <= 11)
+                (l.anio = 2023 AND l.mes = 12) OR
+                (l.anio = 2024) OR
+                (l.anio = 2025 AND l.mes <= 11)
             )
         ) < %s
     ''', (total_periodos,))
@@ -792,27 +792,27 @@ def obtener_clientes_incompletos() -> List[int]:
     return [row[0] if isinstance(row, tuple) else row['cliente_id'] for row in rows]
 
 
-def obtener_años_disponibles() -> List[int]:
-    """Obtiene lista de años con lecturas, incluyendo año actual y anterior."""
+def obtener_anios_disponibles() -> List[int]:
+    """Obtiene lista de anios con lecturas, incluyendo anio actual y anterior."""
     from datetime import date
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('SELECT DISTINCT año FROM lecturas ORDER BY año DESC')
+    cursor.execute('SELECT DISTINCT anio FROM lecturas ORDER BY anio DESC')
     rows = cursor.fetchall()
     conn.close()
-    años = [row[0] for row in rows]
+    anios = [row[0] for row in rows]
 
-    # Asegurar que el año actual y el anterior estén incluidos
-    año_actual = date.today().year
-    año_anterior = año_actual - 1
-    for a in [año_actual, año_anterior]:
-        if a not in años:
-            años.append(a)
-    años.sort(reverse=True)
-    return años
+    # Asegurar que el anio actual y el anterior estén incluidos
+    anio_actual = date.today().year
+    anio_anterior = anio_actual - 1
+    for a in [anio_actual, anio_anterior]:
+        if a not in anios:
+            anios.append(a)
+    anios.sort(reverse=True)
+    return anios
 
 
-def obtener_estadisticas_lecturas(año: int = None, mes: int = None,
+def obtener_estadisticas_lecturas(anio: int = None, mes: int = None,
                                   cliente_id: int = None, medidor_id: int = None,
                                   solo_incompletos: bool = False) -> Dict:
     """Obtiene estadisticas de lecturas con los mismos filtros del listado."""
@@ -835,9 +835,9 @@ def obtener_estadisticas_lecturas(año: int = None, mes: int = None,
     if medidor_id:
         query += ' AND l.medidor_id = %s'
         params.append(medidor_id)
-    if año:
-        query += ' AND l.año = %s'
-        params.append(año)
+    if anio:
+        query += ' AND l.anio = %s'
+        params.append(anio)
     if mes:
         query += ' AND l.mes = %s'
         params.append(mes)
@@ -1028,14 +1028,14 @@ def obtener_estadisticas_pagos(estado: str = None, cliente_id: int = None) -> Di
 def obtener_fechas_comunes_por_periodo(periodos: List[tuple]) -> Dict[tuple, Optional[int]]:
     """
     Obtiene el día más común de lectura para cada periodo.
-    La fecha de lectura de un periodo (mes X, año Y) se toma en el mes siguiente.
+    La fecha de lectura de un periodo (mes X, anio Y) se toma en el mes siguiente.
     Por ejemplo: periodo marzo 2024 -> lectura tomada en abril 2024.
 
     Args:
-        periodos: Lista de tuplas (año, mes) representando los periodos
+        periodos: Lista de tuplas (anio, mes) representando los periodos
 
     Returns:
-        Dict con (año, mes) como key y el día más común como value (None si no hay datos)
+        Dict con (anio, mes) como key y el día más común como value (None si no hay datos)
     """
     if not periodos:
         return {}
@@ -1045,32 +1045,32 @@ def obtener_fechas_comunes_por_periodo(periodos: List[tuple]) -> Dict[tuple, Opt
 
     resultado = {}
 
-    for año, mes in periodos:
+    for anio, mes in periodos:
         # Calcular el mes de lectura (mes siguiente al periodo)
         if mes == 12:
             mes_lectura = 1
-            año_lectura = año + 1
+            anio_lectura = anio + 1
         else:
             mes_lectura = mes + 1
-            año_lectura = año
+            anio_lectura = anio
 
         # Buscar el día más común en las lecturas de ese periodo
         # Formato de fecha: YYYY-MM-DD, extraemos el día
         cursor.execute('''
             SELECT CAST(SUBSTRING(fecha_lectura, 9, 2) AS INTEGER) as dia, COUNT(*) as cuenta
             FROM lecturas
-            WHERE año = %s AND mes = %s
+            WHERE anio = %s AND mes = %s
             AND SUBSTRING(fecha_lectura, 1, 7) = %s
             GROUP BY dia
             ORDER BY cuenta DESC
             LIMIT 1
-        ''', (año, mes, f'{año_lectura:04d}-{mes_lectura:02d}'))
+        ''', (anio, mes, f'{anio_lectura:04d}-{mes_lectura:02d}'))
 
         row = cursor.fetchone()
         if row:
-            resultado[(año, mes)] = row[0]
+            resultado[(anio, mes)] = row[0]
         else:
-            resultado[(año, mes)] = None
+            resultado[(anio, mes)] = None
 
     conn.close()
     return resultado
@@ -1083,7 +1083,7 @@ def crear_lecturas_multiple(medidor_id: int, lectura_m3: int, periodos_fechas: L
     Args:
         medidor_id: ID del medidor
         lectura_m3: Valor de lectura en m3 (igual para todas)
-        periodos_fechas: Lista de dicts con {año, mes, fecha_lectura}
+        periodos_fechas: Lista de dicts con {anio, mes, fecha_lectura}
 
     Returns:
         Dict con 'creados' (lista de IDs), 'omitidos' (cantidad de omitidos)
@@ -1098,18 +1098,18 @@ def crear_lecturas_multiple(medidor_id: int, lectura_m3: int, periodos_fechas: L
         # Verificar si ya existe lectura para este medidor/periodo
         cursor.execute('''
             SELECT id FROM lecturas
-            WHERE medidor_id = %s AND año = %s AND mes = %s
-        ''', (medidor_id, pf['año'], pf['mes']))
+            WHERE medidor_id = %s AND anio = %s AND mes = %s
+        ''', (medidor_id, pf['anio'], pf['mes']))
 
         if cursor.fetchone():
             omitidos += 1
             continue
 
         cursor.execute('''
-            INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, año, mes)
+            INSERT INTO lecturas (medidor_id, lectura_m3, fecha_lectura, foto_path, foto_nombre, anio, mes)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
             RETURNING id
-        ''', (medidor_id, lectura_m3, pf['fecha_lectura'], '', 'sin_foto', pf['año'], pf['mes']))
+        ''', (medidor_id, lectura_m3, pf['fecha_lectura'], '', 'sin_foto', pf['anio'], pf['mes']))
         ids_creados.append(cursor.fetchone()[0])
 
     conn.commit()
@@ -1140,14 +1140,14 @@ def obtener_estadisticas() -> Dict:
     }
 
 
-def obtener_clientes_sin_lectura(año: int, mes: int) -> List[Dict]:
+def obtener_clientes_sin_lectura(anio: int, mes: int) -> List[Dict]:
     """
     Filtrado AUTOMÁTICO de clientes pendientes.
     Retorna SOLO clientes con medidores activos que NO tienen lectura
     registrada en el período especificado.
 
     Args:
-        año: Año del período
+        anio: Año del período
         mes: Mes del período (1-12)
 
     Returns:
@@ -1176,7 +1176,7 @@ def obtener_clientes_sin_lectura(año: int, mes: int) -> List[Dict]:
         FROM clientes c
         INNER JOIN medidores m ON c.id = m.cliente_id
         LEFT JOIN lecturas l ON m.id = l.medidor_id
-            AND l.año = %s
+            AND l.anio = %s
             AND l.mes = %s
         WHERE m.activo = 1
             AND l.id IS NULL
@@ -1184,7 +1184,7 @@ def obtener_clientes_sin_lectura(año: int, mes: int) -> List[Dict]:
         ORDER BY c.nombre
     '''
 
-    cursor.execute(query, (año, mes))
+    cursor.execute(query, (anio, mes))
     rows = cursor.fetchall()
     conn.close()
 

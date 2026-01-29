@@ -15,7 +15,7 @@ from src.models_boletas import (
     listar_boletas, desmarcar_boleta_pagada,
     guardar_comprobante, eliminar_boleta,
     obtener_lectura_anterior, calcular_consumo,
-    obtener_lecturas_sin_boleta, obtener_años_disponibles,
+    obtener_lecturas_sin_boleta, obtener_anios_disponibles,
     obtener_estadisticas_boletas,
     registrar_envio_boleta, obtener_envios_boleta
 )
@@ -86,7 +86,7 @@ def listar():
     # Calcular mes anterior como valor por defecto (solo si no hay filtros en URL)
     hoy = date.today()
     mes_anterior = (hoy.replace(day=1) - timedelta(days=1))
-    año_default = mes_anterior.year
+    anio_default = mes_anterior.year
     mes_default = mes_anterior.month
 
     # Obtener parametros de filtro
@@ -96,15 +96,15 @@ def listar():
     sin_comprobante = request.args.get('sin_comprobante', type=int) == 1
     enviada = request.args.get('enviada', type=int)
 
-    # Manejar año y mes: si es string vacio significa "Todos"
-    año_param = request.args.get('año', '')
+    # Manejar anio y mes: si es string vacio significa "Todos"
+    anio_param = request.args.get('anio', '')
     mes_param = request.args.get('mes', '')
 
     # Si hay parametros en la URL (usuario filtro), respetar su seleccion
-    if 'año' in request.args:
-        año = int(año_param) if año_param else None
+    if 'anio' in request.args:
+        anio = int(anio_param) if anio_param else None
     else:
-        año = año_default  # Primera carga: mes anterior
+        anio = anio_default  # Primera carga: mes anterior
 
     if 'mes' in request.args:
         mes = int(mes_param) if mes_param else None
@@ -127,7 +127,7 @@ def listar():
         medidor_id=medidor_id,
         pagada=pagada,
         sin_comprobante=sin_comprobante,
-        año=año,
+        anio=anio,
         mes=mes,
         enviada=enviada
     )
@@ -144,14 +144,14 @@ def listar():
 
     # Datos para filtros
     clientes = listar_clientes()
-    años = obtener_años_disponibles()
+    anios = obtener_anios_disponibles()
     # Estadísticas con los mismos filtros aplicados
     stats = obtener_estadisticas_boletas(
         cliente_id=cliente_id,
         medidor_id=medidor_id,
         pagada=pagada,
         sin_comprobante=sin_comprobante,
-        año=año,
+        anio=anio,
         mes=mes
     )
 
@@ -173,7 +173,7 @@ def listar():
                            boletas=boletas,
                            clientes=clientes,
                            medidores=medidores,
-                           años=años,
+                           anios=anios,
                            stats=stats,
                            pagination=pagination,
                            filtros={
@@ -181,7 +181,7 @@ def listar():
                                'medidor_id': medidor_id,
                                'pagada': pagada,
                                'sin_comprobante': sin_comprobante,
-                               'año': año,
+                               'anio': anio,
                                'mes': mes,
                                'enviada': enviada,
                                'sort_by': sort_by,
@@ -262,7 +262,7 @@ def crear():
         # Calcular consumo
         lectura_anterior = obtener_lectura_anterior(
             lectura['medidor_id'],
-            lectura['año'],
+            lectura['anio'],
             lectura['mes']
         )
         consumo = calcular_consumo(lectura['lectura_m3'], lectura_anterior)
@@ -272,7 +272,7 @@ def crear():
             lectura_id=lectura_id,
             cliente_nombre=lectura['cliente_nombre'],
             medidor_id=lectura['medidor_id'],
-            periodo_anio=lectura['año'],
+            periodo_anio=lectura['anio'],
             periodo_mes=lectura['mes'],
             lectura_actual=lectura['lectura_m3'],
             lectura_anterior=lectura_anterior,
@@ -286,21 +286,21 @@ def crear():
 
     # GET: Mostrar formulario
     cliente_id = request.args.get('cliente_id', type=int)
-    año = request.args.get('año', type=int)
+    anio = request.args.get('anio', type=int)
     mes = request.args.get('mes', type=int)
 
-    lecturas = obtener_lecturas_sin_boleta(año=año, mes=mes, cliente_id=cliente_id)
+    lecturas = obtener_lecturas_sin_boleta(anio=anio, mes=mes, cliente_id=cliente_id)
     clientes = listar_clientes()
-    años = obtener_años_disponibles()
+    anios = obtener_anios_disponibles()
 
     return render_template('boletas/crear.html',
                            lecturas=lecturas,
                            clientes=clientes,
-                           años=años,
+                           anios=anios,
                            config=config,
                            filtros={
                                'cliente_id': cliente_id,
-                               'año': año,
+                               'anio': anio,
                                'mes': mes
                            })
 
@@ -345,7 +345,7 @@ def crear_masivo():
             # Calcular consumo
             lectura_anterior = obtener_lectura_anterior(
                 lectura['medidor_id'],
-                lectura['año'],
+                lectura['anio'],
                 lectura['mes']
             )
             consumo = calcular_consumo(lectura['lectura_m3'], lectura_anterior)
@@ -355,7 +355,7 @@ def crear_masivo():
                 lectura_id=lectura_id,
                 cliente_nombre=lectura['cliente_nombre'],
                 medidor_id=lectura['medidor_id'],
-                periodo_anio=lectura['año'],
+                periodo_anio=lectura['anio'],
                 periodo_mes=lectura['mes'],
                 lectura_actual=lectura['lectura_m3'],
                 lectura_anterior=lectura_anterior,
@@ -374,21 +374,21 @@ def crear_masivo():
 
     # GET: Mostrar formulario
     cliente_id = request.args.get('cliente_id', type=int)
-    año = request.args.get('año', type=int)
+    anio = request.args.get('anio', type=int)
     mes = request.args.get('mes', type=int)
 
-    lecturas = obtener_lecturas_sin_boleta(año=año, mes=mes, cliente_id=cliente_id)
+    lecturas = obtener_lecturas_sin_boleta(anio=anio, mes=mes, cliente_id=cliente_id)
     clientes = listar_clientes()
-    años = obtener_años_disponibles()
+    anios = obtener_anios_disponibles()
 
     return render_template('boletas/crear_masivo.html',
                            lecturas=lecturas,
                            clientes=clientes,
-                           años=años,
+                           anios=anios,
                            config=config,
                            filtros={
                                'cliente_id': cliente_id,
-                               'año': año,
+                               'anio': anio,
                                'mes': mes
                            })
 
@@ -725,16 +725,16 @@ def descargar(boleta_id):
     if boleta['lectura_anterior'] is not None:
         # Buscar la lectura anterior por medidor_id y periodo
         medidor_id = boleta['medidor_id']
-        año = boleta['periodo_anio']
+        anio = boleta['periodo_anio']
         mes = boleta['periodo_mes']
 
         # Calcular periodo anterior
         if mes == 1:
             mes_anterior = 12
-            año_anterior = año - 1
+            anio_anterior = anio - 1
         else:
             mes_anterior = mes - 1
-            año_anterior = año
+            anio_anterior = anio
 
         # Buscar lectura anterior
         from src.database import get_connection
@@ -742,8 +742,8 @@ def descargar(boleta_id):
         cursor = conn.cursor()
         cursor.execute('''
             SELECT fecha_lectura FROM lecturas
-            WHERE medidor_id = %s AND año = %s AND mes = %s
-        ''', (medidor_id, año_anterior, mes_anterior))
+            WHERE medidor_id = %s AND anio = %s AND mes = %s
+        ''', (medidor_id, anio_anterior, mes_anterior))
         lectura_ant = cursor.fetchone()
         conn.close()
 
@@ -810,7 +810,7 @@ def exportar():
     medidor_id = request.args.get('medidor_id', type=int)
     pagada = request.args.get('pagada', type=int)
     sin_comprobante = request.args.get('sin_comprobante', type=int) == 1
-    año = request.args.get('año', type=int)
+    anio = request.args.get('anio', type=int)
     mes = request.args.get('mes', type=int)
 
     # Obtener boletas con filtros
@@ -819,7 +819,7 @@ def exportar():
         medidor_id=medidor_id,
         pagada=pagada,
         sin_comprobante=sin_comprobante,
-        año=año,
+        anio=anio,
         mes=mes
     )
 
@@ -829,7 +829,7 @@ def exportar():
         medidor_id=medidor_id,
         pagada=pagada,
         sin_comprobante=sin_comprobante,
-        año=año,
+        anio=anio,
         mes=mes
     )
 
@@ -861,11 +861,11 @@ def exportar():
 
     # Filtros aplicados (si existen)
     row = 3
-    if any([cliente_id, medidor_id, pagada is not None, sin_comprobante, año, mes]):
+    if any([cliente_id, medidor_id, pagada is not None, sin_comprobante, anio, mes]):
         ws.merge_cells(f'A{row}:H{row}')
         filtros_texto = []
-        if año:
-            filtros_texto.append(f'Año: {año}')
+        if anio:
+            filtros_texto.append(f'Año: {anio}')
         if mes:
             filtros_texto.append(f'Mes: {mes}')
         if pagada == 0:
@@ -992,7 +992,7 @@ def construir_url_con_filtros(endpoint):
         filtros = {
             'cliente_id': request.form.get('cliente_id'),
             'medidor_id': request.form.get('medidor_id'),
-            'año': request.form.get('año'),
+            'anio': request.form.get('anio'),
             'mes': request.form.get('mes'),
             'pagada': request.form.get('pagada'),
             'sin_comprobante': request.form.get('sin_comprobante'),
@@ -1356,22 +1356,22 @@ def enviar_whatsapp(boleta_id):
         fecha_lectura_anterior = None
         if boleta['lectura_anterior'] is not None:
             medidor_id = boleta['medidor_id']
-            año = boleta['periodo_anio']
+            anio = boleta['periodo_anio']
             mes = boleta['periodo_mes']
 
             if mes == 1:
                 mes_anterior = 12
-                año_anterior = año - 1
+                anio_anterior = anio - 1
             else:
                 mes_anterior = mes - 1
-                año_anterior = año
+                anio_anterior = anio
 
             conn = get_connection()
             cursor = conn.cursor()
             cursor.execute('''
                 SELECT fecha_lectura FROM lecturas
-                WHERE medidor_id = %s AND año = %s AND mes = %s
-            ''', (medidor_id, año_anterior, mes_anterior))
+                WHERE medidor_id = %s AND anio = %s AND mes = %s
+            ''', (medidor_id, anio_anterior, mes_anterior))
             lectura_ant = cursor.fetchone()
             conn.close()
 
@@ -1505,22 +1505,22 @@ def enviar_whatsapp_masivo():
             fecha_lectura_anterior = None
             if boleta['lectura_anterior'] is not None:
                 med_id = boleta['medidor_id']
-                año = boleta['periodo_anio']
+                anio = boleta['periodo_anio']
                 mes = boleta['periodo_mes']
 
                 if mes == 1:
                     mes_anterior = 12
-                    año_anterior = año - 1
+                    anio_anterior = anio - 1
                 else:
                     mes_anterior = mes - 1
-                    año_anterior = año
+                    anio_anterior = anio
 
                 conn = get_connection()
                 cursor = conn.cursor()
                 cursor.execute('''
                     SELECT fecha_lectura FROM lecturas
-                    WHERE medidor_id = %s AND año = %s AND mes = %s
-                ''', (med_id, año_anterior, mes_anterior))
+                    WHERE medidor_id = %s AND anio = %s AND mes = %s
+                ''', (med_id, anio_anterior, mes_anterior))
                 lectura_ant = cursor.fetchone()
                 conn.close()
 
