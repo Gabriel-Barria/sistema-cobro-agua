@@ -248,7 +248,7 @@ def _aplicar_pago_a_boletas(cursor, pago_id: int, cliente_id: int,
         SELECT id, total, monto_pagado, saldo_pendiente
         FROM boletas
         WHERE id = ANY(%s) AND saldo_pendiente > 0
-        ORDER BY periodo_año ASC, periodo_mes ASC
+        ORDER BY periodo_anio ASC, periodo_mes ASC
     ''', (boletas_ids,))
     boletas_ordenadas = cursor.fetchall()
 
@@ -491,7 +491,7 @@ def registrar_pago_directo(cliente_id: int, monto_total: Decimal,
             SELECT id, total, saldo_pendiente
             FROM boletas
             WHERE id = ANY(%s) AND saldo_pendiente > 0
-            ORDER BY periodo_año ASC, periodo_mes ASC
+            ORDER BY periodo_anio ASC, periodo_mes ASC
         ''', (boletas_ids,))
         boletas_ordenadas = cursor.fetchall()
 
@@ -842,7 +842,7 @@ def usar_saldo_en_boletas(cliente_id: int, boletas_ids: List[int],
             SELECT id, saldo_pendiente
             FROM boletas
             WHERE id = ANY(%s) AND saldo_pendiente > 0
-            ORDER BY periodo_año ASC, periodo_mes ASC
+            ORDER BY periodo_anio ASC, periodo_mes ASC
         ''', (boletas_ids,))
         boletas_ordenadas = cursor.fetchall()
 

@@ -269,7 +269,7 @@ def descargar_boleta(boleta_id):
     fecha_lectura_anterior = None
     if boleta['lectura_anterior'] is not None:
         medidor_id = boleta['medidor_id']
-        año = boleta['periodo_año']
+        año = boleta['periodo_anio']
         mes = boleta['periodo_mes']
 
         # Calcular periodo anterior

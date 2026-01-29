@@ -34,7 +34,7 @@ def obtener_boletas_periodo_envio(anio: int, mes: int) -> List[Dict]:
     cursor.execute('''
         SELECT
             b.id, b.numero_boleta, b.cliente_nombre, b.medidor_id,
-            b.periodo_año, b.periodo_mes, b.lectura_actual, b.lectura_anterior,
+            b.periodo_anio, b.periodo_mes, b.lectura_actual, b.lectura_anterior,
             b.consumo_m3, b.cargo_fijo, b.precio_m3, b.subtotal_consumo,
             b.total, b.fecha_emision, b.pagada, b.lectura_id,
             c.id as cliente_id, c.telefono, c.recibe_boleta_whatsapp,
@@ -42,7 +42,7 @@ def obtener_boletas_periodo_envio(anio: int, mes: int) -> List[Dict]:
         FROM boletas b
         JOIN medidores m ON b.medidor_id = m.id
         JOIN clientes c ON m.cliente_id = c.id
-        WHERE b.periodo_año = %s
+        WHERE b.periodo_anio = %s
           AND b.periodo_mes = %s
           AND b.pagada = 0
         ORDER BY c.nombre, b.numero_boleta
@@ -310,7 +310,7 @@ def generar_pdf_boleta_standalone(boleta: Dict, app) -> bytes:
     fecha_lectura_anterior = None
     if boleta.get('lectura_anterior') is not None:
         medidor_id = boleta['medidor_id']
-        año = boleta['periodo_año']
+        año = boleta['periodo_anio']
         mes = boleta['periodo_mes']
 
         if mes == 1:

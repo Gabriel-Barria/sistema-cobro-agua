@@ -92,7 +92,7 @@
                             <input type="checkbox" name="boletas" value="{{ b.id }}" onchange="actualizarTotal()" class="checkbox checkbox-sm mr-3">
                             <div class="flex-1 flex justify-between items-center">
                                 <span class="font-medium">{{ b.numero_boleta }}</span>
-                                <span class="text-base-content/70">{{ b.periodo_mes }}/{{ b.periodo_año }}</span>
+                                <span class="text-base-content/70">{{ b.periodo_mes }}/{{ b.periodo_anio }}</span>
                                 <span class="font-bold">${{ b.total|formato_pesos }}</span>
                             </div>
                         </label>

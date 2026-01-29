@@ -272,7 +272,7 @@ def crear():
             lectura_id=lectura_id,
             cliente_nombre=lectura['cliente_nombre'],
             medidor_id=lectura['medidor_id'],
-            periodo_año=lectura['año'],
+            periodo_anio=lectura['año'],
             periodo_mes=lectura['mes'],
             lectura_actual=lectura['lectura_m3'],
             lectura_anterior=lectura_anterior,
@@ -355,7 +355,7 @@ def crear_masivo():
                 lectura_id=lectura_id,
                 cliente_nombre=lectura['cliente_nombre'],
                 medidor_id=lectura['medidor_id'],
-                periodo_año=lectura['año'],
+                periodo_anio=lectura['año'],
                 periodo_mes=lectura['mes'],
                 lectura_actual=lectura['lectura_m3'],
                 lectura_anterior=lectura_anterior,
@@ -725,7 +725,7 @@ def descargar(boleta_id):
     if boleta['lectura_anterior'] is not None:
         # Buscar la lectura anterior por medidor_id y periodo
         medidor_id = boleta['medidor_id']
-        año = boleta['periodo_año']
+        año = boleta['periodo_anio']
         mes = boleta['periodo_mes']
 
         # Calcular periodo anterior
@@ -921,7 +921,7 @@ def exportar():
         ws.cell(row=row, column=1, value=boleta.get('numero_boleta', '')).border = border
         ws.cell(row=row, column=2, value=boleta.get('cliente_nombre', '')).border = border
         ws.cell(row=row, column=3, value=boleta.get('numero_medidor', '')).border = border
-        ws.cell(row=row, column=4, value=f"{boleta.get('periodo_mes', '')}/{boleta.get('periodo_año', '')}").border = border
+        ws.cell(row=row, column=4, value=f"{boleta.get('periodo_mes', '')}/{boleta.get('periodo_anio', '')}").border = border
         ws.cell(row=row, column=5, value=boleta.get('consumo_m3', 0)).border = border
 
         total_cell = ws.cell(row=row, column=6, value=boleta.get('total', 0))
@@ -1277,7 +1277,7 @@ def api_boletas_pendientes(cliente_id):
     return jsonify([{
         'id': b['id'],
         'numero_boleta': b['numero_boleta'],
-        'periodo': f"{b['periodo_mes']}/{b['periodo_año']}",
+        'periodo': f"{b['periodo_mes']}/{b['periodo_anio']}",
         'total': float(b['total']),
         'saldo_pendiente': float(b['saldo_pendiente'] if b.get('saldo_pendiente') is not None else b['total'])
     } for b in boletas])
@@ -1356,7 +1356,7 @@ def enviar_whatsapp(boleta_id):
         fecha_lectura_anterior = None
         if boleta['lectura_anterior'] is not None:
             medidor_id = boleta['medidor_id']
-            año = boleta['periodo_año']
+            año = boleta['periodo_anio']
             mes = boleta['periodo_mes']
 
             if mes == 1:
@@ -1505,7 +1505,7 @@ def enviar_whatsapp_masivo():
             fecha_lectura_anterior = None
             if boleta['lectura_anterior'] is not None:
                 med_id = boleta['medidor_id']
-                año = boleta['periodo_año']
+                año = boleta['periodo_anio']
                 mes = boleta['periodo_mes']
 
                 if mes == 1:
