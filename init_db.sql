@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS boletas (
     lectura_id INTEGER NOT NULL,
     cliente_nombre TEXT NOT NULL,
     medidor_id INTEGER NOT NULL,
-    periodo_año INTEGER NOT NULL,
+    periodo_anio INTEGER NOT NULL,
     periodo_mes INTEGER NOT NULL,
     lectura_actual INTEGER NOT NULL,
     lectura_anterior INTEGER,
@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS boletas (
     fecha_pago DATE,
     metodo_pago TEXT,
     comprobante_path TEXT,
+    saldo_pendiente NUMERIC(10,2),
+    monto_pagado NUMERIC(10,2) DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (lectura_id) REFERENCES lecturas(id)
 );
@@ -176,7 +178,7 @@ CREATE INDEX IF NOT EXISTS idx_lecturas_año_mes ON lecturas(año, mes);
 CREATE INDEX IF NOT EXISTS idx_boletas_lectura ON boletas(lectura_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_medidor ON boletas(medidor_id);
 CREATE INDEX IF NOT EXISTS idx_boletas_pagada ON boletas(pagada);
-CREATE INDEX IF NOT EXISTS idx_boletas_periodo ON boletas(periodo_año, periodo_mes);
+CREATE INDEX IF NOT EXISTS idx_boletas_periodo ON boletas(periodo_anio, periodo_mes);
 CREATE INDEX IF NOT EXISTS idx_usuarios_username ON usuarios(username);
 CREATE INDEX IF NOT EXISTS idx_pagos_cliente ON pagos(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_pagos_estado ON pagos(estado);

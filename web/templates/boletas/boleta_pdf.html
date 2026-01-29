@@ -91,7 +91,7 @@
         </div>
         <div class="data_container">
             <label>Periodo:</label>
-            <span><strong>{{ meses[boleta.periodo_mes] }} {{ boleta.periodo_año }}</strong></span>
+            <span><strong>{{ meses[boleta.periodo_mes] }} {{ boleta.periodo_anio }}</strong></span>
         </div>
         <div class="data_container">
             <label>Fecha de emision:</label>
@@ -160,7 +160,7 @@
 
     {% if foto_lectura %}
     <section style="margin-top: 30px; page-break-inside: avoid;">
-        <h4>Foto del Medidor - Lectura {{ meses[boleta.periodo_mes] }} {{ boleta.periodo_año }}</h4>
+        <h4>Foto del Medidor - Lectura {{ meses[boleta.periodo_mes] }} {{ boleta.periodo_anio }}</h4>
         <div style="text-align: center; margin-top: 10px;">
             <img src="{{ foto_lectura }}" alt="Foto del medidor" style="max-width: 100%; max-height: 400px; border: 1px solid #ccc;">
         </div>

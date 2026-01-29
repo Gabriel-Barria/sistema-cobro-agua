@@ -59,7 +59,7 @@ def generar_numero_boleta(año: int, mes: int) -> str:
     # Buscar el número máximo existente para ese periodo
     cursor.execute('''
         SELECT numero_boleta FROM boletas
-        WHERE periodo_año = %s AND periodo_mes = %s
+        WHERE periodo_anio = %s AND periodo_mes = %s
         ORDER BY numero_boleta DESC
         LIMIT 1
     ''', (año, mes))
@@ -80,14 +80,14 @@ def generar_numero_boleta(año: int, mes: int) -> str:
 
 
 def crear_boleta(lectura_id: int, cliente_nombre: str, medidor_id: int,
-                 periodo_año: int, periodo_mes: int, lectura_actual: int,
+                 periodo_anio: int, periodo_mes: int, lectura_actual: int,
                  lectura_anterior: int, consumo_m3: int, cargo_fijo: float,
                  precio_m3: float) -> int:
     """Crea una nueva boleta."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    numero_boleta = generar_numero_boleta(periodo_año, periodo_mes)
+    numero_boleta = generar_numero_boleta(periodo_anio, periodo_mes)
     subtotal_consumo = consumo_m3 * precio_m3
     total = cargo_fijo + subtotal_consumo
     fecha_emision = date.today().isoformat()
@@ -95,13 +95,13 @@ def crear_boleta(lectura_id: int, cliente_nombre: str, medidor_id: int,
     cursor.execute('''
         INSERT INTO boletas (
             numero_boleta, lectura_id, cliente_nombre, medidor_id,
-            periodo_año, periodo_mes, lectura_actual, lectura_anterior,
+            periodo_anio, periodo_mes, lectura_actual, lectura_anterior,
             consumo_m3, cargo_fijo, precio_m3, subtotal_consumo, total,
             fecha_emision, pagada, saldo_pendiente, monto_pagado
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 0, %s, 0)
         RETURNING id
     ''', (numero_boleta, lectura_id, cliente_nombre, medidor_id,
-          periodo_año, periodo_mes, lectura_actual, lectura_anterior,
+          periodo_anio, periodo_mes, lectura_actual, lectura_anterior,
           consumo_m3, cargo_fijo, precio_m3, subtotal_consumo, total,
           fecha_emision, total))
 
@@ -181,7 +181,7 @@ def listar_boletas(cliente_id: int = None, medidor_id: int = None,
         query += ' AND b.pagada = 2 AND (b.comprobante_path IS NULL OR b.comprobante_path = \'\')'
 
     if año is not None:
-        query += ' AND b.periodo_año = %s'
+        query += ' AND b.periodo_anio = %s'
         params.append(año)
 
     if mes is not None:
@@ -194,7 +194,7 @@ def listar_boletas(cliente_id: int = None, medidor_id: int = None,
         else:
             query += ' AND NOT EXISTS (SELECT 1 FROM envios_boletas e WHERE e.boleta_id = b.id AND e.estado = \'enviado\')'
 
-    query += ' ORDER BY b.periodo_año DESC, b.periodo_mes DESC, b.id DESC'
+    query += ' ORDER BY b.periodo_anio DESC, b.periodo_mes DESC, b.id DESC'
 
     cursor.execute(query, params)
     boletas = cursor.fetchall()
@@ -399,7 +399,7 @@ def obtener_estadisticas_boletas(cliente_id: int = None, medidor_id: int = None,
         query += ' AND b.pagada = 2 AND (b.comprobante_path IS NULL OR b.comprobante_path = \'\')'
 
     if año is not None:
-        query += ' AND b.periodo_año = %s'
+        query += ' AND b.periodo_anio = %s'
         params.append(año)
 
     if mes is not None:
@@ -431,7 +431,7 @@ def obtener_boletas_pendientes_por_cliente(cliente_id: int, estado: int = 0) -> 
         FROM boletas b
         JOIN medidores m ON b.medidor_id = m.id
         WHERE m.cliente_id = %s AND b.pagada = %s
-        ORDER BY b.periodo_año DESC, b.periodo_mes DESC
+        ORDER BY b.periodo_anio DESC, b.periodo_mes DESC
     ''', (cliente_id, estado))
 
     boletas = cursor.fetchall()

@@ -209,7 +209,7 @@ def enviar_boleta_whatsapp(
     # Formatear periodo
     meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
              'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-    periodo = f"{meses[boleta.get('periodo_mes', 1)]} {boleta.get('periodo_año', '')}"
+    periodo = f"{meses[boleta.get('periodo_mes', 1)]} {boleta.get('periodo_anio', '')}"
 
     # Formatear monto
     total = boleta.get('total', 0) or 0

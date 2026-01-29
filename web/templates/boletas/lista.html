@@ -196,7 +196,7 @@
                         {% endif %}
                     </div>
                     <div class="text-sm text-base-content/70 truncate">{{ boleta.cliente_nombre }}</div>
-                    <div class="text-xs text-base-content/50">{{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}</div>
+                    <div class="text-xs text-base-content/50">{{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_anio }}</div>
                 </div>
                 <div class="flex flex-col items-end gap-1 ml-4">
                     <div class="font-bold">${{ (boleta.saldo_pendiente if boleta.saldo_pendiente is not none else boleta.total)|formato_pesos }}</div>
@@ -298,8 +298,8 @@
                         {{ boleta.cliente_nombre }}
                     </a>
                 </td>
-                <td data-sort="{{ '%04d%02d'|format(boleta.periodo_año, boleta.periodo_mes) }}">
-                    {{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_año }}
+                <td data-sort="{{ '%04d%02d'|format(boleta.periodo_anio, boleta.periodo_mes) }}">
+                    {{ boleta.periodo_mes|nombre_mes }} {{ boleta.periodo_anio }}
                 </td>
                 <td data-sort="{{ boleta.consumo_m3 }}">{{ boleta.consumo_m3 }} m3</td>
                 <td data-sort="{{ boleta.total }}">${{ boleta.total|formato_pesos }}</td>

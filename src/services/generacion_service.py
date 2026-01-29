@@ -130,7 +130,7 @@ def obtener_ultimo_consumo_boleta(medidor_id: int) -> Optional[int]:
         SELECT consumo_m3
         FROM boletas
         WHERE medidor_id = %s
-        ORDER BY periodo_año DESC, periodo_mes DESC, id DESC
+        ORDER BY periodo_anio DESC, periodo_mes DESC, id DESC
         LIMIT 1
     ''', (medidor_id,))
 
@@ -300,7 +300,7 @@ def generar_boleta_desde_lectura(lectura: Dict, config_boletas: Dict) -> Optiona
             lectura_id=lectura['id'],
             cliente_nombre=cliente_nombre,
             medidor_id=medidor_id,
-            periodo_año=año,
+            periodo_anio=año,
             periodo_mes=mes,
             lectura_actual=lectura_actual,
             lectura_anterior=lectura_anterior,
