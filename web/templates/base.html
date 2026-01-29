@@ -49,8 +49,8 @@
                 </div>
                 <div class="flex-none">
                     <button onclick="toggleTheme()" class="btn btn-square btn-ghost">
-                        <i class="fas fa-moon dark:hidden"></i>
-                        <i class="fas fa-sun hidden dark:inline"></i>
+                        <i class="fas fa-moon theme-icon-light"></i>
+                        <i class="fas fa-sun theme-icon-dark"></i>
                     </button>
                 </div>
             </div>
@@ -292,8 +292,8 @@
                         </div>
                         <div class="flex gap-1">
                             <button onclick="toggleTheme()" class="btn btn-ghost btn-sm btn-square hidden lg:flex" title="Cambiar tema">
-                                <i class="fas fa-moon dark:hidden"></i>
-                                <i class="fas fa-sun hidden dark:inline"></i>
+                                <i class="fas fa-moon theme-icon-light"></i>
+                                <i class="fas fa-sun theme-icon-dark"></i>
                             </button>
                             <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm btn-square text-error" title="Cerrar Sesion">
                                 <i class="fas fa-sign-out-alt"></i>
@@ -318,9 +318,25 @@
             const next = current === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', next);
             localStorage.setItem('theme', next);
+            updateThemeIcons(next);
+        }
+
+        // Update theme icons visibility
+        function updateThemeIcons(theme) {
+            // Si tema es dark: ocultar luna, mostrar sol
+            // Si tema es light: mostrar luna, ocultar sol
+            document.querySelectorAll('.theme-icon-light').forEach(function(el) {
+                el.style.display = (theme === 'dark') ? 'none' : 'inline-block';
+            });
+            document.querySelectorAll('.theme-icon-dark').forEach(function(el) {
+                el.style.display = (theme === 'dark') ? 'inline-block' : 'none';
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize theme icons
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            updateThemeIcons(currentTheme);
             // Flash messages to Toast bridge
             var alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert, index) {
