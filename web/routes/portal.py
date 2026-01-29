@@ -17,6 +17,7 @@ from src.models_boletas import (
     obtener_ultimo_rechazo,
     obtener_intento_en_revision
 )
+from src.models_configuracion import obtener_datos_bancarios
 
 portal_bp = Blueprint('portal', __name__)
 
@@ -294,12 +295,14 @@ def descargar_boleta(boleta_id):
             fecha_lectura_anterior = lectura_ant['fecha_lectura']
 
     # Renderizar template HTML
+    datos_bancarios = obtener_datos_bancarios()
     html_string = render_template('boletas/boleta_pdf.html',
                                    boleta=boleta,
                                    meses=meses,
                                    foto_lectura=foto_lectura,
                                    fecha_lectura_actual=fecha_lectura_actual,
-                                   fecha_lectura_anterior=fecha_lectura_anterior)
+                                   fecha_lectura_anterior=fecha_lectura_anterior,
+                                   datos_bancarios=datos_bancarios)
 
     # Generar PDF usando WeasyPrint
     pdf_file = BytesIO()

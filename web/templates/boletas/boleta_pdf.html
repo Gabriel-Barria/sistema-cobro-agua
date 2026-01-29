@@ -149,12 +149,12 @@
         <div>1.- Efectivo</div>
         <div>2.- Transferencia a la siguiente cuenta:</div>
         <ol style="margin-top:2px;">
-            <li>Banco: Banco Estado</li>
-            <li>N&ordm; de cuenta: 82970400962</li>
-            <li>RUT: 65096733-k</li>
-            <li>Tipo de Cuenta: Cuenta Vista o Chequera electronica</li>
-            <li>Nombre: Comite de Trabajo Pasaje Bauche</li>
-            <li>Email: comite.bauche@gmail.com</li>
+            <li>Banco: {{ datos_bancarios.nombre }}</li>
+            <li>N&ordm; de cuenta: {{ datos_bancarios.cuenta }}</li>
+            <li>RUT: {{ datos_bancarios.rut }}</li>
+            <li>Tipo de Cuenta: {{ datos_bancarios.tipo_cuenta }}</li>
+            <li>Nombre: {{ datos_bancarios.titular }}</li>
+            <li>Email: {{ datos_bancarios.email }}</li>
         </ol>
     </section>
 

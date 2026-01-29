@@ -44,6 +44,27 @@
         </div>
     </a>
 
+    <!-- Datos Bancarios -->
+    <a href="{{ url_for('configuracion.datos_bancarios') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
+        <div class="card-body">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-info/10 rounded-lg">
+                    <i class="fas fa-university text-2xl text-info"></i>
+                </div>
+                <div>
+                    <h2 class="card-title">Datos Bancarios</h2>
+                    <p class="text-base-content/70">Informacion bancaria para transferencias en boletas</p>
+                </div>
+            </div>
+            {% if datos_bancarios and datos_bancarios.nombre %}
+            <div class="mt-4 flex flex-wrap gap-2 text-sm">
+                <span class="badge badge-ghost">{{ datos_bancarios.nombre }}</span>
+                <span class="badge badge-ghost">{{ datos_bancarios.titular }}</span>
+            </div>
+            {% endif %}
+        </div>
+    </a>
+
     <!-- Generacion Automatica -->
     <a href="{{ url_for('scheduler.index') }}" class="card bg-base-100 shadow hover:shadow-lg transition-shadow">
         <div class="card-body">

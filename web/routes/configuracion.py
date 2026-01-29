@@ -5,7 +5,9 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from web.auth import admin_required
 from src.models_configuracion import (
     obtener_todas_configuraciones,
-    guardar_configuracion
+    guardar_configuracion,
+    obtener_datos_bancarios,
+    guardar_datos_bancarios
 )
 from src.models_boletas import obtener_configuracion, guardar_configuracion as guardar_tarifas
 
@@ -18,10 +20,12 @@ def index():
     """Dashboard de configuracion."""
     config = obtener_todas_configuraciones()
     tarifas = obtener_configuracion()
+    datos_bancarios = obtener_datos_bancarios()
 
     return render_template('configuracion/index.html',
                            config=config,
-                           tarifas=tarifas)
+                           tarifas=tarifas,
+                           datos_bancarios=datos_bancarios)
 
 
 @configuracion_bp.route('/sistema', methods=['GET', 'POST'])
@@ -63,3 +67,24 @@ def tarifas():
 
     config = obtener_configuracion()
     return render_template('configuracion/tarifas.html', config=config)
+
+
+@configuracion_bp.route('/datos-bancarios', methods=['GET', 'POST'])
+@admin_required
+def datos_bancarios():
+    """Configuracion de datos bancarios para transferencias."""
+    if request.method == 'POST':
+        datos = {
+            'nombre': request.form.get('nombre', ''),
+            'cuenta': request.form.get('cuenta', ''),
+            'rut': request.form.get('rut', ''),
+            'tipo_cuenta': request.form.get('tipo_cuenta', ''),
+            'titular': request.form.get('titular', ''),
+            'email': request.form.get('email', '')
+        }
+        guardar_datos_bancarios(datos)
+        flash('Datos bancarios guardados exitosamente', 'success')
+        return redirect(url_for('configuracion.datos_bancarios'))
+
+    datos = obtener_datos_bancarios()
+    return render_template('configuracion/datos_bancarios.html', datos=datos)

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Datos Bancarios - Sistema de Lecturas{% endblock %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">Datos Bancarios para Transferencias</h1>
+    <a href="{{ url_for('configuracion.index') }}" class="btn btn-ghost">
+        <i class="fas fa-arrow-left"></i>
+        <span class="hidden sm:inline">Volver</span>
+    </a>
+</div>
+
+<div class="card bg-base-100 shadow max-w-xl mx-auto">
+    <div class="card-body">
+        <div class="alert alert-info mb-6">
+            <i class="fas fa-info-circle"></i>
+            <span>Estos datos aparecen en las boletas PDF como informacion para que los clientes realicen transferencias.</span>
+        </div>
+
+        <form method="POST">
+            <div class="grid grid-cols-1 gap-4 mb-6">
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Nombre del Banco</span>
+                    </label>
+                    <input type="text" name="nombre"
+                           value="{{ datos.nombre }}"
+                           class="input input-bordered"
+                           placeholder="Ej: Banco Estado">
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Numero de Cuenta</span>
+                    </label>
+                    <input type="text" name="cuenta"
+                           value="{{ datos.cuenta }}"
+                           class="input input-bordered"
+                           placeholder="Ej: 12345678901">
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">RUT del Titular</span>
+                    </label>
+                    <input type="text" name="rut"
+                           value="{{ datos.rut }}"
+                           class="input input-bordered"
+                           placeholder="Ej: 12345678-9">
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Tipo de Cuenta</span>
+                    </label>
+                    <input type="text" name="tipo_cuenta"
+                           value="{{ datos.tipo_cuenta }}"
+                           class="input input-bordered"
+                           placeholder="Ej: Cuenta Corriente, Cuenta Vista">
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Nombre del Titular</span>
+                    </label>
+                    <input type="text" name="titular"
+                           value="{{ datos.titular }}"
+                           class="input input-bordered"
+                           placeholder="Ej: Juan Perez">
+                </div>
+
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-medium">Email de Contacto</span>
+                    </label>
+                    <input type="email" name="email"
+                           value="{{ datos.email }}"
+                           class="input input-bordered"
+                           placeholder="Ej: contacto@email.com">
+                </div>
+            </div>
+
+            <!-- Vista previa -->
+            <div class="divider">Vista previa en boleta</div>
+
+            <div class="bg-base-200 p-4 rounded-lg mb-6">
+                <p class="font-medium mb-2">Datos para Transferencia:</p>
+                <ul class="text-sm space-y-1">
+                    <li><strong>Banco:</strong> {{ datos.nombre or '(sin configurar)' }}</li>
+                    <li><strong>N de cuenta:</strong> {{ datos.cuenta or '(sin configurar)' }}</li>
+                    <li><strong>RUT:</strong> {{ datos.rut or '(sin configurar)' }}</li>
+                    <li><strong>Tipo de Cuenta:</strong> {{ datos.tipo_cuenta or '(sin configurar)' }}</li>
+                    <li><strong>Nombre:</strong> {{ datos.titular or '(sin configurar)' }}</li>
+                    <li><strong>Email:</strong> {{ datos.email or '(sin configurar)' }}</li>
+                </ul>
+            </div>
+
+            <div class="card-actions justify-center">
+                <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-save"></i> Guardar Datos Bancarios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

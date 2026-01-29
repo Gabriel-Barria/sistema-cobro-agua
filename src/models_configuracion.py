@@ -190,3 +190,30 @@ def obtener_fecha_lectura_por_defecto(anio: int, mes: int) -> date:
     dia_toma = min(dia_toma, dias_en_mes)
 
     return date(anio_lectura, mes_lectura, dia_toma)
+
+
+def obtener_datos_bancarios() -> Dict[str, str]:
+    """
+    Obtiene todos los datos bancarios como diccionario.
+
+    Retorna dict con claves: nombre, cuenta, rut, tipo_cuenta, titular, email
+    """
+    claves = ['banco_nombre', 'banco_cuenta', 'banco_rut',
+              'banco_tipo_cuenta', 'banco_titular', 'banco_email']
+    datos = {}
+    for clave in claves:
+        # Quitar prefijo 'banco_' para las claves del resultado
+        clave_corta = clave.replace('banco_', '')
+        datos[clave_corta] = obtener_configuracion(clave, '')
+    return datos
+
+
+def guardar_datos_bancarios(datos: Dict[str, str]) -> None:
+    """
+    Guarda los datos bancarios.
+
+    Args:
+        datos: Dict con claves nombre, cuenta, rut, tipo_cuenta, titular, email
+    """
+    for campo, valor in datos.items():
+        guardar_configuracion(f'banco_{campo}', valor, 'string')

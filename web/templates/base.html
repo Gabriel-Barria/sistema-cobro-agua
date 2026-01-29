@@ -245,6 +245,12 @@
                                     </a>
                                 </li>
                                 <li>
+                                    <a href="{{ url_for('configuracion.datos_bancarios') }}" class="{% if request.endpoint == 'configuracion.datos_bancarios' %}active{% endif %}">
+                                        <i class="fas fa-university w-4"></i>
+                                        Datos Bancarios
+                                    </a>
+                                </li>
+                                <li>
                                     <a href="{{ url_for('scheduler.index') }}" class="{% if request.endpoint and 'scheduler' in request.endpoint %}active{% endif %}">
                                         <i class="fas fa-clock w-4"></i>
                                         Generacion Auto

@@ -247,6 +247,16 @@ INSERT INTO configuracion_sistema (clave, valor, descripcion, tipo) VALUES
 ('valor_lectura_faltante', 'ultima', 'Valor para lecturas faltantes: ultima (copia ultima lectura), cero (valor 0)', 'string')
 ON CONFLICT (clave) DO NOTHING;
 
+-- Insertar datos bancarios iniciales
+INSERT INTO configuracion_sistema (clave, valor, descripcion, tipo) VALUES
+('banco_nombre', 'Banco Estado', 'Nombre del banco', 'string'),
+('banco_cuenta', '82970400962', 'Numero de cuenta', 'string'),
+('banco_rut', '65096733-k', 'RUT del titular', 'string'),
+('banco_tipo_cuenta', 'Cuenta Vista o Chequera electronica', 'Tipo de cuenta', 'string'),
+('banco_titular', 'Comite de Trabajo Pasaje Bauche', 'Nombre del titular', 'string'),
+('banco_email', 'comite.bauche@gmail.com', 'Email de contacto', 'string')
+ON CONFLICT (clave) DO NOTHING;
+
 -- Insertar configuracion cron por defecto
 INSERT INTO configuracion_cron (nombre, tipo_programacion, dia_mes, hora_ejecucion, activo) VALUES
 ('generacion_boletas', 'dia_mes', 5, '08:00:00', false)

@@ -26,6 +26,7 @@ from src.models_pagos import (
     obtener_resumen_cuenta_cliente, obtener_saldo_cliente
 )
 from src.services.mensajes_service import enviar_boleta_whatsapp, MensajesError
+from src.models_configuracion import obtener_datos_bancarios
 
 boletas_bp = Blueprint('boletas', __name__)
 
@@ -751,12 +752,14 @@ def descargar(boleta_id):
             fecha_lectura_anterior = lectura_ant['fecha_lectura']
 
     # Renderizar template HTML
+    datos_bancarios = obtener_datos_bancarios()
     html_string = render_template('boletas/boleta_pdf.html',
                                    boleta=boleta,
                                    meses=meses,
                                    foto_lectura=foto_lectura,
                                    fecha_lectura_actual=fecha_lectura_actual,
-                                   fecha_lectura_anterior=fecha_lectura_anterior)
+                                   fecha_lectura_anterior=fecha_lectura_anterior,
+                                   datos_bancarios=datos_bancarios)
 
     # Generar PDF usando WeasyPrint
     pdf_file = BytesIO()
@@ -1379,12 +1382,14 @@ def enviar_whatsapp(boleta_id):
                 fecha_lectura_anterior = lectura_ant['fecha_lectura']
 
         # Renderizar template HTML
+        datos_bancarios = obtener_datos_bancarios()
         html_string = render_template('boletas/boleta_pdf.html',
                                        boleta=boleta,
                                        meses=meses,
                                        foto_lectura=foto_lectura,
                                        fecha_lectura_actual=fecha_lectura_actual,
-                                       fecha_lectura_anterior=fecha_lectura_anterior)
+                                       fecha_lectura_anterior=fecha_lectura_anterior,
+                                       datos_bancarios=datos_bancarios)
 
         # Generar PDF usando WeasyPrint
         pdf_file = BytesIO()
@@ -1527,12 +1532,14 @@ def enviar_whatsapp_masivo():
                 if lectura_ant:
                     fecha_lectura_anterior = lectura_ant['fecha_lectura']
 
+            datos_bancarios = obtener_datos_bancarios()
             html_string = render_template('boletas/boleta_pdf.html',
                                            boleta=boleta,
                                            meses=meses,
                                            foto_lectura=foto_lectura,
                                            fecha_lectura_actual=fecha_lectura_actual,
-                                           fecha_lectura_anterior=fecha_lectura_anterior)
+                                           fecha_lectura_anterior=fecha_lectura_anterior,
+                                           datos_bancarios=datos_bancarios)
 
             pdf_file = BytesIO()
             HTML(string=html_string, base_url=BASE_DIR).write_pdf(pdf_file)
